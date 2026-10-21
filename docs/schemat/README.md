@@ -1,10 +1,6 @@
-# Schemat bazy PROMT – propozycja do przeglądu
+# Data model – PROMT 2.0
 
-Branch testowy: tylko dokumentacja schematu, kod aplikacji bez zmian.
-Bazowy schemat (project, funding, project_funding, task, task_assignment, szablony) zostaje i jest rozszerzony
-o firmy, role i grupy, statusy, etapy, checklisty, ewidencję czasu, komentarze, pliki, wydatki i historię – 22 tabele.
-
-Podgląd online z opisem każdej tabeli: https://claude.ai/artifact/JwLRGQuSZawjnSYVrKkRsn
+Design documents of the PROMT 2.0 data model.
 
 ## Pliki
 
@@ -22,7 +18,7 @@ Podgląd online z opisem każdej tabeli: https://claude.ai/artifact/JwLRGQuSZawj
 1. Otwórz `promt-schemat.drawio` w VS Code (z rozszerzeniem) albo w diagrams.net.
 2. Przeciągaj tabele – linie idą za nimi. Dziwny objazd linii: zaznacz linię → prawy przycisk → **Clear Waypoints**.
 3. Kolumnę zmieniasz podwójnym kliknięciem; połączenie dodajesz, przeciągając od krawędzi jednej tabeli do drugiej.
-4. Zapisz i zrób commit na tym branchu – zmiany przeniesiemy do modeli Django.
+4. Zapisz zmiany i otwórz Pull Request.
 
 ## Najważniejsze decyzje
 

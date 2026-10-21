@@ -1,4 +1,4 @@
-# PROMT – Playwright E2E Testing Guide
+# End-to-end tests (Playwright)
 
 ## Stack
 
