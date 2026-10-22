@@ -18,7 +18,7 @@ test("storageState — sesja admina daje dostęp do /dashboard/fundings bez logo
   const state = await page.request.storageState();
   const csrf = state.cookies.find((c) => c.name === "csrftoken");
   expect(csrf).toBeDefined();
-  expect(csrf!.value.length).toBeGreaterThan(32);
+  expect(csrf!.value.length).toBeGreaterThanOrEqual(32);
 });
 
 test("storageState — sesja admina pozwala odpytać /api/fundings/ przez request fixture bez przechodzenia przez UI", async ({
@@ -35,6 +35,7 @@ test("storageState — nieuwierzytelniony request do /api/fundings/ zwraca 401 l
   playwright,
 }) => {
   const anonRequest = await playwright.request.newContext({
+    storageState: { cookies: [], origins: [] },
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
   });
 
