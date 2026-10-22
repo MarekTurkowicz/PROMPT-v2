@@ -29,6 +29,3 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
-# Agents
-.claude
