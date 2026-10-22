@@ -11,7 +11,7 @@ export type Project = {
   funding_ids: number[];
   created_at: string;
   updated_at: string;
-  owner: number;
+  owner: number | null;
 };
 
 export const projectsApi = createApi({
