@@ -77,5 +77,8 @@ backend/.env.*.local
 backend/poetry.lock
 backend/.python-version
 
-# Windows PowerShell history 
+# Windows PowerShell history
 *.pshistory
+
+# Local docs
+docs/
