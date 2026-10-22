@@ -1,16 +1,20 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import auth_csrf, auth_login, auth_logout, health, me
-from .views import (
-    FundingViewSet,
-    FundingTaskViewSet,
-    ProjectViewSet,
-    ProjectFundingViewSet,
-    TaskViewSet,
-    TaskAssignmentViewSet,
-    UserViewSet,
-)
 
+from .views import (
+    FundingTaskViewSet,
+    FundingViewSet,
+    ProjectFundingViewSet,
+    ProjectViewSet,
+    TaskAssignmentViewSet,
+    TaskViewSet,
+    UserViewSet,
+    auth_csrf,
+    auth_login,
+    auth_logout,
+    health,
+    me,
+)
 
 router = DefaultRouter()
 router.register(r"fundings", FundingViewSet, basename="funding")
