@@ -1,30 +1,29 @@
 import random
-from decimal import Decimal
 from datetime import timedelta
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
-from django.core.management.base import BaseCommand, CommandParser
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from django.utils import timezone
-
 from faker import Faker
 
 from api import access
 from api.models import (
+    Funding,
+    FundingTask,
     Organization,
     OrganizationMember,
+    Project,
+    ProjectFunding,
     Role,
     RoleAssignment,
     Status,
-    UserProfile,
-    Funding,
-    FundingTask,
-    Project,
-    ProjectFunding,
     Task,
-    TaskScope,
     TaskAssignment,
+    TaskScope,
+    UserProfile,
 )
 
 if TYPE_CHECKING:
@@ -110,7 +109,7 @@ class Command(BaseCommand):
         users = []
 
         for i in range(count):
-            username = f"demo_{i+1}"
+            username = f"demo_{i + 1}"
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
@@ -164,13 +163,13 @@ class Command(BaseCommand):
             end_date = start_date + timedelta(days=random.randint(60, 365))
 
             funding, _ = Funding.objects.get_or_create(
-                name=f"{funding_label} {i+1} - {fake.company()}",
+                name=f"{funding_label} {i + 1} - {fake.company()}",
                 defaults={
                     "organization": self.organization,
                     "type": funding_type,
                     "funder": fake.company(),
                     "program": fake.catch_phrase(),
-                    "agreement_number": f"AGR/{today.year}/{i+1:03d}",
+                    "agreement_number": f"AGR/{today.year}/{i + 1:03d}",
                     "amount_total": Decimal(str(random.randint(15000, 500000))),
                     "currency": "PLN",
                     "start_date": start_date,
@@ -183,9 +182,7 @@ class Command(BaseCommand):
 
         return fundings
 
-    def seed_funding_templates(
-        self, fundings: list[Funding], templates_per_funding: int
-    ) -> None:
+    def seed_funding_templates(self, fundings: list[Funding], templates_per_funding: int) -> None:
         template_titles = [
             "Analiza wymagań formalnych",
             "Przygotowanie dokumentacji",
@@ -203,7 +200,7 @@ class Command(BaseCommand):
 
         for funding in fundings:
             for i in range(templates_per_funding):
-                title = f"{random.choice(template_titles)} [{i+1}]"
+                title = f"{random.choice(template_titles)} [{i + 1}]"
 
                 FundingTask.objects.get_or_create(
                     funding=funding,
@@ -249,7 +246,7 @@ class Command(BaseCommand):
             end_date = start_date + timedelta(days=end_int)
 
             project, _ = Project.objects.get_or_create(
-                name=f"Projekt {i+1} - {random.choice(project_types)}",
+                name=f"Projekt {i + 1} - {random.choice(project_types)}",
                 defaults={
                     "description": fake.text(max_nb_chars=260),
                     "organization": self.organization,
@@ -281,7 +278,9 @@ class Command(BaseCommand):
                 allocation_end_candidates = [
                     d for d in [project.end_date, funding.end_date] if d is not None
                 ]
-                allocation_end = max(allocation_end_candidates) if allocation_end_candidates else None
+                allocation_end = (
+                    max(allocation_end_candidates) if allocation_end_candidates else None
+                )
 
                 # if allocation_start and allocation_end and allocation_end < allocation_start:
                 #     allocation_end = allocation_start
@@ -370,13 +369,15 @@ class Command(BaseCommand):
                     start_date = due_date - timedelta(days=random.randint(1, 40))
 
                 task = Task.objects.create(
-                    title=f"{random.choice(task_titles)} #{i+1} / {project.name}",
+                    title=f"{random.choice(task_titles)} #{i + 1} / {project.name}",
                     description=fake.text(max_nb_chars=240),
                     status=self.statuses[status],
                     priority=priority,
                     start_date=start_date,
                     due_date=due_date,
-                    cost_amount=Decimal(str(random.choice([0, 50, 100, 250, 500, 1000, 2000, 5000]))),
+                    cost_amount=Decimal(
+                        str(random.choice([0, 50, 100, 250, 500, 1000, 2000, 5000]))
+                    ),
                     cost_currency="PLN",
                     receipt_url="",
                     receipt_note=fake.sentence(nb_words=8) if random.choice([True, False]) else "",
@@ -428,7 +429,7 @@ class Command(BaseCommand):
                     start_date = due_date - timedelta(days=random.randint(1, 30))
 
                 task = Task.objects.create(
-                    title=f"{random.choice(funding_task_titles)} #{i+1} / {funding.name}",
+                    title=f"{random.choice(funding_task_titles)} #{i + 1} / {funding.name}",
                     description=fake.text(max_nb_chars=200),
                     status=self.statuses[status],
                     priority=random.choice([1, 2, 3]),
@@ -479,7 +480,7 @@ class Command(BaseCommand):
                 start_date = due_date - timedelta(days=random.randint(1, 20))
 
             Task.objects.create(
-                title=f"{random.choice(titles)} #{i+1}",
+                title=f"{random.choice(titles)} #{i + 1}",
                 description=fake.text(max_nb_chars=180),
                 status=self.statuses[status],
                 priority=random.choice([1, 2, 3]),
@@ -492,9 +493,7 @@ class Command(BaseCommand):
                 est_hours=Decimal(str(random.choice([1, 2, 4, 8, 16]))),
             )
 
-    def seed_assignments(
-        self, users: list[User], max_assignments_per_task: int
-    ) -> None:
+    def seed_assignments(self, users: list[User], max_assignments_per_task: int) -> None:
         tasks = list(Task.objects.select_related("status").order_by("id"))
         if not tasks or not users:
             return
@@ -539,9 +538,11 @@ class Command(BaseCommand):
                 RoleAssignment.objects.get_or_create(
                     role=project_admin, user_id=project.owner_id, project=project
                 )
-            user_ids = TaskAssignment.objects.filter(
-                task__scope__project=project
-            ).values_list("user_id", flat=True).distinct()
+            user_ids = (
+                TaskAssignment.objects.filter(task__scope__project=project)
+                .values_list("user_id", flat=True)
+                .distinct()
+            )
             for user_id in user_ids:
                 if user_id != project.owner_id:
                     RoleAssignment.objects.get_or_create(

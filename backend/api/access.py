@@ -120,9 +120,7 @@ def permissions_for(
         scope = Q(organization_id=organization_id)
         if project is not None:
             scope |= Q(project_id=project.pk)
-        assignments = RoleAssignment.objects.filter(
-            _principal_q(user, _teams(user, cache)), scope
-        )
+        assignments = RoleAssignment.objects.filter(_principal_q(user, _teams(user, cache)), scope)
         codes = frozenset(
             Permission.objects.filter(roles__assignments__in=assignments)
             .values_list("code", flat=True)
@@ -195,7 +193,10 @@ def legacy_role_annotation(user_ref: str = "pk") -> Subquery:
         output_field=IntegerField(),
     )
     legacy = Case(
-        *[When(role__code=code, then=Value(ORG_ROLE_TO_LEGACY_ROLE[code])) for code in ORG_ROLE_RANK],
+        *[
+            When(role__code=code, then=Value(ORG_ROLE_TO_LEGACY_ROLE[code]))
+            for code in ORG_ROLE_RANK
+        ],
     )
     return Subquery(
         RoleAssignment.objects.filter(
@@ -281,7 +282,9 @@ def set_organization_role(
                     "Nie możesz nadawać ani odbierać roli z uprawnieniami, których sam nie masz."
                 )
 
-    losing_admin = any(a.role.code == ORG_ROLE_ADMIN for a in current) and role_code != ORG_ROLE_ADMIN
+    losing_admin = (
+        any(a.role.code == ORG_ROLE_ADMIN for a in current) and role_code != ORG_ROLE_ADMIN
+    )
     if losing_admin:
         other_admins = (
             RoleAssignment.objects.filter(

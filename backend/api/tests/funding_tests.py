@@ -1,16 +1,18 @@
-import pytest
-from django.core.exceptions import ValidationError
 from datetime import date
 
+import pytest
+from django.core.exceptions import ValidationError
+
 # Import modeli
-from api.models.funding import Funding, ProjectFunding, FundingTask
-from api.models.project import Project  
+from api.models.funding import Funding, FundingTask, ProjectFunding
+from api.models.project import Project
+
 
 class MockProject:
     pass
 
-class TestFundingModel:
 
+class TestFundingModel:
     # 1. Test sprawdzający poprawność metody __str__ w modelu Funding
     @pytest.mark.django_db
     def test_funding_str_with_valid_data_returns_formatted_string(self):
@@ -20,7 +22,7 @@ class TestFundingModel:
     # 2. Test sprawdzający walidację ujemnej kwoty
     def test_funding_amount_with_negative_value_raises_validation_error(self):
         funding = Funding(name="Test", amount_total=-100)
-        validator = funding._meta.get_field('amount_total').validators[0]
+        validator = funding._meta.get_field("amount_total").validators[0]
         with pytest.raises(ValidationError):
             validator(-100)
 
@@ -41,9 +43,9 @@ class TestFundingModel:
         funding = Funding(type=Funding.Type.INTERNAL)
         assert funding.get_type_display() == "Wewnętrzne"
 
-class TestProjectFundingModel:
 
-    # 6. Test sprawdzający przypisanie 
+class TestProjectFundingModel:
+    # 6. Test sprawdzający przypisanie
     def test_project_funding_assignment_sets_proper_references(self):
         f = Funding(name="Fund")
         pf = ProjectFunding(funding=f)
@@ -56,8 +58,8 @@ class TestProjectFundingModel:
         pf = ProjectFunding(project=p, funding=f)
         assert str(pf) == "Projekt X ↔ Fundacja"
 
-class TestFundingTaskModel:
 
+class TestFundingTaskModel:
     # 8. Test sprawdzający domyślny status zadania
     @pytest.mark.django_db
     def test_funding_task_status_no_input_returns_todo(self):

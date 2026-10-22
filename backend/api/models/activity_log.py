@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
-from django.conf import settings
 
 from api.models.mixins.generic_relation_mixin import GenericRelationMixin
 

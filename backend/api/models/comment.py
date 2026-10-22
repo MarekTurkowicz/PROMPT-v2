@@ -1,7 +1,7 @@
+from django.conf import settings
 from django.db import models
 
 from api.models.mixins.generic_relation_mixin import GenericRelationMixin
-from django.conf import settings
 
 
 class Comment(GenericRelationMixin):
@@ -21,7 +21,6 @@ class Comment(GenericRelationMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     is_edited = models.BooleanField(default=False)
-
 
     def __str__(self) -> str:
         return f"Comment by {self.author} on {self.content}"

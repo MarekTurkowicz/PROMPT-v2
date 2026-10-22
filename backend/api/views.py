@@ -1,16 +1,18 @@
 from typing import TYPE_CHECKING
 
-from django.contrib.auth import authenticate, login, logout
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
-from django.db.models import Q, Count, Prefetch, QuerySet
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.db.models import Count, Prefetch, Q, QuerySet
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework import viewsets, permissions, status as http_status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import BaseSerializer
 from rest_framework.views import APIView
+
 from . import access
 from .models import (
     Funding,
@@ -19,23 +21,19 @@ from .models import (
     ProjectFunding,
     Task,
     TaskAssignment,
-    UserProfile,
 )
 from .serializers import (
-    FundingSerializer,
-    FundingTaskSerializer,
-    ProjectSerializer,
-    ProjectFundingSerializer,
-    TaskSerializer,
-    TaskAssignmentSerializer,
-    UserSerializer,
-    UserDetailSerializer,
     AdminUserCreateSerializer,
     AdminUserUpdateSerializer,
+    FundingSerializer,
+    FundingTaskSerializer,
+    ProjectFundingSerializer,
+    ProjectSerializer,
+    TaskAssignmentSerializer,
+    TaskSerializer,
+    UserDetailSerializer,
+    UserSerializer,
 )
-from django_filters.rest_framework import DjangoFilterBackend
-
-from django.contrib.auth import get_user_model
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -70,9 +68,9 @@ def me(request: Request) -> Response:
             "is_staff": user.is_staff,
             "role": access.legacy_role(user),
             "organization": organization.pk if organization else None,
-            "permissions": sorted(
-                access.permissions_for(user, organization=organization)
-            ) if organization else [],
+            "permissions": sorted(access.permissions_for(user, organization=organization))
+            if organization
+            else [],
         }
     )
 
@@ -131,6 +129,7 @@ class CanManageMembers(permissions.BasePermission):
     Zarządzanie użytkownikami: uprawnienie org.members.manage w organizacji użytkownika.
     Co dokładnie wolno zmienić (np. bez eskalacji ról), pilnuje api.access.
     """
+
     def has_permission(self, request: Request, view: APIView) -> bool:
         user = request.user
         if not user or not user.is_authenticated:
@@ -138,9 +137,7 @@ class CanManageMembers(permissions.BasePermission):
         if user.is_superuser:
             return True
         organization = access.primary_organization(user)
-        return organization is not None and access.can(
-            user, "org.members.manage", organization
-        )
+        return organization is not None and access.can(user, "org.members.manage", organization)
 
 
 # ─────────────────────────────
@@ -202,18 +199,14 @@ class ProjectViewSet(viewsets.ModelViewSet[Project]):
         else:
             owner = user if user.is_authenticated else None
 
-        project = serializer.save(
-            owner=owner, organization=access.primary_organization(user)
-        )
+        project = serializer.save(owner=owner, organization=access.primary_organization(user))
         if user.is_authenticated:
             access.grant_project_creator(project, user)
 
 
 class ProjectFundingViewSet(viewsets.ModelViewSet[ProjectFunding]):
     queryset = (
-        ProjectFunding.objects.select_related("project", "funding")
-        .all()
-        .order_by("-created_at")
+        ProjectFunding.objects.select_related("project", "funding").all().order_by("-created_at")
     )
     serializer_class = ProjectFundingSerializer
     permission_classes = [IsAuthenticated]
@@ -271,13 +264,11 @@ class TaskViewSet(viewsets.ModelViewSet[Task]):
 
         if project_id:
             qs = qs.filter(
-                Q(scope__project_id=project_id)
-                | Q(scope__project_funding__project_id=project_id)
+                Q(scope__project_id=project_id) | Q(scope__project_funding__project_id=project_id)
             )
         if funding_id:
             qs = qs.filter(
-                Q(scope__funding_id=funding_id)
-                | Q(scope__project_funding__funding_id=funding_id)
+                Q(scope__funding_id=funding_id) | Q(scope__project_funding__funding_id=funding_id)
             )
         if project_funding_id:
             qs = qs.filter(scope__project_funding_id=int(project_funding_id))
@@ -347,5 +338,6 @@ class UserViewSet(viewsets.ModelViewSet[User]):
     def perform_destroy(self, instance: User) -> None:
         if instance == self.request.user:
             from rest_framework.exceptions import ValidationError
+
             raise ValidationError("Nie możesz usunąć samego siebie.")
         instance.delete()

@@ -1,17 +1,19 @@
+from datetime import date, timedelta
 from typing import Any
 
-from django.core.management.base import BaseCommand, CommandParser
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from django.db.models import Q
-from django.utils import timezone
-from datetime import date, timedelta
 
-from api.models import Project, Funding, FundingTask, ProjectFunding, Task, TaskScope
+from api.models import Funding, FundingTask, Project, ProjectFunding, Task, TaskScope
 
 
 class Command(BaseCommand):
-    help = "Zasieje dane demo: użytkownik PM, projekty, finansowanie, szablony zadań finansowania i auto-skopiowane taski."
+    help = (
+        "Zasieje dane demo: użytkownik PM, projekty, finansowanie, "
+        "szablony zadań finansowania i auto-skopiowane taski."
+    )
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
@@ -24,21 +26,19 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **options: Any) -> None:
         self.stdout.write(self.style.MIGRATE_HEADING("== SEED DEMO START =="))
 
-        User = get_user_model()
+        user_model = get_user_model()
 
         # 1) Użytkownik PM (do logowania i bycia ownerem projektów)
         pm_username = "pm"
         pm_password = "pm12345!"
-        pm, created_pm = User.objects.get_or_create(
+        pm, created_pm = user_model.objects.get_or_create(
             username=pm_username, defaults={"is_staff": True, "is_active": True}
         )
         if created_pm:
             pm.set_password(pm_password)
             pm.save()
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Utworzono użytkownika: {pm_username} / {pm_password}"
-                )
+                self.style.SUCCESS(f"Utworzono użytkownika: {pm_username} / {pm_password}")
             )
         else:
             self.stdout.write(f"Użytkownik istnieje: {pm_username}")
@@ -51,9 +51,7 @@ class Command(BaseCommand):
             ).delete()
             FundingTask.objects.filter(funding__name="Grant Kultura 2025").delete()
             Funding.objects.filter(name="Grant Kultura 2025").delete()
-            Project.objects.filter(
-                name__in=["Trasa Jesień 2025", "Nagranie EP 2025"]
-            ).delete()
+            Project.objects.filter(name__in=["Trasa Jesień 2025", "Nagranie EP 2025"]).delete()
             self.stdout.write(self.style.WARNING("Usunięto poprzednie dane demo."))
 
         # 2) Projekty
@@ -77,9 +75,7 @@ class Command(BaseCommand):
                 "end_date": date.today() + timedelta(days=120),
             },
         )
-        self.stdout.write(
-            self.style.SUCCESS(f"Projekty OK: {proj_a.name}, {proj_b.name}")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Projekty OK: {proj_a.name}, {proj_b.name}"))
 
         # 3) Finansowanie (grant)
         grant, _ = Funding.objects.get_or_create(
@@ -98,8 +94,8 @@ class Command(BaseCommand):
 
         # 4) Szablony zadań finansowania (FundingTask)
         ft_specs = [
-            dict(title="Zebrać faktury", default_priority=2, default_due_days=15),
-            dict(title="Raport końcowy", default_priority=3, default_due_days=30),
+            {"title": "Zebrać faktury", "default_priority": 2, "default_due_days": 15},
+            {"title": "Raport końcowy", "default_priority": 3, "default_due_days": 30},
         ]
         for spec in ft_specs:
             FundingTask.objects.get_or_create(

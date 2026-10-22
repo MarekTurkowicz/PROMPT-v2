@@ -6,33 +6,32 @@ from django.forms import BaseInlineFormSet, ModelForm
 from django.http import HttpRequest
 
 from .models import (
-    Project,
-    Funding,
-    FundingTask,
-    ProjectFunding,
-    Task,
-    TaskScope,
-    TaskAssignment,
-    UserProfile,
-    Organization,
-    Status,
-    OrganizationMember,
-    Permission,
-    Role,
-    RolePermission,
-    Team,
-    TeamMember,
-    RoleAssignment,
-    Milestone,
+    ActivityLog,
     Checklist,
     ChecklistItem,
+    Funding,
+    FundingTask,
+    Milestone,
     Notification,
-    ActivityLog,
+    Organization,
+    OrganizationMember,
+    Permission,
+    Project,
+    ProjectFunding,
+    Role,
+    RoleAssignment,
+    RolePermission,
+    Status,
+    Task,
+    TaskAssignment,
+    TaskScope,
+    Team,
+    TeamMember,
+    UserProfile,
 )
 
 
 class TaskScopeInline(admin.StackedInline[TaskScope, Task]):
-
     model = TaskScope
     fk_name = "task"
     extra = 0
@@ -41,21 +40,18 @@ class TaskScopeInline(admin.StackedInline[TaskScope, Task]):
 
 
 class FundingTaskInline(admin.TabularInline[FundingTask, Funding]):
-
     model = FundingTask
     extra = 0
     autocomplete_fields = ["funding"]
 
 
 class ProjectFundingInline(admin.TabularInline[ProjectFunding, Project]):
-
     model = ProjectFunding
     extra = 0
     autocomplete_fields = ["funding"]
 
 
 class ProjectTaskScopeInline(admin.TabularInline[TaskScope, Project]):
-
     model = TaskScope
     fk_name = "project"
     extra = 1
@@ -74,12 +70,12 @@ class ProjectTaskScopeInline(admin.TabularInline[TaskScope, Project]):
     def get_formset(
         self, request: HttpRequest, obj: Project | None = None, **kwargs: Any
     ) -> type[BaseInlineFormSet[TaskScope, Project, ModelForm[TaskScope]]]:
-        FormSet = super().get_formset(request, obj, **kwargs)
-        base_fields = FormSet.form.base_fields
+        formset = super().get_formset(request, obj, **kwargs)
+        base_fields = formset.form.base_fields
         if "funding_scoped" in base_fields:
             base_fields["funding_scoped"].initial = False
             base_fields["funding_scoped"].disabled = True
-        return FormSet
+        return formset
 
 
 # ---------- Adminy głównych modeli ----------
@@ -293,7 +289,6 @@ class PermissionAdmin(admin.ModelAdmin[Permission]):
 
 
 class RolePermissionInline(admin.TabularInline[RolePermission, Role]):
-
     model = RolePermission
     extra = 0
 
@@ -307,7 +302,6 @@ class RoleAdmin(admin.ModelAdmin[Role]):
 
 
 class TeamMemberInline(admin.TabularInline[TeamMember, Team]):
-
     model = TeamMember
     fk_name = "team"
     extra = 0
@@ -329,7 +323,15 @@ class RoleAssignmentAdmin(admin.ModelAdmin[RoleAssignment]):
 
 @admin.register(Status)
 class StatusAdmin(admin.ModelAdmin[Status]):
-    list_display = ("code", "name", "applies_to", "category", "position", "organization", "is_default")
+    list_display = (
+        "code",
+        "name",
+        "applies_to",
+        "category",
+        "position",
+        "organization",
+        "is_default",
+    )
     list_filter = ("applies_to", "category")
     ordering = ("applies_to", "position")
 
@@ -343,7 +345,6 @@ class MilestoneAdmin(admin.ModelAdmin[Milestone]):
 
 
 class ChecklistItemInline(admin.TabularInline[ChecklistItem, Checklist]):
-
     model = ChecklistItem
     extra = 0
 
@@ -364,6 +365,14 @@ class NotificationAdmin(admin.ModelAdmin[Notification]):
 
 @admin.register(ActivityLog)
 class ActivityLogAdmin(admin.ModelAdmin[ActivityLog]):
-    list_display = ("created_at", "actor", "action", "content_type", "object_id", "organization", "project")
+    list_display = (
+        "created_at",
+        "actor",
+        "action",
+        "content_type",
+        "object_id",
+        "organization",
+        "project",
+    )
     list_filter = ("action", ("project", admin.RelatedOnlyFieldListFilter))
     search_fields = ("actor__username",)

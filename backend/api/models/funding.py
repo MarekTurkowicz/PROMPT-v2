@@ -1,8 +1,8 @@
 from typing import Any
 
-from django.db import models
 from django.core.validators import MinValueValidator
-from django.db.models import Q, F
+from django.db import models
+from django.db.models import F, Q
 
 from api.models.status import default_task_status
 
@@ -99,9 +99,7 @@ class FundingTask(models.Model):
         MEDIUM = 2, "Medium"
         HIGH = 3, "High"
 
-    funding = models.ForeignKey(
-        Funding, on_delete=models.CASCADE, related_name="tasks_blueprint"
-    )
+    funding = models.ForeignKey(Funding, on_delete=models.CASCADE, related_name="tasks_blueprint")
 
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -115,9 +113,7 @@ class FundingTask(models.Model):
     default_priority = models.IntegerField(
         choices=DefaultPriority.choices, default=DefaultPriority.MEDIUM
     )
-    default_est_hours = models.DecimalField(
-        max_digits=6, decimal_places=2, null=True, blank=True
-    )
+    default_est_hours = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     default_due_days = models.IntegerField(null=True, blank=True)
 
@@ -126,17 +122,17 @@ class FundingTask(models.Model):
     class Meta:
         db_table = "promt_funding_task"
 
-    def clean(self) -> None:
-        super().clean()
-        self._fill_default_status()
+    def __str__(self) -> str:
+        return f"[{self.funding.name}] {self.title}"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self._fill_default_status()
         super().save(*args, **kwargs)
 
+    def clean(self) -> None:
+        super().clean()
+        self._fill_default_status()
+
     def _fill_default_status(self) -> None:
         if self.default_status_id is None:
             self.default_status_id = default_task_status()
-
-    def __str__(self) -> str:
-        return f"[{self.funding.name}] {self.title}"

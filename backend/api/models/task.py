@@ -134,18 +134,18 @@ class Task(models.Model):
             ),
         ]
 
-    def clean(self) -> None:
-        super().clean()
-        self._fill_default_status()
+    def __str__(self) -> str:
+        """Return a human-readable representation of the task."""
+        return self.title
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self._fill_default_status()
         super().save(*args, **kwargs)
 
+    def clean(self) -> None:
+        super().clean()
+        self._fill_default_status()
+
     def _fill_default_status(self) -> None:
         if self.status_id is None:
             self.status_id = default_task_status()
-
-    def __str__(self) -> str:
-        """Return a human-readable representation of the task."""
-        return self.title

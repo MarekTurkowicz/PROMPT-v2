@@ -50,9 +50,7 @@ class Command(BaseCommand):
             models = [
                 m
                 for label in opts["apps"]
-                for m in apps.get_app_config(label).get_models(
-                    include_auto_created=True
-                )
+                for m in apps.get_app_config(label).get_models(include_auto_created=True)
             ]
 
         # Tables referenced by a FK but outside the selected apps (e.g. auth_user)
@@ -86,9 +84,7 @@ class Command(BaseCommand):
                 f"```mermaid\n{diagram}```\n"
             )
         path.write_text(diagram, encoding="utf-8")
-        self.stdout.write(
-            self.style.SUCCESS(f"ER diagram ({len(models)} tables) -> {path}")
-        )
+        self.stdout.write(self.style.SUCCESS(f"ER diagram ({len(models)} tables) -> {path}"))
 
     def _entity(self, model: type[Model]) -> str:
         meta = model._meta
@@ -124,6 +120,5 @@ class Command(BaseCommand):
             # child side: at most one for one-to-one / unique FK, otherwise many
             child = "o|" if field.unique else "o{"
             yield (
-                f"    {target._meta.db_table} {parent}--{child} "
-                f'{meta.db_table} : "{field.name}"'
+                f'    {target._meta.db_table} {parent}--{child} {meta.db_table} : "{field.name}"'
             )

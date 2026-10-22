@@ -1,24 +1,24 @@
 from typing import TYPE_CHECKING, Any
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.db.models import Q, QuerySet
 from rest_framework import serializers
 
 from . import access
 from .models import (
-    Organization,
-    Status,
-    Project,
     Funding,
-    ProjectFunding,
     FundingTask,
+    Organization,
+    Project,
+    ProjectFunding,
+    Status,
     Task,
-    TaskScope,
     TaskAssignment,
+    TaskScope,
     UserProfile,
 )
-from django.db.models import Q, QuerySet
-from django.contrib.auth import get_user_model
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -27,9 +27,7 @@ else:
 
 
 def builtin_task_statuses() -> QuerySet[Status]:
-    return Status.objects.filter(
-        organization__isnull=True, applies_to=Status.AppliesTo.TASK
-    )
+    return Status.objects.filter(organization__isnull=True, applies_to=Status.AppliesTo.TASK)
 
 
 class TaskStatusField(serializers.SlugRelatedField[Status]):
@@ -106,9 +104,7 @@ class ProjectSerializer(serializers.ModelSerializer[Project]):
 
     def get_tasks(self, obj: Project) -> list[str]:
         """Zwróć taski projektowe i grantowe (przez ProjectFunding)."""
-        qs = Task.objects.filter(
-            Q(scope__project=obj) | Q(scope__project_funding__project=obj)
-        )
+        qs = Task.objects.filter(Q(scope__project=obj) | Q(scope__project_funding__project=obj))
         return [t.title for t in qs]
 
 
@@ -136,9 +132,7 @@ class ProjectFundingSerializer(serializers.ModelSerializer[ProjectFunding]):
 class TaskSerializer(serializers.ModelSerializer[Task]):
     project = serializers.IntegerField(required=False, allow_null=True, write_only=True)
     funding = serializers.IntegerField(required=False, allow_null=True, write_only=True)
-    project_funding = serializers.IntegerField(
-        required=False, allow_null=True, write_only=True
-    )
+    project_funding = serializers.IntegerField(required=False, allow_null=True, write_only=True)
 
     scope_project = serializers.IntegerField(source="scope.project_id", read_only=True)
     scope_funding = serializers.IntegerField(source="scope.funding_id", read_only=True)
@@ -241,9 +235,7 @@ class TaskSerializer(serializers.ModelSerializer[Task]):
 
         self._incoming_scope = {"project": p, "funding": f, "project_funding": pf}
 
-        assignee_ids = (
-            attrs.pop("assignee_ids", None) if "assignee_ids" in attrs else None
-        )
+        assignee_ids = attrs.pop("assignee_ids", None) if "assignee_ids" in attrs else None
         self._incoming_assignee_ids = assignee_ids
 
         return attrs
@@ -278,9 +270,7 @@ class TaskSerializer(serializers.ModelSerializer[Task]):
             user_map = {u.id: u for u in users}
 
             request = self.context.get("request")
-            assigned_by = (
-                request.user if request and request.user.is_authenticated else None
-            )
+            assigned_by = request.user if request and request.user.is_authenticated else None
 
             for uid in to_add:
                 user = user_map.get(uid)
@@ -388,19 +378,13 @@ class UserDetailSerializer(UserSerializer):
                 "start_date": t.start_date,
                 "due_date": t.due_date,
                 "project_id": (
-                    getattr(t.scope, "project_id", None)
-                    if hasattr(t, "scope")
-                    else None
+                    getattr(t.scope, "project_id", None) if hasattr(t, "scope") else None
                 ),
                 "funding_id": (
-                    getattr(t.scope, "funding_id", None)
-                    if hasattr(t, "scope")
-                    else None
+                    getattr(t.scope, "funding_id", None) if hasattr(t, "scope") else None
                 ),
                 "project_funding_id": (
-                    getattr(t.scope, "project_funding_id", None)
-                    if hasattr(t, "scope")
-                    else None
+                    getattr(t.scope, "project_funding_id", None) if hasattr(t, "scope") else None
                 ),
             }
             for t in user_tasks
@@ -453,21 +437,20 @@ def _actor_organization(actor: User) -> Organization:
     return organization
 
 
-def _set_role(
-    actor: User, organization: Organization, user: User, legacy_role: str
-) -> None:
+def _set_role(actor: User, organization: Organization, user: User, legacy_role: str) -> None:
     try:
         access.set_organization_role(
             actor, organization, user, access.LEGACY_ROLE_TO_ORG_ROLE[legacy_role]
         )
     except DjangoValidationError as exc:
-        raise serializers.ValidationError({"role": exc.messages})
+        raise serializers.ValidationError({"role": exc.messages}) from exc
 
 
 class AdminUserCreateSerializer(serializers.Serializer[User]):
     """
     Tworzy nowego User + UserProfile w jednej transakcji.
     """
+
     username = serializers.CharField(max_length=150)
     email = serializers.EmailField(required=False, allow_blank=True, default="")
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
@@ -520,6 +503,7 @@ class AdminUserUpdateSerializer(serializers.Serializer[User]):
     """
     Aktualizuje User + UserProfile.
     """
+
     username = serializers.CharField(max_length=150, required=False)
     email = serializers.EmailField(required=False, allow_blank=True)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)

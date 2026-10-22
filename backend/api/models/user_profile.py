@@ -33,6 +33,13 @@ class UserProfile(models.Model):
     class Meta:
         db_table = "promt_user_profile"
 
+    def __str__(self) -> str:
+        return self.user.username
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def clean_fields(self, exclude: Collection[str] | None = None) -> None:
         if self.phone:
             self.phone = self.phone.strip()
@@ -44,10 +51,3 @@ class UserProfile(models.Model):
         super().clean()
         if self.avatar_url:
             self.avatar_url = self.avatar_url.strip()
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self) -> str:
-        return self.user.username

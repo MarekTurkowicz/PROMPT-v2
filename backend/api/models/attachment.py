@@ -5,13 +5,13 @@ from api.models.mixins.generic_relation_mixin import GenericRelationMixin
 
 class Attachment(GenericRelationMixin):
     class Type(models.TextChoices):
-        IMAGE = 'image', 'Image'
-        AUDIO = 'audio', 'Audio'
-        DOCUMENT = 'document', 'Document'
-        URL = 'other', 'Other'
+        IMAGE = "image", "Image"
+        AUDIO = "audio", "Audio"
+        DOCUMENT = "document", "Document"
+        URL = "other", "Other"
 
     type = models.CharField(max_length=20, choices=Type.choices, default=Type.DOCUMENT)
-    file = models.FileField(upload_to='attachments/')
+    file = models.FileField(upload_to="attachments/")
     content = models.TextField(blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
