@@ -42,6 +42,7 @@ test(
   "storageState — nieuwierzytelniony request do /api/projects/ zwraca 401 lub 403",
   async ({ playwright }) => {
     const anonRequest = await playwright.request.newContext({
+      storageState: { cookies: [], origins: [] },
       baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
     });
 

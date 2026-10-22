@@ -26,6 +26,7 @@ test(
   async ({ playwright }) => {
     // Tworzymy nowy kontekst REQUEST bez żadnego storageState — symulacja anonimowego klienta
     const anonRequest = await playwright.request.newContext({
+      storageState: { cookies: [], origins: [] },
       baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
     });
 
