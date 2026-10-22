@@ -65,8 +65,12 @@ def test_subteam_member_inherits_roles_of_all_parent_teams(org, project, other_p
     kadry_waw = Team.objects.create(name="Kadry Warszawa", parent=kadry)
     rekrutacja = Team.objects.create(name="Rekrutacja WAW", parent=kadry_waw)
     RoleAssignment.objects.create(role=role(access.ORG_ROLE_VIEWER), team=kadry, organization=org)
-    RoleAssignment.objects.create(role=role("project_member"), team=kadry_waw, project=other_project)
-    RoleAssignment.objects.create(role=role(access.PROJECT_ROLE_ADMIN), team=rekrutacja, project=project)
+    RoleAssignment.objects.create(
+        role=role("project_member"), team=kadry_waw, project=other_project
+    )
+    RoleAssignment.objects.create(
+        role=role(access.PROJECT_ROLE_ADMIN), team=rekrutacja, project=project
+    )
     ania = member(org, "ania")
     bartek = member(org, "bartek")
     TeamMember.objects.create(team=rekrutacja, user=ania)
