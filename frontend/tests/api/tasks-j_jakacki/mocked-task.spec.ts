@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import {Task, TaskPriority} from "../../../src/features/tasks/types";
+import {Task} from "../../../src/features/tasks/types";
 
 const pagedResponse = (results: object[]) => ({
   count: results.length,
