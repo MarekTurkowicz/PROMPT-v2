@@ -96,6 +96,8 @@ jobs:
       - run: pytest
 
   e2e-playwright:
+    # Disabled until the PROMT 2.0 frontend exists (M4).
+    if: false
     needs: backend-integration
     runs-on: ubuntu-latest
     services:
