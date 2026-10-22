@@ -1,11 +1,16 @@
+from typing import TYPE_CHECKING
+
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
-from django.db.models import Q, Count, Prefetch
+from django.db.models import Q, Count, Prefetch, QuerySet
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import NotAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions, status as http_status
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.serializers import BaseSerializer
+from rest_framework.views import APIView
 from . import access
 from .models import (
     Funding,
@@ -32,7 +37,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+else:
+    User = get_user_model()
 
 # ─────────────────────────────
 # Health + Me
@@ -41,14 +49,16 @@ User = get_user_model()
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
-def health(request):
+def health(request: Request) -> Response:
     return Response({"status": "ok"})
 
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
-def me(request):
+def me(request: Request) -> Response:
     user = request.user
+    if not user.is_authenticated:
+        raise NotAuthenticated()
     organization = access.primary_organization(user)
     return Response(
         {
@@ -75,14 +85,14 @@ def me(request):
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 @ensure_csrf_cookie
-def auth_csrf(request):
+def auth_csrf(request: Request) -> Response:
     return Response({"detail": "CSRF cookie set"})
 
 
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 @csrf_protect
-def auth_login(request):
+def auth_login(request: Request) -> Response:
     username = request.data.get("username")
     password = request.data.get("password")
 
@@ -105,14 +115,10 @@ def auth_login(request):
     )
 
 
-auth_login.throttle_classes = [ScopedRateThrottle]
-auth_login.throttle_scope = "auth_login"
-
-
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 @csrf_protect
-def auth_logout(request):
+def auth_logout(request: Request) -> Response:
     logout(request)
     return Response(status=204)
 
@@ -120,16 +126,12 @@ def auth_logout(request):
 # ─────────────────────────────
 # Skrótowa perm-class
 # ─────────────────────────────
-class IsAuthenticated(permissions.IsAuthenticated):
-    pass
-
-
 class CanManageMembers(permissions.BasePermission):
     """
     Zarządzanie użytkownikami: uprawnienie org.members.manage w organizacji użytkownika.
     Co dokładnie wolno zmienić (np. bez eskalacji ról), pilnuje api.access.
     """
-    def has_permission(self, request, view):
+    def has_permission(self, request: Request, view: APIView) -> bool:
         user = request.user
         if not user or not user.is_authenticated:
             return False
@@ -146,7 +148,7 @@ class CanManageMembers(permissions.BasePermission):
 # ─────────────────────────────
 
 
-class FundingViewSet(viewsets.ModelViewSet):
+class FundingViewSet(viewsets.ModelViewSet[Funding]):
     queryset = Funding.objects.all().order_by("-created_at")
     serializer_class = FundingSerializer
     permission_classes = [IsAuthenticated]
@@ -154,7 +156,7 @@ class FundingViewSet(viewsets.ModelViewSet):
     ordering_fields = ["created_at", "start_date", "end_date", "amount_total", "name"]
     ordering = ["-created_at"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Funding]:
         qs = super().get_queryset()
 
         project_id = self.request.query_params.get("project")
@@ -163,11 +165,11 @@ class FundingViewSet(viewsets.ModelViewSet):
 
         return qs
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer: BaseSerializer[Funding]) -> None:
         serializer.save(organization=access.primary_organization(self.request.user))
 
 
-class FundingTaskViewSet(viewsets.ModelViewSet):
+class FundingTaskViewSet(viewsets.ModelViewSet[FundingTask]):
     queryset = FundingTask.objects.select_related("funding", "default_status").all().order_by("id")
     serializer_class = FundingTaskSerializer
     permission_classes = [IsAuthenticated]
@@ -175,7 +177,7 @@ class FundingTaskViewSet(viewsets.ModelViewSet):
     ordering_fields = ["id", "default_priority", "default_status", "default_due_days"]
     ordering = ["id"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[FundingTask]:
         qs = super().get_queryset()
         funding_id = self.request.query_params.get("funding")
         if funding_id:
@@ -183,7 +185,7 @@ class FundingTaskViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(viewsets.ModelViewSet[Project]):
     queryset = Project.objects.all().order_by("-created_at")
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -191,23 +193,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
     ordering_fields = ["created_at", "start_date", "end_date", "name", "status"]
     ordering = ["-created_at"]
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer: BaseSerializer[Project]) -> None:
         user = self.request.user
         provided_owner = serializer.validated_data.get("owner")
 
         if provided_owner is not None:
             owner = provided_owner
         else:
-            owner = user if getattr(user, "is_authenticated", False) else None
+            owner = user if user.is_authenticated else None
 
         project = serializer.save(
             owner=owner, organization=access.primary_organization(user)
         )
-        if getattr(user, "is_authenticated", False):
+        if user.is_authenticated:
             access.grant_project_creator(project, user)
 
 
-class ProjectFundingViewSet(viewsets.ModelViewSet):
+class ProjectFundingViewSet(viewsets.ModelViewSet[ProjectFunding]):
     queryset = (
         ProjectFunding.objects.select_related("project", "funding")
         .all()
@@ -219,7 +221,7 @@ class ProjectFundingViewSet(viewsets.ModelViewSet):
     ordering_fields = ["created_at", "allocation_start", "allocation_end", "is_primary"]
     ordering = ["-created_at"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[ProjectFunding]:
         qs = super().get_queryset()
         project_id = self.request.query_params.get("project")
         funding_id = self.request.query_params.get("funding")
@@ -230,7 +232,7 @@ class ProjectFundingViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class TaskViewSet(viewsets.ModelViewSet):
+class TaskViewSet(viewsets.ModelViewSet[Task]):
     queryset = (
         Task.objects.all()
         .order_by("-created_at")
@@ -258,7 +260,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     ]
     ordering = ["-created_at"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Task]:
         qs = super().get_queryset()
         project_id = self.request.query_params.get("project")
         funding_id = self.request.query_params.get("funding")
@@ -278,7 +280,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 | Q(scope__project_funding__funding_id=funding_id)
             )
         if project_funding_id:
-            qs = qs.filter(scope__project_funding_id=project_funding_id)
+            qs = qs.filter(scope__project_funding_id=int(project_funding_id))
         if unassigned in ("1", "true", "True"):
             qs = qs.filter(scope__isnull=True)
         if funding_scoped in ("1", "true", "True"):
@@ -290,7 +292,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class TaskAssignmentViewSet(viewsets.ModelViewSet):
+class TaskAssignmentViewSet(viewsets.ModelViewSet[TaskAssignment]):
     queryset = TaskAssignment.objects.select_related(
         "task",
         "user",
@@ -302,7 +304,7 @@ class TaskAssignmentViewSet(viewsets.ModelViewSet):
     filterset_fields = ["task", "user"]
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet[User]):
     """
     Pełny CRUD użytkowników.
     LIST / RETRIEVE — każdy zalogowany.
@@ -311,12 +313,12 @@ class UserViewSet(viewsets.ModelViewSet):
 
     pagination_class = None
 
-    def get_permissions(self):
+    def get_permissions(self) -> list[permissions.BasePermission]:
         if self.action in ("list", "retrieve"):
             return [IsAuthenticated()]
         return [CanManageMembers()]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[User]:
         qs = (
             User.objects.all()
             .select_related("profile")
@@ -333,7 +335,7 @@ class UserViewSet(viewsets.ModelViewSet):
         )
         return qs
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[BaseSerializer[User]]:
         if self.action == "create":
             return AdminUserCreateSerializer
         if self.action in ("update", "partial_update"):
@@ -342,7 +344,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserDetailSerializer
         return UserSerializer
 
-    def perform_destroy(self, instance):
+    def perform_destroy(self, instance: User) -> None:
         if instance == self.request.user:
             from rest_framework.exceptions import ValidationError
             raise ValidationError("Nie możesz usunąć samego siebie.")

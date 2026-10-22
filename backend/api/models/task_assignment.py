@@ -43,5 +43,5 @@ class TaskAssignment(models.Model):
         unique_together = ("task", "user")
         ordering = ["-assigned_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user} -> {self.task}"

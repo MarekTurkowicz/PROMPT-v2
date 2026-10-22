@@ -4,7 +4,7 @@ These models represent generic tasks and the context (scope) in which a task
 belongs (project, funding, or a project-funding relation).
 """
 
-from __future__ import annotations
+from typing import Any
 
 from django.conf import settings
 from django.db import models
@@ -134,15 +134,15 @@ class Task(models.Model):
             ),
         ]
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         self._fill_default_status()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self._fill_default_status()
         super().save(*args, **kwargs)
 
-    def _fill_default_status(self):
+    def _fill_default_status(self) -> None:
         if self.status_id is None:
             self.status_id = default_task_status()
 

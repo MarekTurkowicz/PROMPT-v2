@@ -12,8 +12,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import django_stubs_ext
 from dotenv import load_dotenv
 from datetime import timedelta
+
+django_stubs_ext.monkeypatch()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BACKEND_DIR = Path(__file__).resolve().parent.parent

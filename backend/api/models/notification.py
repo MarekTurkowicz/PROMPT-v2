@@ -41,8 +41,8 @@ class Notification(models.Model):
         ]
 
     @property
-    def is_read(self):
+    def is_read(self) -> bool:
         return self.read_at is not None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.recipient}: {self.activity}"

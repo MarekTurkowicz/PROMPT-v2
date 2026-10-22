@@ -23,7 +23,7 @@ class Comment(GenericRelationMixin):
     is_edited = models.BooleanField(default=False)
 
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Comment by {self.author} on {self.content}"
 
     class Meta:

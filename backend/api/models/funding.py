@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import Q, F
@@ -54,7 +56,7 @@ class Funding(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.get_type_display()})"
 
 
@@ -87,7 +89,7 @@ class ProjectFunding(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.project.name} ↔ {self.funding.name}"
 
 
@@ -124,17 +126,17 @@ class FundingTask(models.Model):
     class Meta:
         db_table = "promt_funding_task"
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         self._fill_default_status()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self._fill_default_status()
         super().save(*args, **kwargs)
 
-    def _fill_default_status(self):
+    def _fill_default_status(self) -> None:
         if self.default_status_id is None:
             self.default_status_id = default_task_status()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"[{self.funding.name}] {self.title}"

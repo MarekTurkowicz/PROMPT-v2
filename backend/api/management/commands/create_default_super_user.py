@@ -1,7 +1,9 @@
 import os
+from typing import Any
+
 import django
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandParser
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
@@ -9,14 +11,14 @@ django.setup()
 class Command(BaseCommand):
     help = "Create a superuser"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument('--mode', type=str, help="Mode")
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         run(self)
 
 
-def run(self):
+def run(self: BaseCommand) -> None:
     """
     Create a superuser if not exists, or update their password if they do.
 

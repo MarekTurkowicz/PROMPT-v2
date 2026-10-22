@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, Any
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
@@ -15,31 +17,34 @@ from .models import (
     TaskAssignment,
     UserProfile,
 )
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+else:
+    User = get_user_model()
 
 
-def builtin_task_statuses():
+def builtin_task_statuses() -> QuerySet[Status]:
     return Status.objects.filter(
         organization__isnull=True, applies_to=Status.AppliesTo.TASK
     )
 
 
-class TaskStatusField(serializers.SlugRelatedField):
+class TaskStatusField(serializers.SlugRelatedField[Status]):
     """Task status exposed by its code (todo, doing, to_review, in_review, done)."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("slug_field", "code")
         super().__init__(**kwargs)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Status]:
         return builtin_task_statuses()
 
 
 # ---------- FUNDING ---------
-class FundingSerializer(serializers.ModelSerializer):
+class FundingSerializer(serializers.ModelSerializer[Funding]):
     tasks = serializers.SerializerMethodField()
 
     class Meta:
@@ -56,13 +61,13 @@ class FundingSerializer(serializers.ModelSerializer):
             "type",
         ]
 
-    def get_tasks(self, obj):
+    def get_tasks(self, obj: Funding) -> list[str]:
         """Zwróć taski przypisane bezpośrednio do fundingu."""
         qs = Task.objects.filter(scope__funding=obj)
         return [t.title for t in qs]
 
 
-class FundingTaskSerializer(serializers.ModelSerializer):
+class FundingTaskSerializer(serializers.ModelSerializer[FundingTask]):
     funding_name = serializers.ReadOnlyField(source="funding.name")
     default_status = TaskStatusField(required=False)
 
@@ -83,7 +88,7 @@ class FundingTaskSerializer(serializers.ModelSerializer):
 
 
 # ---------- PROJECT ----------
-class ProjectSerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.ModelSerializer[Project]):
     tasks = serializers.SerializerMethodField()
 
     class Meta:
@@ -99,7 +104,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "tasks",
         ]
 
-    def get_tasks(self, obj):
+    def get_tasks(self, obj: Project) -> list[str]:
         """Zwróć taski projektowe i grantowe (przez ProjectFunding)."""
         qs = Task.objects.filter(
             Q(scope__project=obj) | Q(scope__project_funding__project=obj)
@@ -107,7 +112,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         return [t.title for t in qs]
 
 
-class ProjectFundingSerializer(serializers.ModelSerializer):
+class ProjectFundingSerializer(serializers.ModelSerializer[ProjectFunding]):
     tasks = serializers.SerializerMethodField()
 
     class Meta:
@@ -122,13 +127,13 @@ class ProjectFundingSerializer(serializers.ModelSerializer):
             "tasks",
         ]
 
-    def get_tasks(self, obj):
+    def get_tasks(self, obj: ProjectFunding) -> list[str]:
         qs = Task.objects.filter(scope__project_funding=obj)
         return [t.title for t in qs]
 
 
 # ---------- TASK ----------
-class TaskSerializer(serializers.ModelSerializer):
+class TaskSerializer(serializers.ModelSerializer[Task]):
     project = serializers.IntegerField(required=False, allow_null=True, write_only=True)
     funding = serializers.IntegerField(required=False, allow_null=True, write_only=True)
     project_funding = serializers.IntegerField(
@@ -202,7 +207,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "assignees",
         ]
 
-    def get_assignees(self, obj):
+    def get_assignees(self, obj: Task) -> list[dict[str, Any]]:
         """
         Zwracamy lekkie info o userach przy zadaniu.
         Jeśli chcesz pełny UserSerializer, możesz go tu użyć.
@@ -220,7 +225,7 @@ class TaskSerializer(serializers.ModelSerializer):
             for u in users
         ]
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         p = attrs.pop("project", None) if "project" in attrs else None
         f = attrs.pop("funding", None) if "funding" in attrs else None
         pf = attrs.pop("project_funding", None) if "project_funding" in attrs else None
@@ -243,7 +248,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def _apply_assignees(self, task, assignee_ids):
+    def _apply_assignees(self, task: Task, assignee_ids: list[int] | None) -> None:
         """
         Ustawia przypisanych userów dla danego taska wykorzystując TaskAssignment.
         Semantyka:
@@ -286,7 +291,7 @@ class TaskSerializer(serializers.ModelSerializer):
                         assigned_by=assigned_by,
                     )
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> Task:
         task = Task.objects.create(**validated_data)
 
         p = self._incoming_scope["project"]
@@ -305,7 +310,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return task
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Task, validated_data: dict[str, Any]) -> Task:
         p = self._incoming_scope["project"]
         f = self._incoming_scope["funding"]
         pf = self._incoming_scope["project_funding"]
@@ -327,7 +332,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 # ---------- USER PROFILE ----------
-class UserProfileSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer[UserProfile]):
     role = serializers.SerializerMethodField()
 
     class Meta:
@@ -338,12 +343,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "avatar_url",
         ]
 
-    def get_role(self, obj):
+    def get_role(self, obj: UserProfile) -> str:
         return access.legacy_role(obj.user)
 
 
 # ---------- USER ----------
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer[User]):
     profile = UserProfileSerializer(read_only=True)
     tasks_count = serializers.IntegerField(read_only=True)
     done_tasks_count = serializers.IntegerField(read_only=True)
@@ -368,7 +373,7 @@ class UserDetailSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ["tasks"]
 
-    def get_tasks(self, obj):
+    def get_tasks(self, obj: User) -> list[dict[str, Any]]:
         """
         Lekka lista zadań usera — idealna pod kartę „zadania użytkownika”.
         Tutaj możesz dobrać, jakie pola chcesz.
@@ -403,7 +408,7 @@ class UserDetailSerializer(UserSerializer):
 
 
 # ---------- TASK ASSIGNMENT ----------
-class TaskAssignmentSerializer(serializers.ModelSerializer):
+class TaskAssignmentSerializer(serializers.ModelSerializer[TaskAssignment]):
     user_detail = UserSerializer(source="user", read_only=True)
     assigned_by_username = serializers.CharField(
         source="assigned_by.username",
@@ -426,7 +431,7 @@ class TaskAssignmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["assigned_by", "assigned_at"]
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> TaskAssignment:
         """
         Przy tworzeniu przypisania automatycznie ustawiamy assigned_by = request.user.
         """
@@ -439,7 +444,7 @@ class TaskAssignmentSerializer(serializers.ModelSerializer):
 # ---------- ADMIN USER MANAGEMENT ----------
 
 
-def _actor_organization(actor):
+def _actor_organization(actor: User) -> Organization:
     organization = access.primary_organization(actor)
     if organization is None and actor.is_superuser:
         organization = Organization.objects.order_by("id").first()
@@ -448,7 +453,9 @@ def _actor_organization(actor):
     return organization
 
 
-def _set_role(actor, organization, user, legacy_role):
+def _set_role(
+    actor: User, organization: Organization, user: User, legacy_role: str
+) -> None:
     try:
         access.set_organization_role(
             actor, organization, user, access.LEGACY_ROLE_TO_ORG_ROLE[legacy_role]
@@ -457,7 +464,7 @@ def _set_role(actor, organization, user, legacy_role):
         raise serializers.ValidationError({"role": exc.messages})
 
 
-class AdminUserCreateSerializer(serializers.Serializer):
+class AdminUserCreateSerializer(serializers.Serializer[User]):
     """
     Tworzy nowego User + UserProfile w jednej transakcji.
     """
@@ -473,12 +480,12 @@ class AdminUserCreateSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=16, required=False, allow_blank=True, default="")
     avatar_url = serializers.URLField(required=False, allow_blank=True, default="")
 
-    def validate_username(self, value):
+    def validate_username(self, value: str) -> str:
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Użytkownik o tej nazwie już istnieje.")
         return value
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> User:
         role = validated_data.pop("role", "member")
         phone = validated_data.pop("phone", "")
         avatar_url = validated_data.pop("avatar_url", "")
@@ -505,11 +512,11 @@ class AdminUserCreateSerializer(serializers.Serializer):
 
         return user
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: User) -> dict[str, Any]:
         return UserSerializer(instance, context=self.context).data
 
 
-class AdminUserUpdateSerializer(serializers.Serializer):
+class AdminUserUpdateSerializer(serializers.Serializer[User]):
     """
     Aktualizuje User + UserProfile.
     """
@@ -525,13 +532,15 @@ class AdminUserUpdateSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=16, required=False, allow_blank=True)
     avatar_url = serializers.URLField(required=False, allow_blank=True)
 
-    def validate_username(self, value):
-        user = self.instance
-        if User.objects.filter(username=value).exclude(pk=user.pk).exists():
+    def validate_username(self, value: str) -> str:
+        others = User.objects.filter(username=value)
+        if self.instance is not None:
+            others = others.exclude(pk=self.instance.pk)
+        if others.exists():
             raise serializers.ValidationError("Użytkownik o tej nazwie już istnieje.")
         return value
 
-    def update(self, instance, validated_data):
+    def update(self, instance: User, validated_data: dict[str, Any]) -> User:
         role = validated_data.pop("role", None)
         phone = validated_data.pop("phone", None)
         avatar_url = validated_data.pop("avatar_url", None)
@@ -558,5 +567,5 @@ class AdminUserUpdateSerializer(serializers.Serializer):
 
         return instance
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: User) -> dict[str, Any]:
         return UserSerializer(instance, context=self.context).data

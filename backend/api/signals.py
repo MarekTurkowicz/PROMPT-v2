@@ -3,17 +3,18 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
 from django.conf import settings
-from datetime import timedelta
+from datetime import date, timedelta
+from typing import TYPE_CHECKING, Any
 from .models import ProjectFunding, FundingTask, Task, TaskScope, UserProfile
 
 
-def _due(base_date, delta_days):
+def _due(base_date: date | None, delta_days: int | None) -> date | None:
     if not base_date or delta_days is None:
         return None
     return base_date + timedelta(days=delta_days)
 
 
-def _clone_task_fields(src: Task) -> dict:
+def _clone_task_fields(src: Task) -> dict[str, Any]:
     """
     Kopiuje TYLKO domenowe pola Task (bez scope/ID).
     Zostawiamy template dla śledzenia pochodzenia (jeśli było).
@@ -36,8 +37,8 @@ def _clone_task_fields(src: Task) -> dict:
 
 @receiver(post_save, sender=ProjectFunding)
 def create_tasks_for_project_funding(
-    sender, instance: ProjectFunding, created, **kwargs
-):
+    sender: type[ProjectFunding], instance: ProjectFunding, created: bool, **kwargs: Any
+) -> None:
     if not created:
         return
 
@@ -84,7 +85,9 @@ def create_tasks_for_project_funding(
 
 
 @receiver(post_delete, sender=ProjectFunding)
-def delete_scoped_tasks_on_unlink(sender, instance: ProjectFunding, **kwargs):
+def delete_scoped_tasks_on_unlink(
+    sender: type[ProjectFunding], instance: ProjectFunding, **kwargs: Any
+) -> None:
     Task.objects.filter(
         scope__project_funding=instance,
         scope__funding_scoped=True,
@@ -96,11 +99,16 @@ def delete_scoped_tasks_on_unlink(sender, instance: ProjectFunding, **kwargs):
 # ─────────────────────────────
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+else:
+    User = get_user_model()
 
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def create_user_profile(
+    sender: type[User], instance: User, created: bool, **kwargs: Any
+) -> None:
     """Auto-tworzy UserProfile dla każdego nowego usera."""
     if created:
         UserProfile.objects.get_or_create(user=instance)

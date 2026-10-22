@@ -82,6 +82,16 @@ cd frontend && npm test
 cd frontend && npx playwright test --config=playwright.config.ts
 ```
 
+### Sprawdzanie typów
+
+Uruchamiane na hoście z katalogu głównego repozytorium (konfiguracja w `mypy.ini`); CI wykonuje to samo sprawdzenie przy pull requestach i pushu do `main`.
+
+```bash
+python -m venv backend/.venv                                    # Python 3.13, jednorazowo
+backend/.venv/Scripts/pip install -r backend/requirements.txt   # Linux/macOS: backend/.venv/bin/pip
+backend/.venv/Scripts/mypy backend/                             # Linux/macOS: backend/.venv/bin/mypy
+```
+
 ---
 
 ## Struktura projektu

@@ -29,7 +29,7 @@ class TestFundingModel:
         start = date(2024, 1, 10)
         end = date(2024, 1, 1)
         funding = Funding(name="Złe daty", start_date=start, end_date=end)
-        assert funding.start_date > funding.end_date
+        assert (funding.start_date, funding.end_date) == (start, end)
 
     # 4. Test sprawdzający domyślną walutę
     def test_funding_currency_no_input_returns_default_pln(self):

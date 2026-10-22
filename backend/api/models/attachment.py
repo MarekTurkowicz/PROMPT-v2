@@ -16,7 +16,7 @@ class Attachment(GenericRelationMixin):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Attachment {self.file.name} of type {self.type} on {self.content}"
 
     class Meta:

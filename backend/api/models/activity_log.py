@@ -75,5 +75,5 @@ class ActivityLog(GenericRelationMixin):
             models.Index(fields=["actor", "created_at"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.actor} {self.action} {self.content_type} #{self.object_id}"

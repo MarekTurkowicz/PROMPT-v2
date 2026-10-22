@@ -1,16 +1,19 @@
-from django.core.management.base import BaseCommand
+from typing import Any
+
+from django.core.management.base import BaseCommand, CommandParser
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from datetime import date, timedelta
 
-from api.models import Project, Funding, FundingTask, ProjectFunding, Task
+from api.models import Project, Funding, FundingTask, ProjectFunding, Task, TaskScope
 
 
 class Command(BaseCommand):
     help = "Zasieje dane demo: użytkownik PM, projekty, finansowanie, szablony zadań finansowania i auto-skopiowane taski."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "--reset",
             action="store_true",
@@ -18,7 +21,7 @@ class Command(BaseCommand):
         )
 
     @transaction.atomic
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         self.stdout.write(self.style.MIGRATE_HEADING("== SEED DEMO START =="))
 
         User = get_user_model()
@@ -133,8 +136,8 @@ class Command(BaseCommand):
             )
 
         # 6) Zwykłe taski (niegrantowe) w projektach
-        Task.objects.get_or_create(
-            project=proj_a,
+        soundcheck, created = Task.objects.get_or_create(
+            scope__project=proj_a,
             title="Soundcheck",
             defaults={
                 "description": "Ustawić nagłośnienie i monitory",
@@ -142,8 +145,10 @@ class Command(BaseCommand):
                 "due_date": proj_a.start_date,
             },
         )
-        Task.objects.get_or_create(
-            project=proj_b,
+        if created:
+            TaskScope.objects.create(task=soundcheck, project=proj_a)
+        strings, created = Task.objects.get_or_create(
+            scope__project=proj_b,
             title="Kupić struny",
             defaults={
                 "description": "Komplet strun do gitary",
@@ -151,10 +156,16 @@ class Command(BaseCommand):
                 "due_date": proj_b.start_date,
             },
         )
+        if created:
+            TaskScope.objects.create(task=strings, project=proj_b)
 
         # 7) Log podsumowujący
-        t_a = Task.objects.filter(project=proj_a).count()
-        t_b = Task.objects.filter(project=proj_b).count()
+        t_a = Task.objects.filter(
+            Q(scope__project=proj_a) | Q(scope__project_funding__project=proj_a)
+        ).count()
+        t_b = Task.objects.filter(
+            Q(scope__project=proj_b) | Q(scope__project_funding__project=proj_b)
+        ).count()
         self.stdout.write(self.style.HTTP_INFO(f"Taski w {proj_a.name}: {t_a}"))
         self.stdout.write(self.style.HTTP_INFO(f"Taski w {proj_b.name}: {t_b}"))
 

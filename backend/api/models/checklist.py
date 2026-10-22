@@ -26,7 +26,7 @@ class Checklist(models.Model):
             models.Index(fields=["task", "position"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"[{self.task.title}] {self.title}"
 
 
@@ -70,9 +70,9 @@ class ChecklistItem(models.Model):
             models.Index(fields=["checklist", "position"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{'[x]' if self.is_done else '[ ]'} {self.text}"
 
     @property
-    def is_done(self):
+    def is_done(self) -> bool:
         return self.done_at is not None

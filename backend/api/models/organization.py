@@ -18,5 +18,5 @@ class Organization(models.Model):
         db_table = "promt_organization"
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
