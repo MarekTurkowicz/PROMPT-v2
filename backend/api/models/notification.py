@@ -28,9 +28,7 @@ class Notification(models.Model):
         db_table = "promt_notification"
         ordering = ["-activity_id"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["recipient", "activity"], name="notification_unique"
-            ),
+            models.UniqueConstraint(fields=["recipient", "activity"], name="notification_unique"),
         ]
         indexes = [
             models.Index(
@@ -40,9 +38,9 @@ class Notification(models.Model):
             ),
         ]
 
-    @property
-    def is_read(self):
-        return self.read_at is not None
-
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.recipient}: {self.activity}"
+
+    @property
+    def is_read(self) -> bool:
+        return self.read_at is not None

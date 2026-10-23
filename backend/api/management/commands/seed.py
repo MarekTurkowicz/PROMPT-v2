@@ -1,39 +1,42 @@
 import random
-from decimal import Decimal
 from datetime import timedelta
+from decimal import Decimal
+from typing import TYPE_CHECKING, Any
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from django.utils import timezone
-
 from faker import Faker
 
 from api import access
 from api.models import (
+    Funding,
+    FundingTask,
     Organization,
     OrganizationMember,
+    Project,
+    ProjectFunding,
     Role,
     RoleAssignment,
     Status,
-    UserProfile,
-    Funding,
-    FundingTask,
-    Project,
-    ProjectFunding,
     Task,
-    TaskScope,
     TaskAssignment,
+    TaskScope,
+    UserProfile,
 )
 
-User = get_user_model()
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+else:
+    User = get_user_model()
 fake = Faker("pl_PL")
 
 
 class Command(BaseCommand):
     help = "Seed database with rich demo data for testing"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument("--reset", action="store_true")
         parser.add_argument("--users", type=int, default=15)
         parser.add_argument("--projects", type=int, default=10)
@@ -45,7 +48,7 @@ class Command(BaseCommand):
         parser.add_argument("--max-assignments-per-task", type=int, default=3)
 
     @transaction.atomic
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         if options["reset"]:
             self.reset_demo_data()
 
@@ -82,7 +85,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Seed completed successfully."))
         self.print_summary(project_fundings)
 
-    def reset_demo_data(self):
+    def reset_demo_data(self) -> None:
         """
         Czyści dane demo tworzone przez ten seed.
         Nie usuwa wszystkich userów w systemie, tylko tych z prefiksem demo_.
@@ -101,12 +104,12 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.WARNING("Demo data reset done."))
 
-    def seed_users(self, count):
+    def seed_users(self, count: int) -> list[User]:
         roles = ["admin", "pm", "member", "viewer"]
         users = []
 
         for i in range(count):
-            username = f"demo_{i+1}"
+            username = f"demo_{i + 1}"
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
@@ -142,7 +145,7 @@ class Command(BaseCommand):
 
         return users
 
-    def seed_fundings(self, count):
+    def seed_fundings(self, count: int) -> list[Funding]:
         fundings = []
         today = timezone.now().date()
 
@@ -160,13 +163,13 @@ class Command(BaseCommand):
             end_date = start_date + timedelta(days=random.randint(60, 365))
 
             funding, _ = Funding.objects.get_or_create(
-                name=f"{funding_label} {i+1} - {fake.company()}",
+                name=f"{funding_label} {i + 1} - {fake.company()}",
                 defaults={
                     "organization": self.organization,
                     "type": funding_type,
                     "funder": fake.company(),
                     "program": fake.catch_phrase(),
-                    "agreement_number": f"AGR/{today.year}/{i+1:03d}",
+                    "agreement_number": f"AGR/{today.year}/{i + 1:03d}",
                     "amount_total": Decimal(str(random.randint(15000, 500000))),
                     "currency": "PLN",
                     "start_date": start_date,
@@ -179,7 +182,7 @@ class Command(BaseCommand):
 
         return fundings
 
-    def seed_funding_templates(self, fundings, templates_per_funding):
+    def seed_funding_templates(self, fundings: list[Funding], templates_per_funding: int) -> None:
         template_titles = [
             "Analiza wymagań formalnych",
             "Przygotowanie dokumentacji",
@@ -197,7 +200,7 @@ class Command(BaseCommand):
 
         for funding in fundings:
             for i in range(templates_per_funding):
-                title = f"{random.choice(template_titles)} [{i+1}]"
+                title = f"{random.choice(template_titles)} [{i + 1}]"
 
                 FundingTask.objects.get_or_create(
                     funding=funding,
@@ -212,7 +215,7 @@ class Command(BaseCommand):
                     },
                 )
 
-    def seed_projects(self, users, count):
+    def seed_projects(self, users: list[User], count: int) -> list[Project]:
         projects = []
         today = timezone.now().date()
 
@@ -243,7 +246,7 @@ class Command(BaseCommand):
             end_date = start_date + timedelta(days=end_int)
 
             project, _ = Project.objects.get_or_create(
-                name=f"Projekt {i+1} - {random.choice(project_types)}",
+                name=f"Projekt {i + 1} - {random.choice(project_types)}",
                 defaults={
                     "description": fake.text(max_nb_chars=260),
                     "organization": self.organization,
@@ -257,7 +260,9 @@ class Command(BaseCommand):
 
         return projects
 
-    def seed_project_fundings(self, projects, fundings):
+    def seed_project_fundings(
+        self, projects: list[Project], fundings: list[Funding]
+    ) -> list[ProjectFunding]:
         """
         Łączy projekty z finansowaniami.
         Po utworzeniu ProjectFunding uruchomi się sygnał i doda taski template'owe.
@@ -273,7 +278,9 @@ class Command(BaseCommand):
                 allocation_end_candidates = [
                     d for d in [project.end_date, funding.end_date] if d is not None
                 ]
-                allocation_end = max(allocation_end_candidates) if allocation_end_candidates else None
+                allocation_end = (
+                    max(allocation_end_candidates) if allocation_end_candidates else None
+                )
 
                 # if allocation_start and allocation_end and allocation_end < allocation_start:
                 #     allocation_end = allocation_start
@@ -292,7 +299,12 @@ class Command(BaseCommand):
 
         return created_links
 
-    def seed_project_tasks(self, projects, tasks_per_project_min, tasks_per_project_max):
+    def seed_project_tasks(
+        self,
+        projects: list[Project],
+        tasks_per_project_min: int,
+        tasks_per_project_max: int,
+    ) -> None:
         task_titles = [
             "Przygotowanie backlogu",
             "Spotkanie kickoff",
@@ -357,13 +369,15 @@ class Command(BaseCommand):
                     start_date = due_date - timedelta(days=random.randint(1, 40))
 
                 task = Task.objects.create(
-                    title=f"{random.choice(task_titles)} #{i+1} / {project.name}",
+                    title=f"{random.choice(task_titles)} #{i + 1} / {project.name}",
                     description=fake.text(max_nb_chars=240),
                     status=self.statuses[status],
                     priority=priority,
                     start_date=start_date,
                     due_date=due_date,
-                    cost_amount=Decimal(str(random.choice([0, 50, 100, 250, 500, 1000, 2000, 5000]))),
+                    cost_amount=Decimal(
+                        str(random.choice([0, 50, 100, 250, 500, 1000, 2000, 5000]))
+                    ),
                     cost_currency="PLN",
                     receipt_url="",
                     receipt_note=fake.sentence(nb_words=8) if random.choice([True, False]) else "",
@@ -378,7 +392,7 @@ class Command(BaseCommand):
                     )
                 # jeśli "unbound" -> zostawiamy task bez TaskScope
 
-    def seed_direct_funding_tasks(self, fundings):
+    def seed_direct_funding_tasks(self, fundings: list[Funding]) -> None:
         """
         Ręczne taski przypięte bezpośrednio do Funding.
         To nie są taski z automatycznego sygnału ProjectFunding.
@@ -415,7 +429,7 @@ class Command(BaseCommand):
                     start_date = due_date - timedelta(days=random.randint(1, 30))
 
                 task = Task.objects.create(
-                    title=f"{random.choice(funding_task_titles)} #{i+1} / {funding.name}",
+                    title=f"{random.choice(funding_task_titles)} #{i + 1} / {funding.name}",
                     description=fake.text(max_nb_chars=200),
                     status=self.statuses[status],
                     priority=random.choice([1, 2, 3]),
@@ -434,7 +448,7 @@ class Command(BaseCommand):
                     funding_scoped=False,
                 )
 
-    def seed_unbound_tasks(self, count):
+    def seed_unbound_tasks(self, count: int) -> None:
         """
         Taski bez żadnego scope.
         To ważne, bo w Twoim modelu brak TaskScope jest legalny i oznacza task nieprzypisany.
@@ -466,7 +480,7 @@ class Command(BaseCommand):
                 start_date = due_date - timedelta(days=random.randint(1, 20))
 
             Task.objects.create(
-                title=f"{random.choice(titles)} #{i+1}",
+                title=f"{random.choice(titles)} #{i + 1}",
                 description=fake.text(max_nb_chars=180),
                 status=self.statuses[status],
                 priority=random.choice([1, 2, 3]),
@@ -479,7 +493,7 @@ class Command(BaseCommand):
                 est_hours=Decimal(str(random.choice([1, 2, 4, 8, 16]))),
             )
 
-    def seed_assignments(self, users, max_assignments_per_task):
+    def seed_assignments(self, users: list[User], max_assignments_per_task: int) -> None:
         tasks = list(Task.objects.select_related("status").order_by("id"))
         if not tasks or not users:
             return
@@ -501,8 +515,8 @@ class Command(BaseCommand):
                 if task.status.code in ["doing", "done"]:
                     started_at = timezone.now() - timedelta(days=random.randint(1, 30))
 
-                if task.status.code == "done":
-                    finished_at = started_at + timedelta(days=random.randint(1, 10))
+                    if task.status.code == "done":
+                        finished_at = started_at + timedelta(days=random.randint(1, 10))
 
                 TaskAssignment.objects.get_or_create(
                     task=task,
@@ -515,7 +529,7 @@ class Command(BaseCommand):
                     },
                 )
 
-    def seed_project_roles(self, projects):
+    def seed_project_roles(self, projects: list[Project]) -> None:
         """Owners administer their projects; people assigned to tasks become project members."""
         project_admin = Role.objects.get(organization__isnull=True, code="project_admin")
         project_member = Role.objects.get(organization__isnull=True, code="project_member")
@@ -524,16 +538,18 @@ class Command(BaseCommand):
                 RoleAssignment.objects.get_or_create(
                     role=project_admin, user_id=project.owner_id, project=project
                 )
-            user_ids = TaskAssignment.objects.filter(
-                task__scope__project=project
-            ).values_list("user_id", flat=True).distinct()
+            user_ids = (
+                TaskAssignment.objects.filter(task__scope__project=project)
+                .values_list("user_id", flat=True)
+                .distinct()
+            )
             for user_id in user_ids:
                 if user_id != project.owner_id:
                     RoleAssignment.objects.get_or_create(
                         role=project_member, user_id=user_id, project=project
                     )
 
-    def print_summary(self, project_fundings):
+    def print_summary(self, project_fundings: list[ProjectFunding]) -> None:
         self.stdout.write("")
         self.stdout.write("=== SUMMARY ===")
         self.stdout.write(f"Users: {User.objects.count()}")

@@ -20,7 +20,8 @@ class Scope(models.TextChoices):
 
 class OrganizationMember(models.Model):
     """
-    Represents a user's membership in an organization; required before any role can be granted there.
+    Represents a user's membership in an organization; required before any role
+    can be granted there.
     """
 
     organization = models.ForeignKey(
@@ -53,7 +54,7 @@ class OrganizationMember(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user} @ {self.organization}"
 
 
@@ -73,13 +74,14 @@ class Permission(models.Model):
         db_table = "promt_permission"
         ordering = ["code"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.code
 
 
 class Role(models.Model):
     """
-    Represents a named set of permissions; built-in when ``organization`` is empty, custom otherwise.
+    Represents a named set of permissions; built-in when ``organization`` is empty,
+    custom otherwise.
     """
 
     organization = models.ForeignKey(
@@ -114,7 +116,7 @@ class Role(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -129,22 +131,17 @@ class RolePermission(models.Model):
     class Meta:
         db_table = "promt_role_permission"
         constraints = [
-            models.UniqueConstraint(
-                fields=["role", "permission"], name="role_permission_unique"
-            ),
+            models.UniqueConstraint(fields=["role", "permission"], name="role_permission_unique"),
         ]
 
-    def clean(self):
-        if (
-            self.role.scope == Scope.PROJECT
-            and self.permission.scope == Scope.ORGANIZATION
-        ):
+    def __str__(self) -> str:
+        return f"{self.role.code}: {self.permission.code}"
+
+    def clean(self) -> None:
+        if self.role.scope == Scope.PROJECT and self.permission.scope == Scope.ORGANIZATION:
             raise ValidationError(
                 "An organization-wide permission cannot be part of a project role."
             )
-
-    def __str__(self):
-        return f"{self.role.code}: {self.permission.code}"
 
 
 class Team(models.Model):
@@ -209,25 +206,25 @@ class Team(models.Model):
             ),
         ]
 
-    def root(self):
+    def __str__(self) -> str:
+        return self.name
+
+    def root(self) -> "Team":
         team = self
-        while team.parent_id:
+        while team.parent is not None:
             team = team.parent
         return team
 
-    def depth(self):
+    def depth(self) -> int:
         depth, team = 1, self
-        while team.parent_id:
+        while team.parent is not None:
             depth += 1
             team = team.parent
         return depth
 
-    def clean(self):
-        if self.parent_id and self.parent.depth() >= MAX_TEAM_DEPTH:
+    def clean(self) -> None:
+        if self.parent is not None and self.parent.depth() >= MAX_TEAM_DEPTH:
             raise ValidationError(f"Teams can be nested at most {MAX_TEAM_DEPTH} levels deep.")
-
-    def __str__(self):
-        return self.name
 
 
 class TeamMember(models.Model):
@@ -256,13 +253,14 @@ class TeamMember(models.Model):
             models.UniqueConstraint(fields=["team", "user"], name="team_member_unique"),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user} in {self.team}"
 
 
 class RoleAssignment(models.Model):
     """
-    Represents the single place where access is granted: a user or a team gets a role in an organization or a project.
+    Represents the single place where access is granted: a user or a team gets
+    a role in an organization or a project.
     """
 
     role = models.ForeignKey(Role, on_delete=models.PROTECT, related_name="assignments")
@@ -342,12 +340,12 @@ class RoleAssignment(models.Model):
             ),
         ]
 
-    def clean(self):
-        expected = Scope.PROJECT if self.project_id else Scope.ORGANIZATION
-        if self.role.scope != expected:
-            raise ValidationError("Role scope does not match the assignment scope.")
-
-    def __str__(self):
+    def __str__(self) -> str:
         who = self.user or self.team
         where = self.project or self.organization
         return f"{who}: {self.role.code} @ {where}"
+
+    def clean(self) -> None:
+        expected = Scope.PROJECT if self.project_id else Scope.ORGANIZATION
+        if self.role.scope != expected:
+            raise ValidationError("Role scope does not match the assignment scope.")

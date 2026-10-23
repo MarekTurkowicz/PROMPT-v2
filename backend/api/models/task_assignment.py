@@ -1,10 +1,11 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 
 class TaskAssignment(models.Model):
     """
-    Represents the assignment of tasks to users, including who assigned the task, when it was assigned, start and finish times, and worked hours.
+    Represents the assignment of tasks to users, including who assigned the task,
+    when it was assigned, start and finish times, and worked hours.
     """
 
     task = models.ForeignKey(
@@ -43,5 +44,5 @@ class TaskAssignment(models.Model):
         unique_together = ("task", "user")
         ordering = ["-assigned_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user} -> {self.task}"

@@ -10,10 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+
+import django_stubs_ext
 from dotenv import load_dotenv
-from datetime import timedelta
+
+django_stubs_ext.monkeypatch()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -32,10 +35,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure")  # w DEV może mieć fallba
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # ALLOWED_HOSTS — w DEBUG akceptujemy wszystko (Docker hostnames etc.)
-if DEBUG:
-    ALLOWED_HOSTS = ["*"]
-else:
-    ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = ["*"] if DEBUG else os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 
 # Application definition
@@ -146,15 +146,9 @@ DATABASES = {
         "USER": os.getenv("DB_USER", "promt_user"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": (
-            os.getenv("DB_HOST", "db")
-            if IN_DOCKER
-            else os.getenv("LOCAL_DB_HOST", "localhost")
+            os.getenv("DB_HOST", "db") if IN_DOCKER else os.getenv("LOCAL_DB_HOST", "localhost")
         ),
-        "PORT": (
-            os.getenv("DB_PORT", "5432")
-            if IN_DOCKER
-            else os.getenv("LOCAL_DB_PORT", "5432")
-        ),
+        "PORT": (os.getenv("DB_PORT", "5432") if IN_DOCKER else os.getenv("LOCAL_DB_PORT", "5432")),
     }
 }
 

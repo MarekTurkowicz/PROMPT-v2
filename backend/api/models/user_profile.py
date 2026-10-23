@@ -1,3 +1,6 @@
+from collections.abc import Collection
+from typing import Any
+
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
@@ -30,21 +33,21 @@ class UserProfile(models.Model):
     class Meta:
         db_table = "promt_user_profile"
 
-    def clean_fields(self, exclude=None):
+    def __str__(self) -> str:
+        return self.user.username
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean_fields(self, exclude: Collection[str] | None = None) -> None:
         if self.phone:
             self.phone = self.phone.strip()
             for ch in [" ", "-", "(", ")"]:
                 self.phone = self.phone.replace(ch, "")
         super().clean_fields(exclude=exclude)
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         if self.avatar_url:
             self.avatar_url = self.avatar_url.strip()
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.user.username

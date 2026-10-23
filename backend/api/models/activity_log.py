@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
-from django.conf import settings
 
 from api.models.mixins.generic_relation_mixin import GenericRelationMixin
 
@@ -75,5 +75,5 @@ class ActivityLog(GenericRelationMixin):
             models.Index(fields=["actor", "created_at"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.actor} {self.action} {self.content_type} #{self.object_id}"

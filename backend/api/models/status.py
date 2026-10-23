@@ -61,11 +61,11 @@ class Status(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
-def default_task_status():
+def default_task_status() -> int | None:
     """Primary key of the built-in default task status (used as a model default)."""
     return (
         Status.objects.filter(
@@ -78,7 +78,7 @@ def default_task_status():
     )
 
 
-def default_milestone_status():
+def default_milestone_status() -> int | None:
     """Primary key of the built-in default milestone status (used as a model default)."""
     return (
         Status.objects.filter(

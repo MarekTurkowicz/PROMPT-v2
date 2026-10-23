@@ -1,22 +1,25 @@
 import os
+from typing import Any
+
 import django
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandParser
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 
+
 class Command(BaseCommand):
     help = "Create a superuser"
 
-    def add_arguments(self, parser):
-        parser.add_argument('--mode', type=str, help="Mode")
+    def add_arguments(self, parser: CommandParser) -> None:
+        parser.add_argument("--mode", type=str, help="Mode")
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         run(self)
 
 
-def run(self):
+def run(self: BaseCommand) -> None:
     """
     Create a superuser if not exists, or update their password if they do.
 
@@ -37,15 +40,25 @@ def run(self):
     counter_all_logs = 2
     counter_logs = 1
 
-    print(f"[superuser creation {counter_logs}/{counter_all_logs}]creating superuser if he does not exists already...")
+    print(
+        f"[superuser creation {counter_logs}/{counter_all_logs}]"
+        "creating superuser if he does not exists already..."
+    )
     counter_logs += 1
 
     if not user.objects.filter(username=username).exists():
         user.objects.create_superuser(username, email, password)
-        print(f"[superuser creation {counter_logs}/{counter_all_logs}]✅ Superuser created! Username: ", username)
+        print(
+            f"[superuser creation {counter_logs}/{counter_all_logs}]"
+            "✅ Superuser created! Username: ",
+            username,
+        )
     else:
         # Aktualizujemy hasło żeby zawsze było zgodne z .env
         existing = user.objects.get(username=username)
         existing.set_password(password)
         existing.save()
-        print(f"[superuser creation {counter_logs}/{counter_all_logs}]🔄 Superuser already exists. Password synced from env.")
+        print(
+            f"[superuser creation {counter_logs}/{counter_all_logs}]"
+            "🔄 Superuser already exists. Password synced from env."
+        )

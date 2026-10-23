@@ -11,9 +11,22 @@ only in organizations where the user is an active member. Superusers can do
 everything.
 """
 
+from typing import TYPE_CHECKING, Any
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Case, IntegerField, OuterRef, Q, Subquery, Value, When
+from django.db.models import (
+    Case,
+    IntegerField,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+    Value,
+    When,
+)
 
 from api.models import (
     Organization,
@@ -24,6 +37,11 @@ from api.models import (
     RoleAssignment,
     TeamMember,
 )
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+else:
+    User = get_user_model()
 
 ORG_ROLE_ADMIN = "org_admin"
 ORG_ROLE_PM = "org_pm"
@@ -49,7 +67,7 @@ _CACHE_ATTR = "_promt_permission_cache"
 # ─────────────────────────────
 
 
-def team_ids(user):
+def team_ids(user: User) -> set[int]:
     """Ids of the user's teams together with all their parent teams (max. 3 levels)."""
     rows = TeamMember.objects.filter(user=user).values_list(
         "team_id", "team__parent_id", "team__parent__parent_id"
@@ -57,7 +75,7 @@ def team_ids(user):
     return {team_id for row in rows for team_id in row if team_id}
 
 
-def active_organization_ids(user):
+def active_organization_ids(user: User) -> set[int]:
     return set(
         OrganizationMember.objects.filter(user=user, is_active=True).values_list(
             "organization_id", flat=True
@@ -65,39 +83,44 @@ def active_organization_ids(user):
     )
 
 
-def _principal_q(user, teams):
+def _principal_q(user: User, teams: set[int]) -> Q:
     return Q(user=user) | Q(team_id__in=teams)
 
 
-def permissions_for(user, *, organization=None, project=None):
+def permissions_for(
+    user: User | AnonymousUser,
+    *,
+    organization: Organization | None = None,
+    project: Project | None = None,
+) -> frozenset[str]:
     """Return the set of permission codes the user has in a project or an organization."""
     if not user or not user.is_authenticated:
         return frozenset()
     if user.is_superuser:
         return frozenset(Permission.objects.values_list("code", flat=True))
 
+    key: tuple[str, int | None]
     if project is not None:
         organization_id = project.organization_id
         key = ("project", project.pk)
     else:
-        organization_id = getattr(organization, "pk", organization)
+        organization_id = organization.pk if organization is not None else None
         key = ("organization", organization_id)
 
-    cache = getattr(user, _CACHE_ATTR, None)
+    cache: dict[Any, Any] | None = getattr(user, _CACHE_ATTR, None)
     if cache is None:
         cache = {}
         setattr(user, _CACHE_ATTR, cache)
     if key in cache:
-        return cache[key]
+        cached: frozenset[str] = cache[key]
+        return cached
 
-    codes = frozenset()
+    codes: frozenset[str] = frozenset()
     if organization_id and organization_id in _active_orgs(user, cache):
         scope = Q(organization_id=organization_id)
         if project is not None:
             scope |= Q(project_id=project.pk)
-        assignments = RoleAssignment.objects.filter(
-            _principal_q(user, _teams(user, cache)), scope
-        )
+        assignments = RoleAssignment.objects.filter(_principal_q(user, _teams(user, cache)), scope)
         codes = frozenset(
             Permission.objects.filter(roles__assignments__in=assignments)
             .values_list("code", flat=True)
@@ -107,19 +130,25 @@ def permissions_for(user, *, organization=None, project=None):
     return codes
 
 
-def _teams(user, cache):
+def _teams(user: User, cache: dict[Any, Any]) -> set[int]:
     if "teams" not in cache:
         cache["teams"] = team_ids(user)
-    return cache["teams"]
+    teams: set[int] = cache["teams"]
+    return teams
 
 
-def _active_orgs(user, cache):
+def _active_orgs(user: User, cache: dict[Any, Any]) -> set[int]:
     if "orgs" not in cache:
         cache["orgs"] = active_organization_ids(user)
-    return cache["orgs"]
+    orgs: set[int] = cache["orgs"]
+    return orgs
 
 
-def can(user, permission, obj=None):
+def can(
+    user: User | AnonymousUser,
+    permission: str,
+    obj: Project | Organization | None = None,
+) -> bool:
     """True when the user has ``permission`` for ``obj`` (a project, an organization or None)."""
     if isinstance(obj, Project):
         return permission in permissions_for(user, project=obj)
@@ -130,7 +159,7 @@ def can(user, permission, obj=None):
     raise TypeError(f"Unsupported object for a permission check: {obj!r}")
 
 
-def visible_projects(user):
+def visible_projects(user: User) -> QuerySet[Project]:
     """Projects the user may view, as one query (organization-wide or per-project roles)."""
     if user.is_superuser:
         return Project.objects.all()
@@ -144,8 +173,10 @@ def visible_projects(user):
     )
 
 
-def primary_organization(user):
+def primary_organization(user: User | AnonymousUser) -> Organization | None:
     """The user's first active organization; the current UI works with one organization."""
+    if not user.is_authenticated:
+        return None
     membership = (
         OrganizationMember.objects.filter(user=user, is_active=True)
         .select_related("organization")
@@ -155,14 +186,17 @@ def primary_organization(user):
     return membership.organization if membership else None
 
 
-def legacy_role_annotation(user_ref="pk"):
+def legacy_role_annotation(user_ref: str = "pk") -> Subquery:
     """Subquery with the user's highest built-in organization role as the old API value."""
     rank = Case(
         *[When(role__code=code, then=Value(i)) for i, code in enumerate(ORG_ROLE_RANK)],
         output_field=IntegerField(),
     )
     legacy = Case(
-        *[When(role__code=code, then=Value(ORG_ROLE_TO_LEGACY_ROLE[code])) for code in ORG_ROLE_RANK],
+        *[
+            When(role__code=code, then=Value(ORG_ROLE_TO_LEGACY_ROLE[code]))
+            for code in ORG_ROLE_RANK
+        ],
     )
     return Subquery(
         RoleAssignment.objects.filter(
@@ -177,10 +211,11 @@ def legacy_role_annotation(user_ref="pk"):
     )
 
 
-def legacy_role(user):
+def legacy_role(user: User) -> str:
     """The old ``profile.role`` value: admin / pm / member / viewer."""
     if hasattr(user, "org_role"):
-        return user.org_role or "member"
+        annotated: str | None = user.org_role
+        return annotated or "member"
     codes = set(
         RoleAssignment.objects.filter(
             user=user, organization__isnull=False, role__organization__isnull=True
@@ -197,12 +232,14 @@ def legacy_role(user):
 # ─────────────────────────────
 
 
-def _role_permission_codes(role):
+def _role_permission_codes(role: Role) -> set[str]:
     return set(role.permissions.values_list("code", flat=True))
 
 
 @transaction.atomic
-def add_organization_member(actor, organization, user):
+def add_organization_member(
+    actor: User, organization: Organization, user: User
+) -> OrganizationMember:
     if not can(actor, "org.members.manage", organization):
         raise PermissionDenied("Brak uprawnień do zarządzania członkami organizacji.")
     membership, created = OrganizationMember.objects.get_or_create(
@@ -215,7 +252,9 @@ def add_organization_member(actor, organization, user):
 
 
 @transaction.atomic
-def set_organization_role(actor, organization, user, role_code):
+def set_organization_role(
+    actor: User, organization: Organization, user: User, role_code: str
+) -> RoleAssignment:
     """Replace the user's built-in organization role, guarding against privilege escalation."""
     if not can(actor, "org.members.manage", organization):
         raise PermissionDenied("Brak uprawnień do zarządzania członkami organizacji.")
@@ -243,7 +282,9 @@ def set_organization_role(actor, organization, user, role_code):
                     "Nie możesz nadawać ani odbierać roli z uprawnieniami, których sam nie masz."
                 )
 
-    losing_admin = any(a.role.code == ORG_ROLE_ADMIN for a in current) and role_code != ORG_ROLE_ADMIN
+    losing_admin = (
+        any(a.role.code == ORG_ROLE_ADMIN for a in current) and role_code != ORG_ROLE_ADMIN
+    )
     if losing_admin:
         other_admins = (
             RoleAssignment.objects.filter(
@@ -268,7 +309,7 @@ def set_organization_role(actor, organization, user, role_code):
 
 
 @transaction.atomic
-def grant_project_creator(project, user):
+def grant_project_creator(project: Project, user: User) -> None:
     """The creator of a project becomes its administrator."""
     RoleAssignment.objects.get_or_create(
         role=Role.objects.get(organization__isnull=True, code=PROJECT_ROLE_ADMIN),
@@ -279,6 +320,6 @@ def grant_project_creator(project, user):
     _forget_cache(user)
 
 
-def _forget_cache(user):
+def _forget_cache(user: User) -> None:
     if hasattr(user, _CACHE_ATTR):
         delattr(user, _CACHE_ATTR)

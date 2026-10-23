@@ -10,10 +10,13 @@ Usage:
     python manage.py generate_erd --all                # include Django's own tables
 """
 
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from django.apps import apps
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandParser
+from django.db.models import Model
 
 
 class Command(BaseCommand):
@@ -21,7 +24,7 @@ class Command(BaseCommand):
     # Only the model registry is read, so URL/view checks are irrelevant here.
     requires_system_checks = []
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "apps",
             nargs="*",
@@ -40,16 +43,14 @@ class Command(BaseCommand):
             "any other extension gets raw Mermaid.",
         )
 
-    def handle(self, *args, **opts):
+    def handle(self, *args: Any, **opts: Any) -> None:
         if opts["all"]:
             models = list(apps.get_models(include_auto_created=True))
         else:
             models = [
                 m
                 for label in opts["apps"]
-                for m in apps.get_app_config(label).get_models(
-                    include_auto_created=True
-                )
+                for m in apps.get_app_config(label).get_models(include_auto_created=True)
             ]
 
         # Tables referenced by a FK but outside the selected apps (e.g. auth_user)
@@ -58,11 +59,12 @@ class Command(BaseCommand):
         for model in list(models):
             for field in model._meta.local_fields:
                 target = field.related_model
-                if target and target not in selected:
+                if isinstance(target, type) and target not in selected:
                     selected.add(target)
                     models.append(target)
 
-        entities, relations = [], []
+        entities: list[str] = []
+        relations: list[str] = []
         for model in models:
             entities.append(self._entity(model))
             relations.extend(self._relations(model))
@@ -82,11 +84,9 @@ class Command(BaseCommand):
                 f"```mermaid\n{diagram}```\n"
             )
         path.write_text(diagram, encoding="utf-8")
-        self.stdout.write(
-            self.style.SUCCESS(f"ER diagram ({len(models)} tables) -> {path}")
-        )
+        self.stdout.write(self.style.SUCCESS(f"ER diagram ({len(models)} tables) -> {path}"))
 
-    def _entity(self, model):
+    def _entity(self, model: type[Model]) -> str:
         meta = model._meta
         unique_together = {
             name for group in meta.unique_together if len(group) == 1 for name in group
@@ -109,17 +109,16 @@ class Command(BaseCommand):
         lines.append("    }")
         return "\n".join(lines)
 
-    def _relations(self, model):
+    def _relations(self, model: type[Model]) -> Iterator[str]:
         meta = model._meta
         for field in meta.local_fields:
             target = field.related_model
-            if not target:
+            if not isinstance(target, type):
                 continue
             # parent side: exactly one, or zero-or-one when the FK is nullable
             parent = "|o" if field.null else "||"
             # child side: at most one for one-to-one / unique FK, otherwise many
             child = "o|" if field.unique else "o{"
             yield (
-                f"    {target._meta.db_table} {parent}--{child} "
-                f'{meta.db_table} : "{field.name}"'
+                f'    {target._meta.db_table} {parent}--{child} {meta.db_table} : "{field.name}"'
             )
