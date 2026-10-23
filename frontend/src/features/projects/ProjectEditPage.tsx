@@ -35,7 +35,7 @@ export default function ProjectEditPage() {
 
   const { data: project, isLoading, isError } = useGetByIdQuery(id);
 
-  const form = useForm<ProjectForm>({
+  const form = useForm<z.input<typeof ProjectSchema>, unknown, ProjectForm>({
     resolver: zodResolver(ProjectSchema),
     defaultValues: {
       name: "",
