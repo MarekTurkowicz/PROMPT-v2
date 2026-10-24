@@ -1,5 +1,7 @@
 # PROMT 2.0 — Plan • Run • Optimise Management Tool
 
+[![CI](https://github.com/MarekTurkowicz/PROMPT-v2/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MarekTurkowicz/PROMPT-v2/actions/workflows/ci.yml)
+
 A web platform that supports project managers and their teams in day-to-day project work: planning, task execution, funding requirements, time and cost tracking — for many organizations in one system.
 
 > 📄 Polish version: [README.pl.md](./README.pl.md)

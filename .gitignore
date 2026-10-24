@@ -29,12 +29,12 @@ frontend/.turbo/
 frontend/.cache/
 frontend/coverage/
 
-# Environment files 
+# Environment files
 frontend/.env
 frontend/.env.local
 frontend/.env.*.local
 
-# Package manager lockfile policy 
+# Package manager lockfile policy
 # frontend/package-lock.json
 # frontend/yarn.lock
 # frontend/pnpm-lock.yaml
@@ -59,10 +59,10 @@ backend/*.sqlite
 backend/dumps/
 backend/*.sql
 
-# User-uploaded media 
+# User-uploaded media
 backend/media/
 
-# Environment files 
+# Environment files
 .env
 backend/.env.local
 backend/.env.*.local

@@ -114,7 +114,7 @@ describe("Przypisanie osób (filterTasksByAssignee)", () => {
   });
 
   it("zadanie z 2 assignees → zwracane przez filtr dla obu userów", () => {
-    const task = makeTask({ id: 10, assignees: [userA, userB] as any });
+    const task = makeTask({ id: 10, assignees: [userA, userB] });
     expect(filterTasksByAssignee([task], userA.id)).toHaveLength(1);
     expect(filterTasksByAssignee([task], userB.id)).toHaveLength(1);
     expect(filterTasksByAssignee([task], userA.id)[0].assignees).toHaveLength(
@@ -141,9 +141,9 @@ describe("Filtr — po osobie przypisanej (filterTasksByAssignee)", () => {
   const userA = { id: 1, email: "anna@example.com" };
   const userB = { id: 2, email: "bartek@example.com" };
   const tasks: Task[] = [
-    makeTask({ id: 1, assignees: [userA] as any }),
-    makeTask({ id: 2, assignees: [userB] as any }),
-    makeTask({ id: 3, assignees: [userA, userB] as any }),
+    makeTask({ id: 1, assignees: [userA] }),
+    makeTask({ id: 2, assignees: [userB] }),
+    makeTask({ id: 3, assignees: [userA, userB] }),
     makeTask({ id: 4, assignees: [] }),
   ];
 

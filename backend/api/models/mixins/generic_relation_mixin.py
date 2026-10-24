@@ -14,8 +14,6 @@ class GenericRelationMixin(models.Model):
         "object_id",
     )
 
-
-
     class Meta:
         abstract = True
         indexes = [

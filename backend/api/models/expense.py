@@ -24,5 +24,3 @@ class Expense(GenericRelationMixin):
 
     class Meta:
         db_table = "expenses"
-
-
