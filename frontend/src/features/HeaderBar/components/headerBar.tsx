@@ -8,7 +8,7 @@ export default function HeaderBar() {
   const [logout, { isLoading }] = useLogoutMutation();
   const [open, setOpen] = React.useState(false);
 
-  const display = me?.username ?? "User";
+  const display = me?.email ?? "User";
   const avatarUrl = defaultAvatar;
 
   async function handleLogout() {

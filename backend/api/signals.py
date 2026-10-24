@@ -1,13 +1,12 @@
 from datetime import date, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 
-from .models import FundingTask, ProjectFunding, Task, TaskScope, UserProfile
+from .models import FundingTask, ProjectFunding, Task, TaskScope, User, UserProfile
 
 
 def _due(base_date: date | None, delta_days: int | None) -> date | None:
@@ -97,10 +96,6 @@ def delete_scoped_tasks_on_unlink(
 # ─────────────────────────────
 # Auto-create UserProfile
 # ─────────────────────────────
-if TYPE_CHECKING:
-    from django.contrib.auth.models import User
-else:
-    User = get_user_model()
 
 
 @receiver(post_save, sender=User)

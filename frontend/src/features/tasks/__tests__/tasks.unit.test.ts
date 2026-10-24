@@ -104,8 +104,8 @@ describe("Walidacja dat (validateDateRange)", () => {
 });
 
 describe("Przypisanie osób (filterTasksByAssignee)", () => {
-  const userA = { id: 1, username: "anna" };
-  const userB = { id: 2, username: "bartek" };
+  const userA = { id: 1, email: "anna@example.com" };
+  const userB = { id: 2, email: "bartek@example.com" };
 
   it("zadanie bez assignees → nie zwracane przez filtr (length=0)", () => {
     const task = makeTask({ id: 5, assignees: [] });
@@ -138,8 +138,8 @@ describe("Edycja — logika statusów (isStatusBackward)", () => {
 });
 
 describe("Filtr — po osobie przypisanej (filterTasksByAssignee)", () => {
-  const userA = { id: 1, username: "anna" };
-  const userB = { id: 2, username: "bartek" };
+  const userA = { id: 1, email: "anna@example.com" };
+  const userB = { id: 2, email: "bartek@example.com" };
   const tasks: Task[] = [
     makeTask({ id: 1, assignees: [userA] as any }),
     makeTask({ id: 2, assignees: [userB] as any }),

@@ -104,6 +104,6 @@ test("Auth — page.request ze storageState uwierzytelnia żądania API bez logo
   const resp = await page.request.get("/api/auth/me/");
   expect(resp.status()).toBe(200);
   const me = await resp.json();
-  expect(me).toHaveProperty("username");
+  expect(me).toHaveProperty("email");
   expect(me.is_staff).toBe(true);
 });

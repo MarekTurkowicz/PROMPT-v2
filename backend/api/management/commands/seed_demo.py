@@ -29,19 +29,19 @@ class Command(BaseCommand):
         user_model = get_user_model()
 
         # 1) Użytkownik PM (do logowania i bycia ownerem projektów)
-        pm_username = "pm"
+        pm_email = "pm@example.com"
         pm_password = "pm12345!"
         pm, created_pm = user_model.objects.get_or_create(
-            username=pm_username, defaults={"is_staff": True, "is_active": True}
+            email=pm_email, defaults={"is_staff": True, "is_active": True}
         )
         if created_pm:
             pm.set_password(pm_password)
             pm.save()
             self.stdout.write(
-                self.style.SUCCESS(f"Utworzono użytkownika: {pm_username} / {pm_password}")
+                self.style.SUCCESS(f"Utworzono użytkownika: {pm_email} / {pm_password}")
             )
         else:
-            self.stdout.write(f"Użytkownik istnieje: {pm_username}")
+            self.stdout.write(f"Użytkownik istnieje: {pm_email}")
 
         if options["reset"]:
             # usuwamy tylko nasze obiekty demo (po nazwach), żeby nie ruszyć Twoich ręcznych danych

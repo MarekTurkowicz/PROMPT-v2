@@ -536,7 +536,7 @@ export default function EditTaskModal({
                       >
                         {users.map((u: AppUser) => (
                           <option key={u.id} value={u.id}>
-                            {u.username}
+                            {u.email}
                           </option>
                         ))}
                       </select>

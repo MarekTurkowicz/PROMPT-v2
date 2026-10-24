@@ -10,7 +10,7 @@ test("storageState — sesja admina daje dostęp do /dashboard/admin bez logowan
   await expect(page.locator("#create-user-btn")).toBeVisible();
 
   const me = await (await page.request.get("/api/auth/me/")).json();
-  expect(me).toHaveProperty("username");
+  expect(me).toHaveProperty("email");
   expect(me.is_staff).toBe(true);
 
   const state = await page.request.storageState();
@@ -66,14 +66,14 @@ test(
     ).toBe(200);
 
     const me = await meResp.json();
-    expect(me).toHaveProperty("username");
+    expect(me).toHaveProperty("email");
     expect(me.is_staff).toBe(true);
 
     // Sprawdzamy spójność — admin widzi siebie na liście użytkowników
     const adminOnList = users.find((u: { id: number }) => u.id === me.id);
     expect(
       adminOnList,
-      `Admin (id=${me.id}, username=${me.username}) powinien być widoczny na liście /api/users/`,
+      `Admin (id=${me.id}, email=${me.email}) powinien być widoczny na liście /api/users/`,
     ).toBeDefined();
   },
 );

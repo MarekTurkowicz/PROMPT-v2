@@ -12,7 +12,6 @@ test("GIVEN admin w panelu WHEN tworzy użytkownika z rolą member THEN nowy use
   await expect(page.locator('[role="dialog"]')).toBeVisible();
   await expect(page.locator("#modal-title")).toContainText("Nowy użytkownik");
 
-  await page.fill("#field-username", uniqueUser);
   await page.fill("#field-email", `${uniqueUser}@example.com`);
   await page.fill("#field-first-name", "Jan");
   await page.fill("#field-last-name", "Testowy");

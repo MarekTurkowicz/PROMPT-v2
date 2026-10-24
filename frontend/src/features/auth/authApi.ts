@@ -2,7 +2,7 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "../../app/axiosBaseQuery";
 import type { MeUser } from "../types/users";
 
-type LoginBody = { username: string; password: string };
+type LoginBody = { email: string; password: string };
 
 export const authApi = createApi({
   reducerPath: "authApi",

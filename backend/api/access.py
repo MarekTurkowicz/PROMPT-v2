@@ -11,9 +11,8 @@ only in organizations where the user is an active member. Superusers can do
 everything.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -36,12 +35,8 @@ from api.models import (
     Role,
     RoleAssignment,
     TeamMember,
+    User,
 )
-
-if TYPE_CHECKING:
-    from django.contrib.auth.models import User
-else:
-    User = get_user_model()
 
 ORG_ROLE_ADMIN = "org_admin"
 ORG_ROLE_PM = "org_pm"

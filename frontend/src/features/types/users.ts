@@ -8,7 +8,6 @@ export interface UserProfile {
 
 export interface AppUser {
   id: number;
-  username: string;
   first_name?: string;
   last_name?: string;
   email: string;
@@ -19,7 +18,6 @@ export interface AppUser {
 
 export interface MeUser {
   id: number;
-  username: string;
   email: string;
   first_name?: string;
   last_name?: string;
@@ -28,8 +26,7 @@ export interface MeUser {
 }
 
 export interface CreateUserPayload {
-  username: string;
-  email?: string;
+  email: string;
   first_name?: string;
   last_name?: string;
   password: string;
@@ -39,7 +36,6 @@ export interface CreateUserPayload {
 }
 
 export interface UpdateUserPayload {
-  username?: string;
   email?: string;
   first_name?: string;
   last_name?: string;

@@ -102,7 +102,7 @@ function sortPeople(a: PersonKpi, b: PersonKpi) {
   if (a.overdue !== b.overdue) return b.overdue - a.overdue;
   if (a.doing !== b.doing) return b.doing - a.doing;
   if (a.todo !== b.todo) return b.todo - a.todo;
-  return a.user.username.localeCompare(b.user.username);
+  return a.user.email.localeCompare(b.user.email);
 }
 
 /* ===== tiny modal for person details ===== */
@@ -137,10 +137,10 @@ function PersonDetailsModal(props: {
         <div className="team-modal-body">
           <div className="team-modal-user">
             <div className="team-modal-avatar">
-              {props.user.username.slice(0, 2).toUpperCase()}
+              {props.user.email.slice(0, 2).toUpperCase()}
             </div>
             <div className="team-modal-userinfo">
-              <div className="team-modal-username">{props.user.username}</div>
+              <div className="team-modal-username">{props.user.email}</div>
               {props.user.email ? (
                 <div className="team-modal-email">{props.user.email}</div>
               ) : null}
@@ -280,7 +280,7 @@ export default function ProjectTeamTab() {
 
     if (nq) {
       list = list.filter((p) => {
-        const name = (p.user.username ?? "").toLowerCase();
+        const name = (p.user.email ?? "").toLowerCase();
         const email = (p.user.email ?? "").toLowerCase();
         return name.includes(nq) || email.includes(nq);
       });
@@ -435,21 +435,21 @@ export default function ProjectTeamTab() {
     );
 
     if (taskFilter === "todo") {
-      return sorted.map((p) => ({ name: p.user.username, value: p.todo }));
+      return sorted.map((p) => ({ name: p.user.email, value: p.todo }));
     }
     if (taskFilter === "doing") {
-      return sorted.map((p) => ({ name: p.user.username, value: p.doing }));
+      return sorted.map((p) => ({ name: p.user.email, value: p.doing }));
     }
     if (taskFilter === "done") {
-      return sorted.map((p) => ({ name: p.user.username, value: p.done }));
+      return sorted.map((p) => ({ name: p.user.email, value: p.done }));
     }
     if (taskFilter === "overdue") {
-      return sorted.map((p) => ({ name: p.user.username, value: p.overdue }));
+      return sorted.map((p) => ({ name: p.user.email, value: p.overdue }));
     }
 
     // all => stacked open (todo+doing)
     return sorted.map((p) => ({
-      name: p.user.username,
+      name: p.user.email,
       todo: p.todo,
       doing: p.doing,
     }));
@@ -686,7 +686,7 @@ export default function ProjectTeamTab() {
                       onChange={() => toggleSelect(p.user.id)}
                     />
                     <div className="team-avatar">
-                      {p.user.username.slice(0, 2).toUpperCase()}
+                      {p.user.email.slice(0, 2).toUpperCase()}
                     </div>
                   </label>
 
@@ -696,7 +696,7 @@ export default function ProjectTeamTab() {
                   >
                     <div className="team-person-top">
                       <div className="team-person-name">
-                        {p.user.username}
+                        {p.user.email}
                         {hasAlert && (
                           <span className="team-alert-dot" title="Has alerts" />
                         )}
@@ -721,7 +721,7 @@ export default function ProjectTeamTab() {
               {selectionMode === "single" && (
                 <>
                   <span className="team-person-underline">
-                    {singlePerson?.user.username}
+                    {singlePerson?.user.email}
                   </span>
                   {(singlePerson?.overdue ?? 0) > 0 && (
                     <span className="badge danger">Overdue</span>
@@ -774,9 +774,7 @@ export default function ProjectTeamTab() {
                         const w = Math.round((open / max) * 100);
                         return (
                           <div key={p.user.id} className="team-snap-row">
-                            <div className="team-snap-name">
-                              {p.user.username}
-                            </div>
+                            <div className="team-snap-name">{p.user.email}</div>
                             <div className="team-snap-bar">
                               <div
                                 className="team-snap-barfill"
@@ -799,9 +797,7 @@ export default function ProjectTeamTab() {
                       .slice(0, 6)
                       .map((p) => (
                         <div key={p.user.id} className="team-snap-row">
-                          <div className="team-snap-name">
-                            {p.user.username}
-                          </div>
+                          <div className="team-snap-name">{p.user.email}</div>
                           <div className="team-snap-pill danger">
                             {p.overdue} overdue
                           </div>
@@ -1144,7 +1140,7 @@ export default function ProjectTeamTab() {
 
                           <div className="team-critical-sub">
                             <span className="pill info">
-                              {x.owner?.username ?? "—"}
+                              {x.owner?.email ?? "—"}
                             </span>
                             {x.reason === "overdue" && (
                               <span className="pill danger">Overdue</span>
@@ -1389,7 +1385,7 @@ export default function ProjectTeamTab() {
             <div className="team-task-preview-assignees">
               Assignees:{" "}
               <b>
-                {hoverPreview.task.assignees?.map((a) => a.username).join(", ")}
+                {hoverPreview.task.assignees?.map((a) => a.email).join(", ")}
               </b>
             </div>
           )}
@@ -1482,7 +1478,7 @@ export default function ProjectTeamTab() {
                           <option value="">Assign to…</option>
                           {users.map((u) => (
                             <option key={u.id} value={u.id}>
-                              {u.username}
+                              {u.email}
                             </option>
                           ))}
                         </select>

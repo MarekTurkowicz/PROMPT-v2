@@ -16,13 +16,11 @@ if (!fs.existsSync(authDir)) {
   fs.mkdirSync(authDir, { recursive: true });
 }
 
-// Jakub Jakacki & Marek Turkowicz
-
 setup("authenticate as admin", async ({ page }) => {
   await page.goto("/login");
   await page.fill(
-    "#username",
-    process.env.DJANGO_SUPERUSER_USERNAME ?? "admin",
+    "#email",
+    process.env.DJANGO_SUPERUSER_EMAIL ?? "admin@example.com",
   );
   await page.fill(
     "#password",

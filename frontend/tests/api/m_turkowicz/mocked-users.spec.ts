@@ -2,12 +2,11 @@ import { test, expect } from "@playwright/test";
 
 const makeUser = (
   id: number,
-  username: string,
+  login: string,
   overrides: Record<string, unknown> = {},
 ) => ({
   id,
-  username,
-  email: `${username}@testpromt.pl`,
+  email: `${login}@testpromt.pl`,
   first_name: "Playwright",
   last_name: "Test",
   tasks_count: 0,
@@ -22,7 +21,6 @@ const makeUser = (
 
 const makeMe = (overrides: Record<string, unknown> = {}) => ({
   id: 1,
-  username: "admin",
   email: "admin@testpromt.pl",
   first_name: "Admin",
   last_name: "PROMT",
@@ -203,7 +201,6 @@ test(
   "MOCK — /api/auth/me/ zwraca dane aktualnie zalogowanego użytkownika z rolą admin i is_staff: true",
   async ({ page }) => {
     const mockMe = makeMe({
-      username: "marek_turkowicz",
       first_name: "Marek",
       last_name: "Turkowicz",
       email: "marek@testpromt.pl",

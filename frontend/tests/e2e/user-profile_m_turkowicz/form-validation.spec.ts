@@ -12,7 +12,7 @@ test("GIVEN admin z otwartym formularzem WHEN wysyła bez wymaganych pól THEN m
   await page.click("#submit-user-btn");
   await expect(page.locator('[role="dialog"]')).toBeVisible();
 
-  await page.fill("#field-username", "testnopass");
+  await page.fill("#field-email", "testnopass@example.com");
   await page.click("#submit-user-btn");
   await expect(page.locator('[role="dialog"]')).toBeVisible();
 

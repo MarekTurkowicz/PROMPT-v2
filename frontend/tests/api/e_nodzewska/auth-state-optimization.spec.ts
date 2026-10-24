@@ -6,7 +6,7 @@ test("storageState — sesja admina pozwala odpytać /api/auth/me/ i /api/projec
   const meResp = await page.request.get("/api/auth/me/");
   expect(meResp.status()).toBe(200);
   const me = await meResp.json();
-  expect(me).toHaveProperty("username");
+  expect(me).toHaveProperty("email");
   expect(me.is_staff).toBe(true);
 
   const projectsResp = await page.request.get("/api/projects/");

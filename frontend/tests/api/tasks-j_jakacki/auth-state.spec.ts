@@ -10,7 +10,7 @@ test(
     expect(page.url()).toContain("/dashboard");
 
     const me = await (await page.request.get("/api/auth/me/")).json();
-    expect(me).toHaveProperty("username");
+    expect(me).toHaveProperty("email");
     expect(me.is_staff).toBe(true);
 
     const state = await page.request.storageState();

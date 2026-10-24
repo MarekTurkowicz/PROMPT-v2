@@ -12,7 +12,7 @@ test("storageState — sesja admina daje dostęp do /dashboard/fundings bez logo
   ).toBeVisible({ timeout: 10_000 });
 
   const me = await (await page.request.get("/api/auth/me/")).json();
-  expect(me).toHaveProperty("username");
+  expect(me).toHaveProperty("email");
   expect(me.is_staff).toBe(true);
 
   const state = await page.request.storageState();
