@@ -1,102 +1,42 @@
-"""Task and TaskScope models.
-
-These models represent generic tasks and the context (scope) in which a task
-belongs (project, funding, or a project-funding relation).
-"""
-
-from typing import Any
-
-from django.conf import settings
 from django.db import models
 from django.db.models import F, Q
 
-from api.models.status import default_task_status
+from api.models.constants import Priority
 
 
 class Task(models.Model):
-    """Represents a generic task.
+    """
+    Represents a task of a project, or of a funding alone (exactly one of the two).
 
-    A task is independent of any particular project or funding. Its context is
-    defined separately via the TaskScope model.
-
-    Attributes:
-        title: Short human-readable name of the task.
-        description: Optional detailed description of the task.
-        status: Current workflow status (see Status; logic uses its category).
-        priority: Priority level of the task (low/medium/high).
-        start_date: Optional planned start date.
-        due_date: Optional deadline date.
-        cost_amount: Optional monetary cost associated with the task.
-        cost_currency: ISO-like currency code for cost_amount (default: "PLN").
-        receipt_url: Optional URL to the receipt or related document.
-        receipt_note: Optional free-form note about the receipt/cost.
-        assignees: Users assigned to the task through TaskAssignment.
-        est_hours: Estimated duration of the task in hours.
-        template: Optional reference to a FundingTask template.
-        milestone: Optional project milestone the task belongs to.
-        parent: Optional parent task; set for subtasks.
-        created_at: Timestamp when the task was created.
-        updated_at: Timestamp when the task was last updated.
+    ``project_funding`` must belong to the task's project; besides the ORM foreign key it is
+    guarded by the composite foreign key (project_funding_id, project_id) added in a RunSQL
+    migration.
     """
 
-    class Priority(models.IntegerChoices):
-        """Priority levels used to sort or filter tasks."""
+    Priority = Priority
 
-        LOW = 1, "Low"
-        MEDIUM = 2, "Medium"
-        HIGH = 3, "High"
-
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-
-    status = models.ForeignKey(
-        "api.Status",
+    project = models.ForeignKey(
+        "api.Project",
         on_delete=models.PROTECT,
-        blank=True,
-        related_name="tasks",
-        limit_choices_to={"applies_to": "task"},
-    )
-    priority = models.IntegerField(
-        choices=Priority.choices,
-        default=Priority.MEDIUM,
-    )
-
-    start_date = models.DateField(null=True, blank=True)
-    due_date = models.DateField(null=True, blank=True)
-
-    cost_amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
         null=True,
         blank=True,
+        related_name="tasks",
+        db_index=False,
     )
-    cost_currency = models.CharField(max_length=3, default="PLN")
-    receipt_url = models.URLField(blank=True)
-    receipt_note = models.TextField(blank=True)
-
-    assignees = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        through="api.TaskAssignment",
-        through_fields=("task", "user"),
+    funding = models.ForeignKey(
+        "api.Funding",
+        on_delete=models.PROTECT,
+        null=True,
         blank=True,
         related_name="tasks",
     )
-
-    est_hours = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
+    project_funding = models.ForeignKey(
+        "api.ProjectFunding",
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
+        related_name="tasks",
     )
-
-    template = models.ForeignKey(
-        "api.FundingTask",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="instances",
-    )
-
     milestone = models.ForeignKey(
         "api.Milestone",
         on_delete=models.SET_NULL,
@@ -111,41 +51,71 @@ class Task(models.Model):
         blank=True,
         related_name="subtasks",
     )
+    template = models.ForeignKey(
+        "api.TaskTemplate",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks",
+    )
+    status = models.ForeignKey(
+        "api.TaskStatus",
+        on_delete=models.PROTECT,
+        related_name="tasks",
+    )
+    group = models.ForeignKey(
+        "api.MemberGroup",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks",
+    )
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    priority = models.SmallIntegerField(choices=Priority.choices, default=Priority.MEDIUM)
+    start_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    est_hours = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        """Meta options for Task."""
-
-        db_table = "promt_task"
-        indexes = [
-            models.Index(fields=["due_date"]),
-            models.Index(fields=["updated_at"]),
-        ]
+        db_table = "task"
         constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(project__isnull=False, funding__isnull=True)
+                    | Q(project__isnull=True, funding__isnull=False)
+                ),
+                name="task_project_xor_funding",
+            ),
+            models.CheckConstraint(
+                condition=Q(project_funding__isnull=True) | Q(project__isnull=False),
+                name="task_project_funding_needs_project",
+            ),
+            models.CheckConstraint(
+                condition=Q(priority__gte=Priority.LOWEST, priority__lte=Priority.HIGHEST),
+                name="task_priority_range",
+            ),
             models.CheckConstraint(
                 condition=(
                     Q(start_date__isnull=True)
                     | Q(due_date__isnull=True)
-                    | Q(start_date__lte=F("due_date"))
+                    | Q(due_date__gte=F("start_date"))
                 ),
                 name="task_dates_ok",
             ),
+            models.CheckConstraint(
+                condition=Q(est_hours__isnull=True) | Q(est_hours__gt=0),
+                name="task_est_hours_positive",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["project", "status", "-priority"], name="task_project_status_ix"),
+            models.Index(fields=["due_date"], name="task_due_ix"),
         ]
 
     def __str__(self) -> str:
-        """Return a human-readable representation of the task."""
         return self.title
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self._fill_default_status()
-        super().save(*args, **kwargs)
-
-    def clean(self) -> None:
-        super().clean()
-        self._fill_default_status()
-
-    def _fill_default_status(self) -> None:
-        if self.status_id is None:
-            self.status_id = default_task_status()

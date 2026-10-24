@@ -1,52 +1,59 @@
-from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import F, Q
 
 
-class Project(models.Model):
-    class Status(models.TextChoices):
-        NEW = "new", "New"
-        ACTIVE = "active", "Active"
-        CLOSED = "closed", "Closed"
+class ProjectStatus(models.TextChoices):
+    PLANNED = "planned", "Planned"
+    ACTIVE = "active", "Active"
+    CLOSED = "closed", "Closed"
+    CANCELLED = "cancelled", "Cancelled"
+    ARCHIVED = "archived", "Archived"
 
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.NEW)
+
+class Project(models.Model):
+    """
+    Represents a project of an organization.
+
+    ``hidden_status_ids`` (PostgreSQL ``bigint[]``, no foreign key) lists organization
+    statuses switched off in this project.
+    """
+
+    Status = ProjectStatus
 
     organization = models.ForeignKey(
         "api.Organization",
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
         related_name="projects",
     )
-
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        "api.OrganizationMember",
+        on_delete=models.PROTECT,
         related_name="owned_projects",
     )
 
-    fundings = models.ManyToManyField(
-        "api.Funding", through="api.ProjectFunding", related_name="projects", blank=True
-    )
-
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=12, choices=ProjectStatus.choices, default=Status.PLANNED)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    hidden_status_ids = ArrayField(models.BigIntegerField(), default=list, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "promt_project"
+        db_table = "project"
+        ordering = ["name", "id"]
         constraints = [
+            models.CheckConstraint(
+                condition=Q(status__in=ProjectStatus.values), name="project_status_valid"
+            ),
             models.CheckConstraint(
                 condition=(
                     Q(start_date__isnull=True)
                     | Q(end_date__isnull=True)
-                    | Q(start_date__lte=F("end_date"))
+                    | Q(end_date__gte=F("start_date"))
                 ),
                 name="project_dates_ok",
             ),

@@ -1,45 +1,47 @@
-from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
 
 class Notification(models.Model):
     """
-    Represents one recipient's copy of an activity log entry.
-
-    What happened, to which object and when is stored once in ActivityLog;
-    one event fans out to many notifications.
+    Represents one recipient's notification: a copy of an activity log entry, or a system
+    reminder when ``activity`` is empty. ``content`` (PostgreSQL jsonb) holds title, body and link.
     """
 
-    recipient = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="notifications",
-        db_index=False,
-    )
     activity = models.ForeignKey(
         "api.ActivityLog",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="notifications",
     )
-    read_at = models.DateTimeField(blank=True, null=True)
+    recipient = models.ForeignKey(
+        "api.User",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+
+    content = models.JSONField(null=True, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        db_table = "promt_notification"
-        ordering = ["-activity_id"]
+        db_table = "notification"
+        ordering = ["-id"]
         constraints = [
-            models.UniqueConstraint(fields=["recipient", "activity"], name="notification_unique"),
+            models.UniqueConstraint(
+                fields=["activity", "recipient"], name="notification_activity_recipient_unique"
+            ),
         ]
         indexes = [
             models.Index(
-                fields=["recipient", "activity"],
+                fields=["recipient"],
                 condition=Q(read_at__isnull=True),
-                name="notification_unread_idx",
+                name="notification_unread_ix",
             ),
         ]
 
     def __str__(self) -> str:
-        return f"{self.recipient}: {self.activity}"
+        return f"{self.recipient}: {self.activity or 'reminder'}"
 
     @property
     def is_read(self) -> bool:

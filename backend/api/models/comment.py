@@ -1,29 +1,64 @@
-from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
-from api.models.mixins.generic_relation_mixin import GenericRelationMixin
 
+class Comment(models.Model):
+    """
+    Represents a comment on a task or on a project (exactly one of the two); replies point
+    to their parent comment.
+    """
 
-class Comment(GenericRelationMixin):
-    author = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+    task = models.ForeignKey(
+        "api.Task",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="comments",
+        db_index=False,
+    )
+    project = models.ForeignKey(
+        "api.Project",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="comments",
+        db_index=False,
+    )
+    author = models.ForeignKey(
+        "api.OrganizationMember",
+        on_delete=models.PROTECT,
         related_name="comments",
     )
-    parent_comment = models.ForeignKey(
+    parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="replies",
     )
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
-    is_edited = models.BooleanField(default=False)
 
-    def __str__(self) -> str:
-        return f"Comment by {self.author} on {self.content}"
+    content = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "comments"
+        db_table = "comment"
+        ordering = ["created_at", "id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(task__isnull=False, project__isnull=True)
+                    | Q(task__isnull=True, project__isnull=False)
+                ),
+                name="comment_task_xor_project",
+            ),
+            models.CheckConstraint(condition=~Q(content=""), name="comment_content_not_empty"),
+        ]
+        indexes = [
+            models.Index(fields=["task", "created_at"], name="comment_task_ix"),
+            models.Index(fields=["project", "created_at"], name="comment_project_ix"),
+        ]
+
+    def __str__(self) -> str:
+        return f"Comment by {self.author}"
