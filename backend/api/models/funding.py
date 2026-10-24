@@ -1,10 +1,7 @@
-from typing import Any
-
-from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import F, Q
 
-from api.models.status import default_task_status
+from api.models.constants import CURRENCY_CODE
 
 
 class Funding(models.Model):
@@ -17,25 +14,16 @@ class Funding(models.Model):
     organization = models.ForeignKey(
         "api.Organization",
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
         related_name="fundings",
     )
 
-    type = models.CharField(max_length=20, choices=Type.choices, default=Type.INTERNAL)
+    type = models.CharField(max_length=40, choices=Type.choices, default=Type.INTERNAL)
     name = models.CharField(max_length=200)
     funder = models.CharField(max_length=200, blank=True)
     program = models.CharField(max_length=200, blank=True)
     agreement_number = models.CharField(max_length=100, blank=True)
-    amount_total = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(0)],
-    )
+    amount_total = models.DecimalField(max_digits=14, decimal_places=2)
     currency = models.CharField(max_length=3, default="PLN")
-
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     reporting_deadline = models.DateField(null=True, blank=True)
@@ -44,13 +32,18 @@ class Funding(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "promt_funding"
+        db_table = "funding"
+        ordering = ["name", "id"]
         constraints = [
+            models.CheckConstraint(condition=Q(amount_total__gt=0), name="funding_amount_positive"),
+            models.CheckConstraint(
+                condition=Q(currency__regex=CURRENCY_CODE), name="funding_currency_code"
+            ),
             models.CheckConstraint(
                 condition=(
                     Q(start_date__isnull=True)
                     | Q(end_date__isnull=True)
-                    | Q(start_date__lte=F("end_date"))
+                    | Q(end_date__gte=F("start_date"))
                 ),
                 name="funding_dates_ok",
             ),
@@ -58,81 +51,3 @@ class Funding(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.get_type_display()})"
-
-
-class ProjectFunding(models.Model):
-    project = models.ForeignKey(
-        "api.Project", on_delete=models.CASCADE, related_name="project_fundings"
-    )
-    funding = models.ForeignKey(
-        "api.Funding", on_delete=models.CASCADE, related_name="funding_projects"
-    )
-
-    allocation_start = models.DateField(null=True, blank=True)
-    allocation_end = models.DateField(null=True, blank=True)
-    is_primary = models.BooleanField(default=False)
-    note = models.TextField(blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "promt_project_funding"
-        unique_together = ("project", "funding")
-        constraints = [
-            models.CheckConstraint(
-                condition=(
-                    Q(allocation_start__isnull=True)
-                    | Q(allocation_end__isnull=True)
-                    | Q(allocation_start__lte=F("allocation_end"))
-                ),
-                name="projectfunding_dates_ok",
-            ),
-        ]
-
-    def __str__(self) -> str:
-        return f"{self.project.name} ↔ {self.funding.name}"
-
-
-class FundingTask(models.Model):
-    class DefaultPriority(models.IntegerChoices):
-        LOW = 1, "Low"
-        MEDIUM = 2, "Medium"
-        HIGH = 3, "High"
-
-    funding = models.ForeignKey(Funding, on_delete=models.CASCADE, related_name="tasks_blueprint")
-
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    default_status = models.ForeignKey(
-        "api.Status",
-        on_delete=models.PROTECT,
-        blank=True,
-        related_name="funding_task_templates",
-        limit_choices_to={"applies_to": "task"},
-    )
-    default_priority = models.IntegerField(
-        choices=DefaultPriority.choices, default=DefaultPriority.MEDIUM
-    )
-    default_est_hours = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-
-    default_due_days = models.IntegerField(null=True, blank=True)
-
-    mandatory = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = "promt_funding_task"
-
-    def __str__(self) -> str:
-        return f"[{self.funding.name}] {self.title}"
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self._fill_default_status()
-        super().save(*args, **kwargs)
-
-    def clean(self) -> None:
-        super().clean()
-        self._fill_default_status()
-
-    def _fill_default_status(self) -> None:
-        if self.default_status_id is None:
-            self.default_status_id = default_task_status()

@@ -1,18 +1,38 @@
-from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
-from api.models.mixins.generic_relation_mixin import GenericRelationMixin
 
-
-class ActivityLog(GenericRelationMixin):
+class EntityType(models.TextChoices):
     """
-    Represents a single entry in the audit log: who did what to which object and when.
-
-    The entry belongs to a project, to an organization (events outside any
-    project, e.g. a role change) or to neither (platform events such as a
-    login); never to both, because a project already implies its organization.
+    Basic audit messages
     """
+
+    ORGANIZATION = "organization", "Organization"
+    ORGANIZATION_MEMBER = "organization_member", "Organization member"
+    MEMBER_GROUP = "member_group", "Member group"
+    ROLE = "role", "Role"
+    ROLE_ASSIGNMENT = "role_assignment", "Role assignment"
+    TASK_STATUS = "task_status", "Task status"
+    PROJECT = "project", "Project"
+    MILESTONE = "milestone", "Milestone"
+    FUNDING = "funding", "Funding"
+    PROJECT_FUNDING = "project_funding", "Project funding"
+    TASK_TEMPLATE = "task_template", "Task template"
+    TASK = "task", "Task"
+    TASK_ASSIGNMENT = "task_assignment", "Task assignment"
+    TIME_ENTRY = "time_entry", "Time entry"
+    CHECKLIST_ITEM = "checklist_item", "Checklist item"
+    COMMENT = "comment", "Comment"
+    ATTACHMENT = "attachment", "Attachment"
+    EXPENSE = "expense", "Expense"
+
+
+class ActivityLog(models.Model):
+    """
+    Represents one entry of the append-only event log: who did what to which object and when.
+    """
+
+    EntityType = EntityType
 
     class Action(models.TextChoices):
         CREATED = "created", "Created"
@@ -20,60 +40,49 @@ class ActivityLog(GenericRelationMixin):
         DELETED = "deleted", "Deleted"
         STATUS_CHANGED = "status_changed", "Status changed"
         ASSIGNED = "assigned", "Assigned"
+        UNASSIGNED = "unassigned", "Unassigned"
         COMMENTED = "commented", "Commented"
-        MEMBER_ADDED = "member_added", "Member added"
-        MEMBER_REMOVED = "member_removed", "Member removed"
+        MEMBER_STATUS_CHANGED = "member_status_changed", "Member status changed"
         ROLE_GRANTED = "role_granted", "Role granted"
         ROLE_REVOKED = "role_revoked", "Role revoked"
-        DEADLINE_SOON = "deadline_soon", "Deadline soon"
-        LOGIN = "login", "Logged in"
-        LOGIN_FAILED = "login_failed", "Login failed"
+        FUNDING_ATTACHED = "funding_attached", "Funding attached"
 
-    actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="activity_logs",
-    )
     organization = models.ForeignKey(
         "api.Organization",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
+        on_delete=models.PROTECT,
         related_name="activity_logs",
+        db_index=False,
     )
-    project = models.ForeignKey(
-        "api.Project",
+    actor = models.ForeignKey(
+        "api.OrganizationMember",
         on_delete=models.SET_NULL,
-        blank=True,
         null=True,
+        blank=True,
         related_name="activity_logs",
     )
 
-    action = models.CharField(max_length=20, choices=Action.choices)
-    changes = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Changed fields as {field: [old, new]}",
-    )
+    entity_type = models.CharField(max_length=40, choices=EntityType.choices)
+    entity_id = models.BigIntegerField()
+    action = models.CharField(max_length=40, choices=Action.choices)
+    changes = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta(GenericRelationMixin.Meta):
-        db_table = "promt_activity_log"
-        ordering = ["-created_at"]
+    class Meta:
+        db_table = "activity_log"
+        ordering = ["-created_at", "-id"]
         constraints = [
             models.CheckConstraint(
-                name="activity_log_at_most_one_scope",
-                condition=~Q(organization__isnull=False, project__isnull=False),
+                condition=Q(entity_type__in=EntityType.values),
+                name="activity_log_entity_type_valid",
             ),
         ]
-        indexes = GenericRelationMixin.Meta.indexes + [
-            models.Index(fields=["organization", "created_at"]),
-            models.Index(fields=["project", "created_at"]),
-            models.Index(fields=["actor", "created_at"]),
+        indexes = [
+            models.Index(
+                fields=["entity_type", "entity_id", "created_at"], name="activity_log_entity_ix"
+            ),
+            models.Index(fields=["organization", "created_at"], name="activity_log_org_ix"),
         ]
 
     def __str__(self) -> str:
-        return f"{self.actor} {self.action} {self.content_type} #{self.object_id}"
+        return f"{self.actor or 'system'} {self.action} {self.entity_type} #{self.entity_id}"
