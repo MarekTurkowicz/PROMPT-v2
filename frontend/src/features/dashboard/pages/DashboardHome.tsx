@@ -24,7 +24,7 @@ const LS_ACTIVITY28 = "app:activity28";
 
 export default function DashboardHome() {
   const { data: me } = useMeQuery();
-  const display = me?.username ?? "User";
+  const display = me?.email ?? "User";
 
   const avatarUrl = defaultAvatar;
 

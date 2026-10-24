@@ -1,6 +1,4 @@
-from typing import TYPE_CHECKING
-
-from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.db.models import Count, Prefetch, Q, QuerySet
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django_filters.rest_framework import DjangoFilterBackend
@@ -21,6 +19,7 @@ from .models import (
     ProjectFunding,
     Task,
     TaskAssignment,
+    User,
 )
 from .serializers import (
     AdminUserCreateSerializer,
@@ -34,11 +33,6 @@ from .serializers import (
     UserDetailSerializer,
     UserSerializer,
 )
-
-if TYPE_CHECKING:
-    from django.contrib.auth.models import User
-else:
-    User = get_user_model()
 
 # ─────────────────────────────
 # Health + Me
@@ -61,7 +55,6 @@ def me(request: Request) -> Response:
     return Response(
         {
             "id": user.id,
-            "username": user.username,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
@@ -91,13 +84,13 @@ def auth_csrf(request: Request) -> Response:
 @permission_classes([permissions.AllowAny])
 @csrf_protect
 def auth_login(request: Request) -> Response:
-    username = request.data.get("username")
+    email = request.data.get("email")
     password = request.data.get("password")
 
-    if not username or not password:
-        return Response({"detail": "Username and password required"}, status=400)
+    if not email or not password:
+        return Response({"detail": "Email and password required"}, status=400)
 
-    user = authenticate(request, username=username, password=password)
+    user = authenticate(request, email=email, password=password)
     if not user:
         return Response({"detail": "Invalid credentials"}, status=400)
 
@@ -105,7 +98,6 @@ def auth_login(request: Request) -> Response:
     return Response(
         {
             "id": user.id,
-            "username": user.username,
             "email": user.email,
             "is_staff": user.is_staff,
         },
@@ -186,7 +178,7 @@ class ProjectViewSet(viewsets.ModelViewSet[Project]):
     queryset = Project.objects.all().order_by("-created_at")
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
-    search_fields = ["name", "description", "owner__username"]
+    search_fields = ["name", "description", "owner__email"]
     ordering_fields = ["created_at", "start_date", "end_date", "name", "status"]
     ordering = ["-created_at"]
 

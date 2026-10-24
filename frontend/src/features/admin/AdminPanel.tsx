@@ -42,7 +42,6 @@ export default function AdminPanel() {
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
 
   // Form state
-  const [formUsername, setFormUsername] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formFirstName, setFormFirstName] = useState("");
   const [formLastName, setFormLastName] = useState("");
@@ -53,7 +52,6 @@ export default function AdminPanel() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   function resetForm() {
-    setFormUsername("");
     setFormEmail("");
     setFormFirstName("");
     setFormLastName("");
@@ -70,7 +68,6 @@ export default function AdminPanel() {
 
   function openEdit(user: AppUser) {
     setEditingUser(user);
-    setFormUsername(user.username);
     setFormEmail(user.email || "");
     setFormFirstName(user.first_name || "");
     setFormLastName(user.last_name || "");
@@ -91,7 +88,6 @@ export default function AdminPanel() {
 
     if (modalMode === "create") {
       const payload: CreateUserPayload = {
-        username: formUsername,
         email: formEmail,
         first_name: formFirstName,
         last_name: formLastName,
@@ -112,8 +108,6 @@ export default function AdminPanel() {
       }
     } else if (modalMode === "edit" && editingUser) {
       const payload: UpdateUserPayload = {};
-      if (formUsername !== editingUser.username)
-        payload.username = formUsername;
       if (formEmail !== (editingUser.email || "")) payload.email = formEmail;
       if (formFirstName !== (editingUser.first_name || ""))
         payload.first_name = formFirstName;
@@ -159,7 +153,6 @@ export default function AdminPanel() {
     const q = search.toLowerCase();
     const matchesSearch =
       !q ||
-      u.username.toLowerCase().includes(q) ||
       (u.first_name || "").toLowerCase().includes(q) ||
       (u.last_name || "").toLowerCase().includes(q) ||
       (u.email || "").toLowerCase().includes(q);
@@ -313,15 +306,14 @@ export default function AdminPanel() {
                     <td>
                       <div className="ap__user-cell">
                         <div className="ap__user-avatar">
-                          {(u.first_name || u.username)[0]?.toUpperCase()}
+                          {(u.first_name || u.email)[0]?.toUpperCase()}
                         </div>
                         <div>
                           <div className="ap__user-name">
                             {u.first_name && u.last_name
                               ? `${u.first_name} ${u.last_name}`
-                              : u.username}
+                              : u.email}
                           </div>
-                          <div className="ap__user-login">@{u.username}</div>
                         </div>
                       </div>
                     </td>
@@ -395,7 +387,7 @@ export default function AdminPanel() {
               <h2 id="modal-title" className="ap__modal-title">
                 {modalMode === "create"
                   ? "Nowy użytkownik"
-                  : `Edytuj: ${editingUser?.username}`}
+                  : `Edytuj: ${editingUser?.email}`}
               </h2>
               <button
                 className="ap__modal-close"
@@ -409,21 +401,11 @@ export default function AdminPanel() {
             <form className="ap__form" onSubmit={handleSubmit}>
               <div className="ap__form-grid">
                 <div className="ap__field">
-                  <label htmlFor="field-username">Login *</label>
-                  <input
-                    id="field-username"
-                    required
-                    value={formUsername}
-                    onChange={(e) => setFormUsername(e.target.value)}
-                    placeholder="np. jkowalski"
-                  />
-                </div>
-
-                <div className="ap__field">
-                  <label htmlFor="field-email">E-mail</label>
+                  <label htmlFor="field-email">E-mail *</label>
                   <input
                     id="field-email"
                     type="email"
+                    required
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="jan@example.com"

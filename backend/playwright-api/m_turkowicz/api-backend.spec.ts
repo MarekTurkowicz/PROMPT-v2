@@ -24,15 +24,14 @@ async function createTestUser(
     phone?: string;
     avatar_url?: string;
   } = {},
-): Promise<{ id: number; username: string }> {
+): Promise<{ id: number; email: string }> {
   const { roleSuffix = "member", phone = "", avatar_url = "" } = opts;
-  const username = `playwright_turek_${roleSuffix}_${Date.now()}`;
+  const email = `playwright_turek_${roleSuffix}_${Date.now()}@testpromt.pl`;
 
   const response = await request.post(USERS_URL, {
     headers: { "X-CSRFToken": csrfToken },
     data: {
-      username,
-      email: `${username}@testpromt.pl`,
+      email,
       first_name: "Playwright",
       last_name: "Turkowicz",
       password: "SecureTestPass123!",
@@ -45,20 +44,20 @@ async function createTestUser(
   if (!response.ok()) {
     const body = await response.text();
     throw new Error(
-      `Nie można stworzyć użytkownika pomocniczego '${username}'. ` +
+      `Nie można stworzyć użytkownika pomocniczego '${email}'. ` +
         `Status: ${response.status()}, Odpowiedź: ${body}`,
     );
   }
 
   const body = await response.json();
-  return { id: body.id as number, username };
+  return { id: body.id as number, email };
 }
 
 // ── UWAGA: UserViewSet ma pagination_class = None, więc /api/users/ zwraca
 //          PŁASKĄ TABLICĘ, a nie obiekt {count, results}. ──────────────────
 
 test(
-  "GET /api/users/ — admin otrzymuje 200 z płaską tablicą użytkowników, każdy ma 'id', 'username', 'email' oraz zagnieżdżone pole 'profile'",
+  "GET /api/users/ — admin otrzymuje 200 z płaską tablicą użytkowników, każdy ma 'id', 'email' oraz zagnieżdżone pole 'profile'",
   async ({ request }) => {
     const response = await request.get(USERS_URL);
 
@@ -82,7 +81,6 @@ test(
     const firstUser = body[0];
 
     expect(firstUser, "Obiekt użytkownika musi mieć pole 'id'").toHaveProperty("id");
-    expect(firstUser, "Obiekt użytkownika musi mieć pole 'username'").toHaveProperty("username");
     expect(firstUser, "Obiekt użytkownika musi mieć pole 'email'").toHaveProperty("email");
     expect(firstUser, "Obiekt użytkownika musi mieć zagnieżdżone pole 'profile'").toHaveProperty("profile");
 
@@ -91,8 +89,8 @@ test(
       `Pole 'id' powinno być dodatnią liczbą całkowitą, otrzymano: ${firstUser.id}`,
     ).toBe(true);
     expect(
-      typeof firstUser.username === "string" && firstUser.username.length > 0,
-      `Pole 'username' powinno być niepustym stringiem, otrzymano: ${firstUser.username}`,
+      typeof firstUser.email === "string" && firstUser.email.length > 0,
+      `Pole 'email' powinno być niepustym stringiem, otrzymano: ${firstUser.email}`,
     ).toBe(true);
 
     expect(firstUser.profile, "Pole 'profile' powinno mieć pole 'role'").toHaveProperty("role");
@@ -116,11 +114,8 @@ test(
   async ({ request }) => {
     const csrfToken = await getCsrfToken(request);
     const uniqueTs = Date.now();
-    const username = `playwright_turek_lifecycle_${uniqueTs}`;
-
     const createPayload = {
-      username,
-      email: `${username}@testpromt.pl`,
+      email: `playwright_turek_lifecycle_${uniqueTs}@testpromt.pl`,
       first_name: "Marek",
       last_name: "Testowy",
       password: "TurkowiczTestPass!99",
@@ -141,7 +136,6 @@ test(
 
     expect(created).toHaveProperty("id");
     expect(typeof created.id === "number" && created.id > 0).toBe(true);
-    expect(created.username).toBe(username);
     expect(created.email).toBe(createPayload.email);
     // Rola jest zagnieżdżona w profile (UserSerializer zwraca profile.role)
     expect(
@@ -170,7 +164,6 @@ test(
       fetched.profile?.role,
       "Zmiana roli powinna być persystentna — GET po PATCH powinien zwrócić 'manager' w profile.role",
     ).toBe("manager");
-    expect(fetched.username).toBe(username);
     expect(fetched.email).toBe(createPayload.email);
 
     const deleteResponse = await request.delete(`${USERS_URL}${userId}/`, {
@@ -191,17 +184,16 @@ test(
 );
 
 test(
-  "POST /api/users/ z już istniejącą nazwą użytkownika — backend zwraca 400 z informacją o duplikacie",
+  "POST /api/users/ z już istniejącym adresem e-mail — backend zwraca 400 z informacją o duplikacie",
   async ({ request }) => {
     const csrfToken = await getCsrfToken(request);
-    const { id: userId, username } = await createTestUser(request, csrfToken);
+    const { id: userId, email } = await createTestUser(request, csrfToken);
 
     try {
       const duplicateResponse = await request.post(USERS_URL, {
         headers: { "X-CSRFToken": csrfToken },
         data: {
-          username,
-          email: `duplicate_${Date.now()}@testpromt.pl`,
+          email,
           password: "AnyPassword123!",
           role: "member",
         },
@@ -209,22 +201,22 @@ test(
 
       expect(
         duplicateResponse.status(),
-        `Drugi POST z tym samym username '${username}' powinien zwrócić 400 Bad Request. Otrzymano: ${duplicateResponse.status()}`,
+        `Drugi POST z tym samym e-mailem '${email}' powinien zwrócić 400 Bad Request. Otrzymano: ${duplicateResponse.status()}`,
       ).toBe(400);
 
       const errorBody = await duplicateResponse.json();
       expect(errorBody, "Odpowiedź błędu powinna być obiektem JSON").toBeTruthy();
 
       const errorStr = JSON.stringify(errorBody).toLowerCase();
-      const mentionsUsername =
-        errorStr.includes("username") ||
+      const mentionsEmail =
+        errorStr.includes("email") ||
         errorStr.includes("already exists") ||
         errorStr.includes("musi być unikatow") ||
-        errorStr.includes("użytkownik o tej nazwie");
+        errorStr.includes("użytkownik o tym adresie e-mail");
 
       expect(
-        mentionsUsername,
-        `Odpowiedź błędu powinna zawierać informację o duplikacie username. ` +
+        mentionsEmail,
+        `Odpowiedź błędu powinna zawierać informację o duplikacie e-maila. ` +
           `Otrzymana odpowiedź: ${JSON.stringify(errorBody)}`,
       ).toBe(true);
     } finally {
@@ -256,7 +248,6 @@ test(
 
     expect(detail).toHaveProperty("id");
     expect(detail.id).toBe(firstUserId);
-    expect(detail).toHaveProperty("username");
     expect(detail).toHaveProperty("email");
     expect(detail).toHaveProperty("profile");
     expect(detail.profile).toHaveProperty("role");
@@ -278,7 +269,7 @@ test(
 );
 
 test(
-  "GET /api/auth/me/ — zwraca dane zalogowanego admina z polami id, username, email, is_staff, role",
+  "GET /api/auth/me/ — zwraca dane zalogowanego admina z polami id, email, is_staff, role",
   async ({ request }) => {
     const response = await request.get(ME_URL);
 
@@ -290,7 +281,6 @@ test(
     const me = await response.json();
 
     expect(me).toHaveProperty("id");
-    expect(me).toHaveProperty("username");
     expect(me).toHaveProperty("email");
     expect(me).toHaveProperty("is_staff");
     expect(me).toHaveProperty("role");
@@ -305,8 +295,8 @@ test(
       `Pole 'id' powinno być dodatnim int, otrzymano: ${me.id}`,
     ).toBe(true);
     expect(
-      typeof me.username === "string" && me.username.length > 0,
-      `Pole 'username' powinno być niepustym stringiem, otrzymano: ${me.username}`,
+      typeof me.email === "string" && me.email.length > 0,
+      `Pole 'email' powinno być niepustym stringiem, otrzymano: ${me.email}`,
     ).toBe(true);
 
     expect(me, "BEZPIECZEŃSTWO: /api/auth/me/ nie może ujawniać hasła").not.toHaveProperty("password");
@@ -355,14 +345,13 @@ test(
 );
 
 test(
-  "POST /api/users/ bez wymaganego pola 'username' — backend zwraca 400 Bad Request",
+  "POST /api/users/ bez wymaganego pola 'email' — backend zwraca 400 Bad Request",
   async ({ request }) => {
     const csrfToken = await getCsrfToken(request);
 
     const response = await request.post(USERS_URL, {
       headers: { "X-CSRFToken": csrfToken },
       data: {
-        email: "noname@testpromt.pl",
         password: "SomePassword123!",
         role: "member",
       },
@@ -370,14 +359,14 @@ test(
 
     expect(
       response.status(),
-      `POST bez pola 'username' powinien zwrócić 400 Bad Request. Otrzymano: ${response.status()}`,
+      `POST bez pola 'email' powinien zwrócić 400 Bad Request. Otrzymano: ${response.status()}`,
     ).toBe(400);
 
     const errorBody = await response.json();
     const errorStr = JSON.stringify(errorBody).toLowerCase();
     expect(
-      errorStr.includes("username") || errorStr.includes("wymagane") || errorStr.includes("required"),
-      `Odpowiedź błędu powinna wskazywać na brakujące pole 'username'. Otrzymano: ${JSON.stringify(errorBody)}`,
+      errorStr.includes("email") || errorStr.includes("wymagane") || errorStr.includes("required"),
+      `Odpowiedź błędu powinna wskazywać na brakujące pole 'email'. Otrzymano: ${JSON.stringify(errorBody)}`,
     ).toBe(true);
   },
 );

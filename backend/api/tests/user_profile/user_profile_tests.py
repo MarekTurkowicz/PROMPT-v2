@@ -161,5 +161,5 @@ def test_user_profile_user_when_profile_is_created_stores_passed_user_reference(
 
 
 @pytest.mark.django_db
-def test_user_profile_str_returns_username(user):
-    assert str(user.profile) == user.username
+def test_user_profile_str_returns_email(user):
+    assert str(user.profile) == user.email

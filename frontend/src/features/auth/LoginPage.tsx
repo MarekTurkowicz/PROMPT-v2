@@ -34,7 +34,7 @@ export default function LoginPage() {
     setFormError(null);
 
     const fd = new FormData(e.currentTarget);
-    const username = String(fd.get("username") ?? "");
+    const email = String(fd.get("email") ?? "");
     const password = String(fd.get("password") ?? "");
 
     const fails = Number(sessionStorage.getItem(FAIL_KEY) ?? 0);
@@ -45,7 +45,7 @@ export default function LoginPage() {
     }
 
     try {
-      await login({ username, password }).unwrap();
+      await login({ email, password }).unwrap();
       sessionStorage.removeItem(FAIL_KEY);
       toast.success("Zalogowano!");
       navigate("/dashboard", { replace: true });
@@ -58,8 +58,8 @@ export default function LoginPage() {
         setFormError("Zbyt wiele prób logowania. Spróbuj za chwilę.");
         toast.error("Zbyt wiele prób. Spróbuj za chwilę.");
       } else if (status === 400) {
-        setFormError("Nieprawidłowy login lub hasło.");
-        toast.error("Nieprawidłowy login lub hasło.");
+        setFormError("Nieprawidłowy e-mail lub hasło.");
+        toast.error("Nieprawidłowy e-mail lub hasło.");
       } else {
         setFormError("Logowanie nieudane. Spróbuj ponownie.");
         toast.error("Logowanie nieudane.");
@@ -95,18 +95,19 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
           <div>
             <label
-              htmlFor="username"
+              htmlFor="email"
               style={{ display: "block", fontSize: 14, marginBottom: 6 }}
             >
-              Login
+              E-mail
             </label>
             <input
-              id="username"
-              name="username"
+              id="email"
+              name="email"
+              type="email"
               required
-              autoComplete="username"
+              autoComplete="email"
               style={inputStyle}
-              placeholder="np. pm"
+              placeholder="np. pm@example.com"
             />
           </div>
 

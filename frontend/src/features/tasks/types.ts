@@ -5,8 +5,7 @@ export type TaskPriority = 1 | 2 | 3;
 
 export interface TaskAssignee {
   id: number;
-  username: string;
-  email?: string;
+  email: string;
   profile?: UserProfile;
   avatar_url?: string;
 }

@@ -24,18 +24,16 @@ def run(self: BaseCommand) -> None:
     Create a superuser if not exists, or update their password if they do.
 
     Environment variables in use:
-        DJANGO_SUPERUSER_USERNAME: superuser username (default: admin)
-        DJANGO_SUPERUSER_EMAIL: superuser email (default: admin@example.com)
+        DJANGO_SUPERUSER_EMAIL: superuser email, used as the login (default: admin@example.com)
         DJANGO_SUPERUSER_PASSWORD: superuser password (default: admin)
 
     Prints:
-        "✅ Superuser created! Username: <username>" if created
+        "✅ Superuser created! Email: <email>" if created
         "🔄 Superuser password updated." if already exists
     """
     user = get_user_model()
-    username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")
     password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")
-    email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
+    email = user.objects.normalize_email(os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com"))
 
     counter_all_logs = 2
     counter_logs = 1
@@ -46,16 +44,15 @@ def run(self: BaseCommand) -> None:
     )
     counter_logs += 1
 
-    if not user.objects.filter(username=username).exists():
-        user.objects.create_superuser(username, email, password)
+    if not user.objects.filter(email=email).exists():
+        user.objects.create_superuser(email, password)
         print(
-            f"[superuser creation {counter_logs}/{counter_all_logs}]"
-            "✅ Superuser created! Username: ",
-            username,
+            f"[superuser creation {counter_logs}/{counter_all_logs}]✅ Superuser created! Email: ",
+            email,
         )
     else:
         # Aktualizujemy hasło żeby zawsze było zgodne z .env
-        existing = user.objects.get(username=username)
+        existing = user.objects.get(email=email)
         existing.set_password(password)
         existing.save()
         print(

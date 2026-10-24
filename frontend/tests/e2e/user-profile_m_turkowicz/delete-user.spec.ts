@@ -11,7 +11,7 @@ test("GIVEN admin i nowo utworzony user WHEN klika usuń i potwierdza THEN user 
   await page.click("#create-user-btn");
   await expect(page.locator('[role="dialog"]')).toBeVisible();
 
-  await page.fill("#field-username", userToDelete);
+  await page.fill("#field-email", `${userToDelete}@example.com`);
   await page.fill("#field-password", "haslo123");
   await page.click("#submit-user-btn");
 

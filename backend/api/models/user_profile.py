@@ -34,7 +34,7 @@ class UserProfile(models.Model):
         db_table = "promt_user_profile"
 
     def __str__(self) -> str:
-        return self.user.username
+        return self.user.email
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.full_clean()

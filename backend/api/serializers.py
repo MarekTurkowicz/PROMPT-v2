@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Q, QuerySet
@@ -17,13 +16,9 @@ from .models import (
     Task,
     TaskAssignment,
     TaskScope,
+    User,
     UserProfile,
 )
-
-if TYPE_CHECKING:
-    from django.contrib.auth.models import User
-else:
-    User = get_user_model()
 
 
 def builtin_task_statuses() -> QuerySet[Status]:
@@ -210,7 +205,6 @@ class TaskSerializer(serializers.ModelSerializer[Task]):
         return [
             {
                 "id": u.id,
-                "username": u.username,
                 "first_name": u.first_name,
                 "last_name": u.last_name,
                 "email": u.email,
@@ -347,10 +341,9 @@ class UserSerializer(serializers.ModelSerializer[User]):
         model = User
         fields = [
             "id",
-            "username",
+            "email",
             "first_name",
             "last_name",
-            "email",
             "profile",
             "tasks_count",
             "done_tasks_count",
@@ -394,8 +387,8 @@ class UserDetailSerializer(UserSerializer):
 # ---------- TASK ASSIGNMENT ----------
 class TaskAssignmentSerializer(serializers.ModelSerializer[TaskAssignment]):
     user_detail = UserSerializer(source="user", read_only=True)
-    assigned_by_username = serializers.CharField(
-        source="assigned_by.username",
+    assigned_by_email = serializers.EmailField(
+        source="assigned_by.email",
         read_only=True,
     )
 
@@ -407,7 +400,7 @@ class TaskAssignmentSerializer(serializers.ModelSerializer[TaskAssignment]):
             "user",
             "user_detail",
             "assigned_by",
-            "assigned_by_username",
+            "assigned_by_email",
             "assigned_at",
             "started_at",
             "finished_at",
@@ -446,13 +439,23 @@ def _set_role(actor: User, organization: Organization, user: User, legacy_role: 
         raise serializers.ValidationError({"role": exc.messages}) from exc
 
 
+def _unique_email(value: str, exclude: User | None = None) -> str:
+    """Normalizes the email (login, case-insensitive) and rejects one already taken."""
+    email = User.objects.normalize_email(value)
+    others = User.objects.filter(email=email)
+    if exclude is not None:
+        others = others.exclude(pk=exclude.pk)
+    if others.exists():
+        raise serializers.ValidationError("Użytkownik o tym adresie e-mail już istnieje.")
+    return email
+
+
 class AdminUserCreateSerializer(serializers.Serializer[User]):
     """
     Tworzy nowego User + UserProfile w jednej transakcji.
     """
 
-    username = serializers.CharField(max_length=150)
-    email = serializers.EmailField(required=False, allow_blank=True, default="")
+    email = serializers.EmailField()
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
     password = serializers.CharField(write_only=True, min_length=6)
@@ -463,10 +466,8 @@ class AdminUserCreateSerializer(serializers.Serializer[User]):
     phone = serializers.CharField(max_length=16, required=False, allow_blank=True, default="")
     avatar_url = serializers.URLField(required=False, allow_blank=True, default="")
 
-    def validate_username(self, value: str) -> str:
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Użytkownik o tej nazwie już istnieje.")
-        return value
+    def validate_email(self, value: str) -> str:
+        return _unique_email(value)
 
     def create(self, validated_data: dict[str, Any]) -> User:
         role = validated_data.pop("role", "member")
@@ -476,8 +477,7 @@ class AdminUserCreateSerializer(serializers.Serializer[User]):
 
         with transaction.atomic():
             user = User.objects.create_user(
-                username=validated_data["username"],
-                email=validated_data.get("email", ""),
+                email=validated_data["email"],
                 first_name=validated_data.get("first_name", ""),
                 last_name=validated_data.get("last_name", ""),
                 password=password,
@@ -504,8 +504,7 @@ class AdminUserUpdateSerializer(serializers.Serializer[User]):
     Aktualizuje User + UserProfile.
     """
 
-    username = serializers.CharField(max_length=150, required=False)
-    email = serializers.EmailField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, min_length=6, required=False)
@@ -516,13 +515,8 @@ class AdminUserUpdateSerializer(serializers.Serializer[User]):
     phone = serializers.CharField(max_length=16, required=False, allow_blank=True)
     avatar_url = serializers.URLField(required=False, allow_blank=True)
 
-    def validate_username(self, value: str) -> str:
-        others = User.objects.filter(username=value)
-        if self.instance is not None:
-            others = others.exclude(pk=self.instance.pk)
-        if others.exists():
-            raise serializers.ValidationError("Użytkownik o tej nazwie już istnieje.")
-        return value
+    def validate_email(self, value: str) -> str:
+        return _unique_email(value, exclude=self.instance)
 
     def update(self, instance: User, validated_data: dict[str, Any]) -> User:
         role = validated_data.pop("role", None)
@@ -531,7 +525,7 @@ class AdminUserUpdateSerializer(serializers.Serializer[User]):
         password = validated_data.pop("password", None)
 
         with transaction.atomic():
-            for field in ("username", "email", "first_name", "last_name"):
+            for field in ("email", "first_name", "last_name"):
                 if field in validated_data:
                     setattr(instance, field, validated_data[field])
             if password:

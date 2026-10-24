@@ -21,8 +21,8 @@ def role(code):
     return Role.objects.get(organization__isnull=True, code=code)
 
 
-def member(org, username, org_role=None):
-    user = User.objects.create_user(username=username, password="x" * 12)
+def member(org, name, org_role=None):
+    user = User.objects.create_user(email=f"{name}@example.com", password="x" * 12)
     OrganizationMember.objects.create(organization=org, user=user)
     if org_role:
         RoleAssignment.objects.create(role=role(org_role), user=user, organization=org)
@@ -65,8 +65,12 @@ def test_subteam_member_inherits_roles_of_all_parent_teams(org, project, other_p
     kadry_waw = Team.objects.create(name="Kadry Warszawa", parent=kadry)
     rekrutacja = Team.objects.create(name="Rekrutacja WAW", parent=kadry_waw)
     RoleAssignment.objects.create(role=role(access.ORG_ROLE_VIEWER), team=kadry, organization=org)
-    RoleAssignment.objects.create(role=role("project_member"), team=kadry_waw, project=other_project)
-    RoleAssignment.objects.create(role=role(access.PROJECT_ROLE_ADMIN), team=rekrutacja, project=project)
+    RoleAssignment.objects.create(
+        role=role("project_member"), team=kadry_waw, project=other_project
+    )
+    RoleAssignment.objects.create(
+        role=role(access.PROJECT_ROLE_ADMIN), team=rekrutacja, project=project
+    )
     ania = member(org, "ania")
     bartek = member(org, "bartek")
     TeamMember.objects.create(team=rekrutacja, user=ania)
@@ -143,7 +147,7 @@ def test_nobody_changes_own_role(org):
 
 def test_last_admin_cannot_be_removed(org):
     admin = member(org, "admin", access.ORG_ROLE_ADMIN)
-    root = User.objects.create_superuser(username="root", password="x" * 12)
+    root = User.objects.create_superuser(email="root@example.com", password="x" * 12)
 
     with pytest.raises(ValidationError):
         access.set_organization_role(root, org, admin, access.ORG_ROLE_MEMBER)

@@ -284,7 +284,7 @@ export default function ProjectTimelineTab() {
       for (const a of t.assignees ?? []) {
         if (typeof a.id !== "number") continue;
         if (!map.has(a.id)) {
-          const name = a.username ?? "Użytkownik";
+          const name = a.email ?? "Użytkownik";
           map.set(a.id, { id: a.id, name });
         }
       }

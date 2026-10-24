@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.db.models import QuerySet
 from django.forms import BaseInlineFormSet, ModelForm
 from django.http import HttpRequest
@@ -27,6 +28,7 @@ from .models import (
     TaskScope,
     Team,
     TeamMember,
+    User,
     UserProfile,
 )
 
@@ -180,7 +182,7 @@ class ProjectAdmin(admin.ModelAdmin[Project]):
         "end_date",
         "created_at",
     )
-    search_fields = ("name", "description", "owner__username")
+    search_fields = ("name", "description", "owner__email")
     list_filter = ("status", ("owner", admin.RelatedOnlyFieldListFilter))
     ordering = ("-created_at",)
     inlines = [ProjectFundingInline]
@@ -248,10 +250,45 @@ class ProjectFundingAdmin(admin.ModelAdmin[ProjectFunding]):
     ordering = ("-created_at",)
 
 
+@admin.register(User)
+class UserAdmin(DjangoUserAdmin[User]):
+    """Django's UserAdmin with the email as the login instead of username."""
+
+    ordering = ("email",)
+    list_display = ("email", "first_name", "last_name", "is_staff", "is_active")
+    search_fields = ("email", "first_name", "last_name")
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        ("Personal info", {"fields": ("first_name", "last_name")}),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        ("Important dates", {"fields": ("last_login", "date_joined")}),
+    )
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "usable_password", "password1", "password2"),
+            },
+        ),
+    )
+
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin[UserProfile]):
     list_display = ("user", "phone")
-    search_fields = ("user__username",)
+    search_fields = ("user__email",)
 
 
 @admin.register(TaskAssignment)
@@ -260,7 +297,7 @@ class TaskAssignmentAdmin(admin.ModelAdmin[TaskAssignment]):
     list_filter = ("assigned_by", "user")
     search_fields = (
         "task__title",
-        "user__username",
+        "user__email",
         "user__first_name",
         "user__last_name",
     )
@@ -278,7 +315,7 @@ class OrganizationAdmin(admin.ModelAdmin[Organization]):
 class OrganizationMemberAdmin(admin.ModelAdmin[OrganizationMember]):
     list_display = ("organization", "user", "is_active", "invited_by", "joined_at")
     list_filter = ("is_active", ("organization", admin.RelatedOnlyFieldListFilter))
-    search_fields = ("organization__name", "user__username")
+    search_fields = ("organization__name", "user__email")
 
 
 @admin.register(Permission)
@@ -318,7 +355,7 @@ class TeamAdmin(admin.ModelAdmin[Team]):
 class RoleAssignmentAdmin(admin.ModelAdmin[RoleAssignment]):
     list_display = ("role", "user", "team", "organization", "project", "granted_by", "created_at")
     list_filter = ("role",)
-    search_fields = ("user__username", "team__name")
+    search_fields = ("user__email", "team__name")
 
 
 @admin.register(Status)
@@ -360,7 +397,7 @@ class ChecklistAdmin(admin.ModelAdmin[Checklist]):
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin[Notification]):
     list_display = ("recipient", "activity", "read_at")
-    search_fields = ("recipient__username",)
+    search_fields = ("recipient__email",)
 
 
 @admin.register(ActivityLog)
@@ -375,4 +412,4 @@ class ActivityLogAdmin(admin.ModelAdmin[ActivityLog]):
         "project",
     )
     list_filter = ("action", ("project", admin.RelatedOnlyFieldListFilter))
-    search_fields = ("actor__username",)
+    search_fields = ("actor__email",)

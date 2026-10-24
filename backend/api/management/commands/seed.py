@@ -1,9 +1,8 @@
 import random
 from datetime import timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from django.utils import timezone
@@ -23,13 +22,10 @@ from api.models import (
     Task,
     TaskAssignment,
     TaskScope,
+    User,
     UserProfile,
 )
 
-if TYPE_CHECKING:
-    from django.contrib.auth.models import User
-else:
-    User = get_user_model()
 fake = Faker("pl_PL")
 
 
@@ -98,7 +94,7 @@ class Command(BaseCommand):
         Project.objects.all().delete()
         Funding.objects.all().delete()
 
-        demo_users = User.objects.filter(username__startswith="demo_")
+        demo_users = User.objects.filter(email__startswith="demo_")
         UserProfile.objects.filter(user__in=demo_users).delete()
         demo_users.delete()
 
@@ -109,11 +105,9 @@ class Command(BaseCommand):
         users = []
 
         for i in range(count):
-            username = f"demo_{i + 1}"
             user, created = User.objects.get_or_create(
-                username=username,
+                email=f"demo_{i + 1}@example.com",
                 defaults={
-                    "email": f"{username}@example.com",
                     "first_name": fake.first_name(),
                     "last_name": fake.last_name(),
                     "is_staff": i < 2,
