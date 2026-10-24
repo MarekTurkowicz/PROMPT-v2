@@ -1,48 +1,49 @@
-from django.conf import settings
 from django.db import models
+from django.db.models import F, Q
 
 
 class TaskAssignment(models.Model):
     """
-    Represents the assignment of tasks to users, including who assigned the task,
-    when it was assigned, start and finish times, and worked hours.
+    Represents a member working on a task: who assigned them and when the work started and ended.
     """
 
     task = models.ForeignKey(
-        "Task",
+        "api.Task",
         on_delete=models.CASCADE,
         related_name="assignments",
+        db_index=False,
     )
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+    member = models.ForeignKey(
+        "api.OrganizationMember",
+        on_delete=models.PROTECT,
         related_name="task_assignments",
     )
     assigned_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        "api.OrganizationMember",
         on_delete=models.SET_NULL,
-        blank=True,
         null=True,
-        related_name="assigned_tasks_made",
+        blank=True,
+        related_name="task_assignments_made",
     )
 
     assigned_at = models.DateTimeField(auto_now_add=True)
-    started_at = models.DateTimeField(blank=True, null=True)
-    finished_at = models.DateTimeField(blank=True, null=True)
-
-    worked_hours = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Real worked hours on the task in hours",
-    )
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        db_table = "promt_task_assignment"
-        unique_together = ("task", "user")
+        db_table = "task_assignment"
         ordering = ["-assigned_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["task", "member"], name="task_assignment_unique"),
+            models.CheckConstraint(
+                condition=(
+                    Q(started_at__isnull=True)
+                    | Q(finished_at__isnull=True)
+                    | Q(finished_at__gte=F("started_at"))
+                ),
+                name="task_assignment_dates_ok",
+            ),
+        ]
 
     def __str__(self) -> str:
-        return f"{self.user} -> {self.task}"
+        return f"{self.member} -> {self.task}"
