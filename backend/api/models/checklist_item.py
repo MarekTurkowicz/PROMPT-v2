@@ -20,7 +20,7 @@ class ChecklistItem(models.Model):
     order = models.PositiveSmallIntegerField(default=0)
     assignee = models.ForeignKey(
         "api.OrganizationMember",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="checklist_items",
@@ -34,6 +34,7 @@ class ChecklistItem(models.Model):
     )
     done_at = models.DateTimeField(null=True, blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

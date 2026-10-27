@@ -4,12 +4,15 @@ from django.db.models import F, Q
 from api.models.constants import CURRENCY_CODE
 
 
+class FundingType(models.TextChoices):
+    GRANT = "grant", "Grant"
+    SPONSORSHIP = "sponsorship", "Sponsoring"
+    DONATION = "donation", "Darowizna"
+    INTERNAL = "internal", "Wewnętrzne"
+
+
 class Funding(models.Model):
-    class Type(models.TextChoices):
-        GRANT = "grant", "Grant"
-        SPONSORSHIP = "sponsorship", "Sponsoring"
-        DONATION = "donation", "Darowizna"
-        INTERNAL = "internal", "Wewnętrzne"
+    Type = FundingType
 
     organization = models.ForeignKey(
         "api.Organization",
@@ -17,7 +20,7 @@ class Funding(models.Model):
         related_name="fundings",
     )
 
-    type = models.CharField(max_length=40, choices=Type.choices, default=Type.INTERNAL)
+    type = models.CharField(max_length=40, choices=FundingType.choices, default=Type.INTERNAL)
     name = models.CharField(max_length=200)
     funder = models.CharField(max_length=200, blank=True)
     program = models.CharField(max_length=200, blank=True)
@@ -35,6 +38,9 @@ class Funding(models.Model):
         db_table = "funding"
         ordering = ["name", "id"]
         constraints = [
+            models.CheckConstraint(
+                condition=Q(type__in=FundingType.values), name="funding_type_valid"
+            ),
             models.CheckConstraint(condition=Q(amount_total__gt=0), name="funding_amount_positive"),
             models.CheckConstraint(
                 condition=Q(currency__regex=CURRENCY_CODE), name="funding_currency_code"
