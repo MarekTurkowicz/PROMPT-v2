@@ -27,25 +27,27 @@ class EntityType(models.TextChoices):
     EXPENSE = "expense", "Expense"
 
 
+class ActivityAction(models.TextChoices):
+    CREATED = "created", "Created"
+    UPDATED = "updated", "Updated"
+    DELETED = "deleted", "Deleted"
+    STATUS_CHANGED = "status_changed", "Status changed"
+    ASSIGNED = "assigned", "Assigned"
+    UNASSIGNED = "unassigned", "Unassigned"
+    COMMENTED = "commented", "Commented"
+    MEMBER_STATUS_CHANGED = "member_status_changed", "Member status changed"
+    ROLE_GRANTED = "role_granted", "Role granted"
+    ROLE_REVOKED = "role_revoked", "Role revoked"
+    FUNDING_ATTACHED = "funding_attached", "Funding attached"
+
+
 class ActivityLog(models.Model):
     """
     Represents one entry of the append-only event log: who did what to which object and when.
     """
 
     EntityType = EntityType
-
-    class Action(models.TextChoices):
-        CREATED = "created", "Created"
-        UPDATED = "updated", "Updated"
-        DELETED = "deleted", "Deleted"
-        STATUS_CHANGED = "status_changed", "Status changed"
-        ASSIGNED = "assigned", "Assigned"
-        UNASSIGNED = "unassigned", "Unassigned"
-        COMMENTED = "commented", "Commented"
-        MEMBER_STATUS_CHANGED = "member_status_changed", "Member status changed"
-        ROLE_GRANTED = "role_granted", "Role granted"
-        ROLE_REVOKED = "role_revoked", "Role revoked"
-        FUNDING_ATTACHED = "funding_attached", "Funding attached"
+    Action = ActivityAction
 
     organization = models.ForeignKey(
         "api.Organization",
@@ -55,7 +57,7 @@ class ActivityLog(models.Model):
     )
     actor = models.ForeignKey(
         "api.OrganizationMember",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="activity_logs",
@@ -63,7 +65,7 @@ class ActivityLog(models.Model):
 
     entity_type = models.CharField(max_length=40, choices=EntityType.choices)
     entity_id = models.BigIntegerField()
-    action = models.CharField(max_length=40, choices=Action.choices)
+    action = models.CharField(max_length=40, choices=ActivityAction.choices)
     changes = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -75,6 +77,10 @@ class ActivityLog(models.Model):
             models.CheckConstraint(
                 condition=Q(entity_type__in=EntityType.values),
                 name="activity_log_entity_type_valid",
+            ),
+            models.CheckConstraint(
+                condition=Q(action__in=ActivityAction.values),
+                name="activity_log_action_valid",
             ),
         ]
         indexes = [
