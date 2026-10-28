@@ -51,7 +51,7 @@ class Comment(models.Model):
                     Q(task__isnull=False, project__isnull=True)
                     | Q(task__isnull=True, project__isnull=False)
                 ),
-                name="comment_task_xor_project",
+                name="comment_one_of_task_project",
             ),
             models.CheckConstraint(condition=~Q(content=""), name="comment_content_not_empty"),
         ]

@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q
 
-from api.models.constants import Priority
+from api.constants import Priority
 
 
 class TaskTemplate(models.Model):

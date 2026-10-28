@@ -1,8 +1,9 @@
 from typing import Any, ClassVar
 
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.db.models.functions import Lower
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager["User"]):
@@ -46,19 +47,30 @@ class UserManager(BaseUserManager["User"]):
         return self._create_user(email, password, **extra_fields)
 
 
-class User(AbstractUser):
+class User(AbstractBaseUser):
     """
     One account per person, regardless of how many organizations they belong to.
     The email is the login; organization-specific data lives in OrganizationMember.
+
+    Built on AbstractBaseUser without Django's PermissionsMixin: permissions come from
+    ``role`` / ``role_assignment``, so the ``user_groups`` and ``user_user_permissions``
+    tables are not created. ``is_staff`` / ``is_superuser`` only open the Django admin.
+    ``password`` and ``last_login`` come from AbstractBaseUser.
     """
 
-    username = None  # type: ignore[assignment]
     email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(default=timezone.now)
 
+    EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: ClassVar[list[str]] = []
 
-    objects: ClassVar[UserManager] = UserManager()  # type: ignore[assignment]
+    objects: ClassVar[UserManager] = UserManager()
 
     class Meta:
         db_table = "user"
@@ -71,6 +83,19 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.email
+
+    def get_full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}".strip()
+
+    def get_short_name(self) -> str:
+        return self.first_name
+
+    # The Django admin asks these two; application permissions come from role_assignment.
+    def has_perm(self, perm: str, obj: Any = None) -> bool:
+        return self.is_active and self.is_superuser
+
+    def has_module_perms(self, app_label: str) -> bool:
+        return self.is_active and self.is_superuser
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.email = User.objects.normalize_email(self.email)

@@ -39,7 +39,7 @@ class TaskStatus(models.Model):
 
     class Meta:
         db_table = "task_status"
-        ordering = ["position", "id"]
+        ordering = ["position", "name", "id"]
         constraints = [
             models.CheckConstraint(
                 condition=Q(category__in=StatusCategory.values),

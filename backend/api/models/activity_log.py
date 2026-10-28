@@ -28,17 +28,37 @@ class EntityType(models.TextChoices):
 
 
 class ActivityAction(models.TextChoices):
+    """
+    Closed dictionary of logged actions (see PRD). The entry is logged on the object the user
+    sees (task, project, member, group), not on the linking table.
+    """
+
+    # basic
     CREATED = "created", "Created"
     UPDATED = "updated", "Updated"
     DELETED = "deleted", "Deleted"
     STATUS_CHANGED = "status_changed", "Status changed"
+    RESCHEDULED = "rescheduled", "Rescheduled"
     ASSIGNED = "assigned", "Assigned"
     UNASSIGNED = "unassigned", "Unassigned"
-    COMMENTED = "commented", "Commented"
-    MEMBER_STATUS_CHANGED = "member_status_changed", "Member status changed"
-    ROLE_GRANTED = "role_granted", "Role granted"
-    ROLE_REVOKED = "role_revoked", "Role revoked"
-    FUNDING_ATTACHED = "funding_attached", "Funding attached"
+    GRANTED = "granted", "Role granted"
+    REVOKED = "revoked", "Role revoked"
+    ATTACHED = "attached", "Funding attached"
+    DETACHED = "detached", "Funding detached"
+    # extended
+    UNCHECKED = "unchecked", "Checklist item unchecked"
+    ADDED_TO_GROUP = "added_to_group", "Added to group"
+    REMOVED_FROM_GROUP = "removed_from_group", "Removed from group"
+    INVITED = "invited", "Invited"
+    REMINDER_SENT = "reminder_sent", "Reminder sent"
+    MOVED = "moved", "Moved"
+    HIDDEN = "hidden", "Status hidden"
+    SHOWN = "shown", "Status shown"
+    ARCHIVED = "archived", "Archived"
+    RESTORED = "restored", "Restored"
+    # alerts
+    ALERT_RAISED = "alert_raised", "Alert raised"
+    ALERT_RESOLVED = "alert_resolved", "Alert resolved"
 
 
 class ActivityLog(models.Model):

@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q
 
-from api.models.constants import MAX_ATTACHMENT_SIZE
+from api.constants import MAX_ATTACHMENT_SIZE
 
 
 class Attachment(models.Model):
@@ -53,7 +53,7 @@ class Attachment(models.Model):
                     | Q(task__isnull=True, comment__isnull=False, expense__isnull=True)
                     | Q(task__isnull=True, comment__isnull=True, expense__isnull=False)
                 ),
-                name="attachment_exactly_one_owner",
+                name="attachment_one_of_task_comment_expense",
             ),
             models.CheckConstraint(
                 condition=Q(size_bytes__gt=0, size_bytes__lte=MAX_ATTACHMENT_SIZE),

@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import F, Q
 
-from api.models.constants import CURRENCY_CODE
+from api.constants import CURRENCY_CODE
 
 
 class FundingType(models.TextChoices):
