@@ -47,7 +47,7 @@ class RoleAssignment(models.Model):
                     Q(member__isnull=False, group__isnull=True)
                     | Q(member__isnull=True, group__isnull=False)
                 ),
-                name="role_assignment_member_xor_group",
+                name="role_assignment_one_of_member_group",
             ),
             models.UniqueConstraint(
                 fields=["role", "member", "group", "project"],

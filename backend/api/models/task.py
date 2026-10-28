@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import F, Q
 
-from api.models.constants import Priority
+from api.constants import Priority
 
 
 class Task(models.Model):
@@ -89,7 +89,7 @@ class Task(models.Model):
                     Q(project__isnull=False, funding__isnull=True)
                     | Q(project__isnull=True, funding__isnull=False)
                 ),
-                name="task_project_xor_funding",
+                name="task_one_of_project_funding",
             ),
             models.CheckConstraint(
                 condition=Q(project_funding__isnull=True) | Q(project__isnull=False),
@@ -110,6 +110,12 @@ class Task(models.Model):
             models.CheckConstraint(
                 condition=Q(est_hours__isnull=True) | Q(est_hours__gt=0),
                 name="task_est_hours_positive",
+            ),
+            # attaching the same funding again must not copy its templates twice (P1)
+            models.UniqueConstraint(
+                fields=["project_funding", "template"],
+                condition=Q(project_funding__isnull=False, template__isnull=False),
+                name="task_template_once_per_project_funding",
             ),
         ]
         indexes = [

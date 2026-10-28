@@ -6,7 +6,7 @@ class Notification(models.Model):
     """
     Represents one recipient's notification: a copy of an activity log entry, or a system
     reminder when ``activity_log_entry`` is empty. ``content`` (PostgreSQL jsonb) holds title,
-    body and link.
+    body and link. ``created_at`` drives retention of read notifications.
     """
 
     activity_log_entry = models.ForeignKey(
@@ -26,9 +26,11 @@ class Notification(models.Model):
     content = models.JSONField(null=True, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         db_table = "notification"
-        ordering = ["-id"]
+        ordering = ["-created_at", "-id"]
         constraints = [
             models.UniqueConstraint(
                 fields=["activity_log_entry", "recipient"],
