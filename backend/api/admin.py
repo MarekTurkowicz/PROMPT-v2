@@ -1,257 +1,42 @@
-from typing import Any
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
-from django.db.models import QuerySet
-from django.forms import BaseInlineFormSet, ModelForm
-from django.http import HttpRequest
+from django.contrib.auth.models import Group
 
 from .models import (
     ActivityLog,
-    Checklist,
+    Attachment,
     ChecklistItem,
+    Comment,
+    Expense,
     Funding,
-    FundingTask,
+    MemberGroup,
     Milestone,
     Notification,
     Organization,
     OrganizationMember,
-    Permission,
     Project,
     ProjectFunding,
     Role,
     RoleAssignment,
-    RolePermission,
-    Status,
     Task,
     TaskAssignment,
-    TaskScope,
-    Team,
-    TeamMember,
+    TaskStatus,
+    TaskTemplate,
+    TimeEntry,
     User,
-    UserProfile,
 )
 
+# MemberGroupMember is not registered: Django 5.2 admin rejects models with a composite primary key.
 
-class TaskScopeInline(admin.StackedInline[TaskScope, Task]):
-    model = TaskScope
-    fk_name = "task"
-    extra = 0
-    can_delete = True
-    autocomplete_fields = ["project", "funding", "project_funding"]
+# User has no Django groups (access comes from role_assignment)
+admin.site.unregister(Group)
 
 
-class FundingTaskInline(admin.TabularInline[FundingTask, Funding]):
-    model = FundingTask
-    extra = 0
-    autocomplete_fields = ["funding"]
-
-
-class ProjectFundingInline(admin.TabularInline[ProjectFunding, Project]):
-    model = ProjectFunding
-    extra = 0
-    autocomplete_fields = ["funding"]
-
-
-class ProjectTaskScopeInline(admin.TabularInline[TaskScope, Project]):
-    model = TaskScope
-    fk_name = "project"
-    extra = 1
-    verbose_name = "Project task"
-    verbose_name_plural = "Project tasks"
-
-    fields = ("task", "funding_scoped")
-    autocomplete_fields = ["task"]
-
-    exclude = ("funding", "project_funding")
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet[TaskScope]:
-        qs = super().get_queryset(request)
-        return qs.select_related("task").filter(project__isnull=False)
-
-    def get_formset(
-        self, request: HttpRequest, obj: Project | None = None, **kwargs: Any
-    ) -> type[BaseInlineFormSet[TaskScope, Project, ModelForm[TaskScope]]]:
-        formset = super().get_formset(request, obj, **kwargs)
-        base_fields = formset.form.base_fields
-        if "funding_scoped" in base_fields:
-            base_fields["funding_scoped"].initial = False
-            base_fields["funding_scoped"].disabled = True
-        return formset
-
-
-# ---------- Adminy głównych modeli ----------
-
-
-@admin.register(Task)
-class TaskAdmin(admin.ModelAdmin[Task]):
-    list_display = (
-        "id",
-        "title",
-        "status",
-        "priority",
-        "project",
-        "funding",
-        "project_funding",
-        "funding_scoped",
-        "due_date",
-        "created_at",
-    )
-    search_fields = (
-        "title",
-        "description",
-        "scope__project__name",
-        "scope__funding__name",
-        "scope__project_funding__project__name",
-        "scope__project_funding__funding__name",
-    )
-    list_select_related = (
-        "scope",
-        "scope__project",
-        "scope__funding",
-        "scope__project_funding",
-        "template",
-    )
-    list_filter = (
-        "status",
-        "priority",
-        ("scope__project", admin.RelatedOnlyFieldListFilter),
-        ("scope__funding", admin.RelatedOnlyFieldListFilter),
-        ("scope__project_funding", admin.RelatedOnlyFieldListFilter),
-        "scope__funding_scoped",
-    )
-    ordering = ("-created_at",)
-    inlines = [TaskScopeInline]
-
-    @admin.display(description="Project", ordering="scope__project")
-    def project(self, obj: Task) -> Project | None:
-        scope: TaskScope | None = getattr(obj, "scope", None)
-        return scope.project if scope else None
-
-    @admin.display(description="Funding", ordering="scope__funding")
-    def funding(self, obj: Task) -> Funding | None:
-        scope: TaskScope | None = getattr(obj, "scope", None)
-        return scope.funding if scope else None
-
-    @admin.display(description="ProjectFunding", ordering="scope__project_funding")
-    def project_funding(self, obj: Task) -> ProjectFunding | None:
-        scope: TaskScope | None = getattr(obj, "scope", None)
-        return scope.project_funding if scope else None
-
-    @admin.display(boolean=True, description="Grant copy?", ordering="scope__funding_scoped")
-    def funding_scoped(self, obj: Task) -> bool:
-        scope: TaskScope | None = getattr(obj, "scope", None)
-        return scope.funding_scoped if scope else False
-
-
-@admin.register(TaskScope)
-class TaskScopeAdmin(admin.ModelAdmin[TaskScope]):
-    list_display = (
-        "task",
-        "project",
-        "funding",
-        "project_funding",
-        "funding_scoped",
-        "created_at",
-    )
-    search_fields = (
-        "task__title",
-        "project__name",
-        "funding__name",
-        "project_funding__project__name",
-        "project_funding__funding__name",
-    )
-    autocomplete_fields = ["task", "project", "funding", "project_funding"]
-    list_filter = (
-        ("project", admin.RelatedOnlyFieldListFilter),
-        ("funding", admin.RelatedOnlyFieldListFilter),
-        ("project_funding", admin.RelatedOnlyFieldListFilter),
-        "funding_scoped",
-    )
-    ordering = ("-created_at",)
-
-
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin[Project]):
-    list_display = (
-        "id",
-        "name",
-        "status",
-        "owner",
-        "start_date",
-        "end_date",
-        "created_at",
-    )
-    search_fields = ("name", "description", "owner__email")
-    list_filter = ("status", ("owner", admin.RelatedOnlyFieldListFilter))
-    ordering = ("-created_at",)
-    inlines = [ProjectFundingInline]
-    autocomplete_fields = ["owner"]
-
-
-@admin.register(Funding)
-class FundingAdmin(admin.ModelAdmin[Funding]):
-    list_display = (
-        "id",
-        "name",
-        "program",
-        "funder",
-        "amount_total",
-        "start_date",
-        "end_date",
-        "created_at",
-    )
-    search_fields = ("name", "program", "funder", "agreement_number", "description")
-    list_filter = ("start_date", "end_date")
-    ordering = ("-created_at",)
-    inlines = [FundingTaskInline]
-
-
-@admin.register(FundingTask)
-class FundingTaskAdmin(admin.ModelAdmin[FundingTask]):
-    list_display = (
-        "id",
-        "funding",
-        "title",
-        "default_status",
-        "default_priority",
-        "default_due_days",
-    )
-    search_fields = ("title", "funding__name")
-    list_filter = (
-        ("funding", admin.RelatedOnlyFieldListFilter),
-        "default_status",
-        "default_priority",
-    )
-    autocomplete_fields = ["funding"]
-    ordering = ("funding", "id")
-
-
-@admin.register(ProjectFunding)
-class ProjectFundingAdmin(admin.ModelAdmin[ProjectFunding]):
-    list_display = (
-        "id",
-        "project",
-        "funding",
-        "is_primary",
-        "allocation_start",
-        "allocation_end",
-        "created_at",
-    )
-    search_fields = ("project__name", "funding__name", "note")
-    list_filter = (
-        ("project", admin.RelatedOnlyFieldListFilter),
-        ("funding", admin.RelatedOnlyFieldListFilter),
-        "is_primary",
-        "allocation_start",
-        "allocation_end",
-    )
-    autocomplete_fields = ["project", "funding"]
-    ordering = ("-created_at",)
+# ---------- Organizacja, ludzie, role ----------
 
 
 @admin.register(User)
-class UserAdmin(DjangoUserAdmin[User]):
+class UserAdmin(DjangoUserAdmin[User]):  # type: ignore[type-var]  # stubs require AbstractUser
     """Django's UserAdmin with the email as the login instead of username."""
 
     ordering = ("email",)
@@ -286,131 +71,211 @@ class UserAdmin(DjangoUserAdmin[User]):
     )
 
 
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin[UserProfile]):
-    list_display = ("user", "phone")
-    search_fields = ("user__email",)
-
-
-@admin.register(TaskAssignment)
-class TaskAssignmentAdmin(admin.ModelAdmin[TaskAssignment]):
-    list_display = ("task", "user", "assigned_by", "assigned_at", "worked_hours")
-    list_filter = ("assigned_by", "user")
-    search_fields = (
-        "task__title",
-        "user__email",
-        "user__first_name",
-        "user__last_name",
-    )
-
-
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin[Organization]):
-    list_display = ("id", "name", "slug", "tax_id", "is_active", "created_at")
-    search_fields = ("name", "slug", "tax_id")
+    list_display = ("id", "name", "tax_id", "is_active", "created_at")
+    search_fields = ("name", "tax_id")
     list_filter = ("is_active",)
-    prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(OrganizationMember)
 class OrganizationMemberAdmin(admin.ModelAdmin[OrganizationMember]):
-    list_display = ("organization", "user", "is_active", "invited_by", "joined_at")
-    list_filter = ("is_active", ("organization", admin.RelatedOnlyFieldListFilter))
-    search_fields = ("organization__name", "user__email")
+    list_display = ("user", "organization", "status", "job_title", "joined_at")
+    list_select_related = ("user", "organization")
+    list_filter = ("status", ("organization", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("user__email", "email", "organization__name")
+    autocomplete_fields = ["organization", "user"]
 
 
-@admin.register(Permission)
-class PermissionAdmin(admin.ModelAdmin[Permission]):
-    list_display = ("code", "scope", "description")
-    list_filter = ("scope",)
-    search_fields = ("code", "description")
-
-
-class RolePermissionInline(admin.TabularInline[RolePermission, Role]):
-    model = RolePermission
-    extra = 0
+@admin.register(MemberGroup)
+class MemberGroupAdmin(admin.ModelAdmin[MemberGroup]):
+    list_display = ("id", "name", "organization", "parent", "created_at")
+    list_select_related = ("organization", "parent")
+    list_filter = (("organization", admin.RelatedOnlyFieldListFilter),)
+    search_fields = ("name",)
+    autocomplete_fields = ["organization", "parent"]
 
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin[Role]):
-    list_display = ("code", "name", "scope", "organization")
-    list_filter = ("scope", ("organization", admin.RelatedOnlyFieldListFilter))
-    search_fields = ("code", "name")
-    inlines = [RolePermissionInline]
-
-
-class TeamMemberInline(admin.TabularInline[TeamMember, Team]):
-    model = TeamMember
-    fk_name = "team"
-    extra = 0
-
-
-@admin.register(Team)
-class TeamAdmin(admin.ModelAdmin[Team]):
-    list_display = ("id", "name", "organization", "project", "parent", "created_at")
+    list_display = ("id", "name", "organization")
+    list_select_related = ("organization",)
+    list_filter = (("organization", admin.RelatedOnlyFieldListFilter),)
     search_fields = ("name",)
-    inlines = [TeamMemberInline]
 
 
 @admin.register(RoleAssignment)
 class RoleAssignmentAdmin(admin.ModelAdmin[RoleAssignment]):
-    list_display = ("role", "user", "team", "organization", "project", "granted_by", "created_at")
-    list_filter = ("role",)
-    search_fields = ("user__email", "team__name")
+    list_display = ("role", "member", "group", "project", "created_at")
+    list_select_related = ("role", "member__user", "member__organization", "group", "project")
+    list_filter = (("role", admin.RelatedOnlyFieldListFilter),)
+    search_fields = ("member__user__email", "group__name", "role__name")
+    autocomplete_fields = ["role", "member", "group", "project"]
 
 
-@admin.register(Status)
-class StatusAdmin(admin.ModelAdmin[Status]):
+# ---------- Statusy, projekty, finansowanie ----------
+
+
+@admin.register(TaskStatus)
+class TaskStatusAdmin(admin.ModelAdmin[TaskStatus]):
     list_display = (
-        "code",
         "name",
-        "applies_to",
         "category",
-        "position",
         "organization",
+        "project",
+        "position",
         "is_default",
+        "is_active",
     )
-    list_filter = ("applies_to", "category")
-    ordering = ("applies_to", "position")
+    list_select_related = ("organization", "project")
+    list_filter = ("category", "is_active", ("organization", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("name",)
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin[Project]):
+    list_display = ("id", "name", "organization", "status", "owner", "start_date", "end_date")
+    list_select_related = ("organization", "owner__user", "owner__organization")
+    list_filter = ("status", ("organization", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("name", "description")
+    autocomplete_fields = ["organization", "owner"]
 
 
 @admin.register(Milestone)
 class MilestoneAdmin(admin.ModelAdmin[Milestone]):
-    list_display = ("id", "name", "project", "status", "due_date")
+    list_display = ("id", "name", "project", "status", "due_date", "position")
+    list_select_related = ("project",)
     list_filter = ("status", ("project", admin.RelatedOnlyFieldListFilter))
     search_fields = ("name", "project__name")
     autocomplete_fields = ["project"]
 
 
-class ChecklistItemInline(admin.TabularInline[ChecklistItem, Checklist]):
-    model = ChecklistItem
-    extra = 0
+@admin.register(Funding)
+class FundingAdmin(admin.ModelAdmin[Funding]):
+    list_display = ("id", "name", "type", "organization", "amount_total", "currency", "end_date")
+    list_select_related = ("organization",)
+    list_filter = ("type", ("organization", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("name", "funder", "program", "agreement_number")
 
 
-@admin.register(Checklist)
-class ChecklistAdmin(admin.ModelAdmin[Checklist]):
-    list_display = ("id", "title", "task", "position", "created_at")
-    search_fields = ("title", "task__title")
-    autocomplete_fields = ["task"]
-    inlines = [ChecklistItemInline]
+@admin.register(ProjectFunding)
+class ProjectFundingAdmin(admin.ModelAdmin[ProjectFunding]):
+    list_display = ("id", "project", "funding", "is_primary", "allocation_start", "allocation_end")
+    list_select_related = ("project", "funding")
+    list_filter = ("is_primary",)
+    search_fields = ("project__name", "funding__name")
+    autocomplete_fields = ["project", "funding"]
 
 
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin[Notification]):
-    list_display = ("recipient", "activity", "read_at")
-    search_fields = ("recipient__email",)
+@admin.register(TaskTemplate)
+class TaskTemplateAdmin(admin.ModelAdmin[TaskTemplate]):
+    list_display = ("id", "title", "funding", "default_priority", "default_due_days", "mandatory")
+    list_select_related = ("funding",)
+    list_filter = ("mandatory", ("funding", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("title", "funding__name")
+    autocomplete_fields = ["funding"]
+
+
+# ---------- Zadania ----------
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin[Task]):
+    list_display = ("id", "title", "status", "priority", "project", "funding", "due_date")
+    list_select_related = ("status", "project", "funding")
+    list_filter = ("priority", ("project", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("title", "description")
+    autocomplete_fields = [
+        "project",
+        "funding",
+        "project_funding",
+        "milestone",
+        "parent",
+        "template",
+        "status",
+        "group",
+    ]
+
+
+@admin.register(TaskAssignment)
+class TaskAssignmentAdmin(admin.ModelAdmin[TaskAssignment]):
+    list_display = ("task", "member", "assigned_by", "assigned_at", "started_at", "finished_at")
+    list_select_related = (
+        "task",
+        "member__user",
+        "member__organization",
+        "assigned_by__user",
+        "assigned_by__organization",
+    )
+    search_fields = ("task__title", "member__user__email")
+    autocomplete_fields = ["task", "member", "assigned_by"]
+
+
+@admin.register(TimeEntry)
+class TimeEntryAdmin(admin.ModelAdmin[TimeEntry]):
+    list_display = ("id", "assignment", "hours", "started_at", "finished_at")
+    list_select_related = (
+        "assignment__task",
+        "assignment__member__user",
+        "assignment__member__organization",
+    )
+    search_fields = ("assignment__task__title", "assignment__member__user__email")
+    autocomplete_fields = ["assignment"]
+
+
+@admin.register(ChecklistItem)
+class ChecklistItemAdmin(admin.ModelAdmin[ChecklistItem]):
+    list_display = ("id", "task", "checklist_title", "element", "order", "done_at")
+    list_select_related = ("task",)
+    search_fields = ("element", "checklist_title", "task__title")
+    autocomplete_fields = ["task", "assignee", "done_by"]
+
+
+# ---------- Współpraca, koszty, historia ----------
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin[Comment]):
+    list_display = ("id", "author", "task", "project", "created_at")
+    list_select_related = ("author__user", "author__organization", "task", "project")
+    search_fields = ("content", "author__user__email")
+    autocomplete_fields = ["task", "project", "author", "parent"]
+
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin[Attachment]):
+    list_display = ("id", "original_name", "mime_type", "size_bytes", "uploaded_by", "created_at")
+    list_select_related = ("uploaded_by__user", "uploaded_by__organization")
+    search_fields = ("original_name",)
+    autocomplete_fields = ["task", "comment", "expense", "uploaded_by"]
+
+
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin[Expense]):
+    list_display = ("id", "type", "amount", "currency", "spent_on_date", "project", "created_by")
+    list_select_related = ("project", "created_by__user", "created_by__organization")
+    list_filter = ("type", ("project", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("document_number", "description", "project__name")
+    autocomplete_fields = ["project", "project_funding", "task", "created_by"]
 
 
 @admin.register(ActivityLog)
 class ActivityLogAdmin(admin.ModelAdmin[ActivityLog]):
-    list_display = (
-        "created_at",
-        "actor",
-        "action",
-        "content_type",
-        "object_id",
-        "organization",
-        "project",
+    list_display = ("created_at", "organization", "actor", "action", "entity_type", "entity_id")
+    list_select_related = ("organization", "actor__user", "actor__organization")
+    list_filter = ("action", "entity_type", ("organization", admin.RelatedOnlyFieldListFilter))
+    search_fields = ("actor__user__email",)
+    autocomplete_fields = ["organization", "actor"]
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin[Notification]):
+    list_display = ("id", "recipient", "activity_log_entry", "read_at", "created_at")
+    list_select_related = (
+        "recipient",
+        "activity_log_entry__actor__user",
+        "activity_log_entry__actor__organization",
     )
-    list_filter = ("action", ("project", admin.RelatedOnlyFieldListFilter))
-    search_fields = ("actor__email",)
+    list_filter = ("read_at",)
+    search_fields = ("recipient__email",)
+    autocomplete_fields = ["activity_log_entry", "recipient"]
