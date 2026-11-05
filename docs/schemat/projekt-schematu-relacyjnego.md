@@ -32,7 +32,7 @@ Schemat obejmuje 22 relacji. Implementacja: `promt-schemat.sql` (przetestowana n
 - **PROJECT**(<u>id</u>, #organization_id, #owner_id, name, description, status, start_date, end_date, hidden_status_ids, created_at, updated_at)
 - **MILESTONE**(<u>id</u>, #project_id, name, status, due_date, position, created_at, updated_at)
 - **FUNDING**(<u>id</u>, #organization_id, type, name, funder, program, agreement_number, amount_total, currency, start_date, end_date, reporting_deadline, description, created_at)
-- **PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at)
+- **PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at, detached_at)
 - **TASK_TEMPLATE**(<u>id</u>, #funding_id, title, description, #default_status_id, default_priority, default_est_hours, default_due_days, mandatory)
 
 **Zadania**
@@ -546,9 +546,9 @@ Finansowanie – z bazy. Zwykle należy do firmy (grant finansuje kilka jej proj
 
 ### 12. project_funding
 
-Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresie.
+Które finansowanie finansuje który projekt i w jakim okresie. Odpięcie ustawia detached_at zamiast usuwać rekord – ruszone zadania, godziny i wydatki dalej wskazują właściwe finansowanie i okres.
 
-**PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at)
+**PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at, detached_at)
 
 | Atrybut | Typ | Dziedzina | NULL | Klucz | Opis |
 |---|---|---|---|---|---|
@@ -560,6 +560,7 @@ Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresi
 | is_primary | `bool` | wartość logiczna | nie |  |  |
 | note | `text` | tekst bez limitu | nie |  |  |
 | created_at | `timestamptz` | data i czas ze strefą | nie |  |  |
+| detached_at | `timestamptz` | data i czas ze strefą | tak |  | NULL = aktywne |
 
 **Klucze obce**
 
@@ -570,13 +571,14 @@ Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresi
 
 **Więzy**
 
-- `UNIQUE (project_id, funding_id)`
+- `UNIQUE (project_id, funding_id) WHERE detached_at IS NULL` (indeks częściowy – po odpięciu można podpiąć ponownie)
+- `UNIQUE (project_id) WHERE is_primary AND detached_at IS NULL` (jedno aktywne główne finansowanie)
 - `UNIQUE (id, project_id)                                  -- cel złożonego FK z task`
 
 **Zależności funkcyjne**
 
-- {id} → {project_id, funding_id, allocation_start, allocation_end, is_primary, note, created_at}
-- {project_id, funding_id} → {id}  (klucz kandydujący)
+- {id} → {project_id, funding_id, allocation_start, allocation_end, is_primary, note, created_at, detached_at}
+- {project_id, funding_id} → {id} tylko wśród aktywnych (unikalność częściowa – nie jest kluczem całej relacji)
 - {id, project_id} → {id}  (klucz kandydujący)
 
 **Postać normalna:** BCNF – jedynym wyznacznikiem są klucze (kandydujące).

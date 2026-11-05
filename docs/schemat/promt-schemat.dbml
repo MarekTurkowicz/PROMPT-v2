@@ -148,7 +148,8 @@ Table "project_funding" {
   "is_primary" bool [not null]
   "note" text [not null]
   "created_at" timestamptz [not null]
-  Note: 'Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresie.'
+  "detached_at" timestamptz [null, note: 'null = aktywne; odpięcie nie usuwa rekordu']
+  Note: 'Które finansowanie finansuje który projekt i w jakim okresie. Odpięte powiązanie zostaje (detached_at), żeby ruszone zadania, godziny i wydatki dalej wskazywały właściwe finansowanie.'
 }
 
 Table "task_template" {

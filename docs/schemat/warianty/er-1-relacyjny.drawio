@@ -302,7 +302,7 @@
                     <mxGeometry height="17" width="312" y="249" as="geometry"/>
                 </mxCell>
                 <mxCell id="project_funding" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=middle;startSize=28;horizontal=1;childLayout=stackLayout;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=8;html=1;rounded=1;arcSize=4;absoluteArcSize=1;fontSize=13;fillColor=#30353c;swimlaneFillColor=#26292e;fontColor=#e6edf3;strokeColor=#8a9bb0;strokeWidth=1;" value="PROJECT_FUNDING" vertex="1">
-                    <mxGeometry height="172" width="312" x="1160" y="641" as="geometry"/>
+                    <mxGeometry height="189" width="312" x="1160" y="641" as="geometry"/>
                 </mxCell>
                 <mxCell id="project_funding.id" parent="project_funding" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;fontSize=13;" value="&lt;span style=&quot;color:#e6edf3&quot;&gt;&lt;u&gt;&lt;b&gt;id&lt;/b&gt;&lt;/u&gt;&lt;/span&gt;&lt;span style=&quot;color:#9aa8b6&quot;&gt; : bigint&lt;/span&gt;" vertex="1">
                     <mxGeometry height="17" width="312" y="28" as="geometry"/>
@@ -327,6 +327,9 @@
                 </mxCell>
                 <mxCell id="project_funding.created_at" parent="project_funding" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;fontSize=13;" value="&lt;span style=&quot;color:#e6edf3&quot;&gt;created_at&lt;/span&gt;&lt;span style=&quot;color:#9aa8b6&quot;&gt; : timestamptz&lt;/span&gt;" vertex="1">
                     <mxGeometry height="17" width="312" y="147" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_funding.detached_at" parent="project_funding" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;fontSize=13;" value="&lt;span style=&quot;color:#e6edf3&quot;&gt;detached_at&lt;/span&gt;&lt;span style=&quot;color:#9aa8b6&quot;&gt; : timestamptz&lt;/span&gt;&lt;span style=&quot;color:#9aa8b6&quot;&gt; NULL&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="17" width="312" y="164" as="geometry"/>
                 </mxCell>
                 <mxCell id="task_template" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=middle;startSize=28;horizontal=1;childLayout=stackLayout;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=8;html=1;rounded=1;arcSize=4;absoluteArcSize=1;fontSize=13;fillColor=#22364d;swimlaneFillColor=#26292e;fontColor=#e6edf3;strokeColor=#8a9bb0;strokeWidth=1;" value="TASK_TEMPLATE" vertex="1">
                     <mxGeometry height="189" width="312" x="2280" y="40" as="geometry"/>
@@ -805,7 +808,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e19" edge="1" parent="1" source="project_funding" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b4c0cc;strokeWidth=1.3;startArrow=ERzeroToMany;startFill=0;startSize=12;endArrow=ERmandOne;endFill=0;endSize=12;exitX=0.305;exitY=0;exitDx=0;exitDy=0;entryX=0.487;entryY=1.000;entryDx=0;entryDy=0;exitPerimeter=0;fontSize=13;" target="funding" value="">
+                <mxCell id="e19" edge="1" parent="1" source="project_funding" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b4c0cc;strokeWidth=1.3;startArrow=ERzeroToMany;startFill=0;startSize=12;endArrow=ERmandOne;endFill=0;endSize=12;exitX=0.305;exitY=0.000;exitDx=0;exitDy=0;entryX=0.487;entryY=1.000;entryDx=0;entryDy=0;exitPerimeter=0;fontSize=13;" target="funding" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1255.2" y="611.5"/>
@@ -841,7 +844,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e24" edge="1" parent="1" source="task" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b4c0cc;strokeWidth=1.3;startArrow=ERzeroToMany;startFill=0;startSize=12;endArrow=ERzeroToOne;endFill=0;endSize=12;exitX=0.000;exitY=0.231;exitDx=0;exitDy=0;entryX=1.000;entryY=0.180;entryDx=0;entryDy=0;fontSize=13;" target="project_funding" value="">
+                <mxCell id="e24" edge="1" parent="1" source="task" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b4c0cc;strokeWidth=1.3;startArrow=ERzeroToMany;startFill=0;startSize=12;endArrow=ERzeroToOne;endFill=0;endSize=12;exitX=0.000;exitY=0.231;exitDx=0;exitDy=0;entryX=1.000;entryY=0.164;entryDx=0;entryDy=0;fontSize=13;" target="project_funding" value="">
                     <mxGeometry relative="1" x="0.0027" as="geometry">
                         <Array as="points">
                             <mxPoint x="1696" y="576.1"/>
@@ -1048,7 +1051,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e46" edge="1" parent="1" source="expense" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b4c0cc;strokeWidth=1.3;startArrow=ERzeroToMany;startFill=0;startSize=12;endArrow=ERzeroToOne;endFill=0;endSize=12;exitX=0.000;exitY=0.296;exitDx=0;exitDy=0;entryX=1.000;entryY=0.924;entryDx=0;entryDy=0;fontSize=13;" target="project_funding" value="">
+                <mxCell id="e46" edge="1" parent="1" source="expense" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b4c0cc;strokeWidth=1.3;startArrow=ERzeroToMany;startFill=0;startSize=12;endArrow=ERzeroToOne;endFill=0;endSize=12;exitX=0.000;exitY=0.296;exitDx=0;exitDy=0;entryX=1.000;entryY=0.841;entryDx=0;entryDy=0;fontSize=13;" target="project_funding" value="">
                     <mxGeometry relative="1" x="0.0022" as="geometry">
                         <Array as="points">
                             <mxPoint x="1696" y="953"/>

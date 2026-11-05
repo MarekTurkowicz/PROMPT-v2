@@ -271,12 +271,15 @@ Powiązanie projektu z finansowaniem (M:N z danymi).
 | project | FK → project | PROTECT |
 | funding | FK → funding | PROTECT |
 | allocation_start, allocation_end | date NULL | `end ≥ start` (CHECK) |
-| is_primary | bool | najwyżej jedno główne na projekt |
+| is_primary | bool | najwyżej jedno aktywne główne na projekt |
 | note | text | |
 | created_at | timestamptz | |
+| detached_at | timestamptz NULL | NULL = aktywne; data odpięcia (P11) – rekord zostaje, nie jest usuwany |
 
-- AK1: Ta sama para projekt–finansowanie drugi raz → IntegrityError.
-- AK2: Drugie finansowanie główne projektu → IntegrityError (unikalność częściowa `WHERE is_primary`).
+- AK1: Ta sama para projekt–finansowanie drugi raz, gdy poprzednie powiązanie jest aktywne → IntegrityError
+  (unikalność częściowa `WHERE detached_at IS NULL`); po odpięciu można podpiąć ponownie jako nowy rekord.
+- AK2: Drugie aktywne finansowanie główne projektu → IntegrityError (unikalność częściowa
+  `WHERE is_primary AND detached_at IS NULL`); odpięte finansowanie główne nie blokuje nowego.
 - AK3: Projekt i finansowanie z różnych organizacji → ValidationError; finansowanie bez organizacji można
   podpiąć do projektu każdej organizacji.
 - AK4: Para (id, project_id) jest unikalna – cel złożonego klucza obcego z `Task`.
@@ -495,10 +498,13 @@ Kryteria akceptacji:
 - AK3: Szablon bez statusu domyślnego → zadanie dostaje status domyślny organizacji.
 - AK4: Błąd przy tworzeniu dowolnego zadania (np. brak statusu domyślnego) → nie powstaje ani powiązanie,
   ani żadne zadanie (wycofanie całości).
-- AK5: Ponowne podpięcie tego samego finansowania do projektu → odrzucone, bez duplikatów zadań.
+- AK5: Ponowne podpięcie tego samego finansowania, gdy poprzednie powiązanie jest aktywne → odrzucone,
+  bez duplikatów zadań. Po odpięciu (P11) ponowne podpięcie tworzy nowe powiązanie i nowe zadania
+  z szablonów; zadania z poprzedniego okresu zostają przy starym powiązaniu.
 - AK6: Zmiana szablonu po podpięciu nie zmienia utworzonych zadań; nowy szablon dodany później nie tworzy
   zadań w już podpiętych projektach.
-- AK7: Odpięcie finansowania (usunięcie `ProjectFunding`) z zadaniami lub wydatkami → odrzucone (PROTECT).
+- AK7: Twarde usunięcie `ProjectFunding` z zadaniami lub wydatkami → odrzucone (PROTECT). Odpięcie
+  finansowania to osobny proces (P11), który nie usuwa rekordu.
 
 ### P2. Założenie organizacji
 Modele: `Organization`, `TaskStatus`, `Role`, `OrganizationMember`, `RoleAssignment`.
@@ -589,6 +595,33 @@ Modele: `Task`, `TaskAssignment`, `Notification`.
 - AK2: Ponowne uruchomienie tego samego dnia nie tworzy duplikatów. ⚠ Wymaga `notification.created_at` (może brakuje, rejestr pkt 2) –
   bez niej duplikat da się wykryć tylko po treści `content`.
 
+### P11. Odpięcie finansowania od projektu
+Modele: `ProjectFunding`, `Task`, `TimeEntry`, `Expense`, `ActivityLog`. Implementacja: issue #70.
+
+Odpięcie nie usuwa `ProjectFunding` – ustawia `detached_at`. Dzięki temu praca wykonana w ramach
+finansowania (zadania, godziny, wydatki) zostaje przypisana do właściwego finansowania i okresu.
+
+Co ma się zadziać (w jednej transakcji):
+1. Zadania tego powiązania, które **nie zostały ruszone**, są usuwane.
+2. Zadania **ruszone** zostają w projekcie i dalej wskazują na to samo `project_funding`.
+3. Powiązanie dostaje `detached_at`; wydatki i godziny zostają podpięte bez zmian.
+4. W dzienniku zdarzeń powstaje jeden wpis `detached` z uzasadnieniem i liczbą usuniętych
+   i pozostawionych zadań.
+
+Zadanie jest **ruszone**, gdy ma którekolwiek z: status spoza kategorii todo, wpis czasu pracy, wydatek,
+komentarz lub załącznik, odhaczony punkt checklisty, przypisanie z `started_at`, podzadanie.
+`updated_at` nie jest kryterium – zmienia się przy każdej drobnej edycji.
+
+Kryteria akceptacji:
+- AK1: Odpięcie finansowania, którego zadania nie zostały ruszone → zadania usunięte, powiązanie
+  z `detached_at`.
+- AK2: Zadania ruszone, ich godziny i wydatki zostają i wskazują na odpięte powiązanie.
+- AK3: Odpięcie wymaga uzasadnienia; jedno uzasadnienie obejmuje usunięcie zadań obowiązkowych (P9).
+- AK4: Ponowne podpięcie tego samego finansowania tworzy nowe powiązanie i nowe zadania z szablonów;
+  zadania z poprzedniego okresu zostają przy starym (rozróżnienie po `project_funding_id`).
+- AK5: Do odpiętego powiązania nie można dodać nowego zadania ani wydatku → ValidationError.
+- AK6: Błąd w trakcie odpinania → żadna zmiana nie zostaje zapisana (wycofanie całości).
+
 ## 6. Reguły międzymodelowe (izolacja organizacji)
 
 Każdy obiekt należy pośrednio lub bezpośrednio do jednej organizacji. Model nie może łączyć obiektów
@@ -610,7 +643,7 @@ lub w powłoce Django (`manage.py shell`).
 | Grupy i role | MemberGroup, MemberGroupMember, Role, RoleAssignment | hierarchia 3 grup, role na każdym poziomie, `effective_roles` |
 | Statusy i Kanban | TaskStatus, Project | statusy organizacji i projektu, ukrycie, `visible_statuses` |
 | Projekty i etapy | Project, Milestone | projekt z etapami, postęp etapu |
-| Finansowanie i szablony | Funding, ProjectFunding, TaskTemplate, Task | podpięcie → zadania z szablonów, rollback przy błędzie |
+| Finansowanie i szablony | Funding, ProjectFunding, TaskTemplate, Task | podpięcie → zadania z szablonów, rollback przy błędzie; odpięcie zachowuje ruszone zadania, ponowne podpięcie |
 | Zadania, przypisania, pula grupy | Task, TaskAssignment | podzadanie, przekazanie grupie, wzięcie z puli, start/koniec pracy, zaległość |
 | Checklisty | ChecklistItem | dwie checklisty w zadaniu, odhaczanie, postęp |
 | Czas pracy | TimeEntry | wpis w przypisaniu, karta tygodnia, raport czasu |

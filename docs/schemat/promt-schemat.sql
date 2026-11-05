@@ -168,9 +168,13 @@ CREATE TABLE project_funding (
     is_primary        boolean     NOT NULL DEFAULT false,
     note              text        NOT NULL DEFAULT '',
     created_at        timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (project_id, funding_id),
+    detached_at       timestamptz,                           -- NULL = aktywne
     UNIQUE (id, project_id)                                  -- cel złożonego FK z task
 );
+CREATE UNIQUE INDEX project_funding_unique ON project_funding (project_id, funding_id)
+    WHERE detached_at IS NULL;                               -- po odpięciu można podpiąć ponownie
+CREATE UNIQUE INDEX project_funding_one_primary ON project_funding (project_id)
+    WHERE is_primary AND detached_at IS NULL;
 CREATE INDEX project_funding_funding_ix ON project_funding (funding_id);
 
 CREATE TABLE task_template (                                 -- w bazie: funding_task
