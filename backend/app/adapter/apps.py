@@ -1,13 +1,12 @@
-from typing import Any
+from typing import Dict, Any
 
 from django.apps import AppConfig
 
 
 class ApplicationConfig(AppConfig):
-    name = "app"
-    container: dict[str, Any]
+    name = "application"
+    container: Dict[str, Any]
 
     def ready(self) -> None:
-        from .dependencies_container import build_dependencies_container
-
-        self.container = build_dependencies_container()
+        from .dependencies_container import DependenciesContainer
+        container = DependenciesContainer()
