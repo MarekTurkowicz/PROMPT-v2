@@ -18,13 +18,6 @@ class ChecklistItem(models.Model):
     checklist_title = models.CharField(max_length=120, null=True, blank=True)
     element = models.CharField(max_length=300)
     order = models.PositiveSmallIntegerField(default=0)
-    assignee = models.ForeignKey(
-        "api.OrganizationMember",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="checklist_items",
-    )
     done_by = models.ForeignKey(
         "api.OrganizationMember",
         on_delete=models.PROTECT,

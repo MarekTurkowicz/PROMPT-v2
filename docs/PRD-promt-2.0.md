@@ -253,7 +253,7 @@ Status zadania organizacji albo projektu z jedną z 4 stałych kategorii.
 
 | Pole | Typ | Uwagi |
 |---|---|---|
-| organization | FK → organization | PROTECT |
+| organization | FK → organization NULL | PROTECT; NULL = finansowanie nieprzypisane do jednej organizacji (np. program UE dostępny dla wielu) |
 | type, name, funder, program, agreement_number | varchar | |
 | amount_total | numeric(14,2) | > 0 (CHECK) |
 | currency | char(3) | 3 wielkie litery (CHECK) |
@@ -277,7 +277,8 @@ Powiązanie projektu z finansowaniem (M:N z danymi).
 
 - AK1: Ta sama para projekt–finansowanie drugi raz → IntegrityError.
 - AK2: Drugie finansowanie główne projektu → IntegrityError (unikalność częściowa `WHERE is_primary`).
-- AK3: Projekt i finansowanie z różnych organizacji → ValidationError.
+- AK3: Projekt i finansowanie z różnych organizacji → ValidationError; finansowanie bez organizacji można
+  podpiąć do projektu każdej organizacji.
 - AK4: Para (id, project_id) jest unikalna – cel złożonego klucza obcego z `Task`.
 
 #### `TaskTemplate` – tabela `task_template`
@@ -306,9 +307,8 @@ Szablon zadania wymaganego przez finansowanie.
 
 | Pole | Typ | Uwagi |
 |---|---|---|
-| project | FK → project NULL | PROTECT |
-| funding | FK → funding NULL | PROTECT |
-| project_funding | FK → project_funding NULL | PROTECT; zgodny z projektem |
+| project | FK → project | PROTECT; każde zadanie należy do projektu |
+| project_funding | FK → project_funding NULL | PROTECT; zgodny z projektem; wypełnione = zadanie z szablonu finansowania |
 | milestone | FK → milestone NULL | SET_NULL |
 | parent | FK → task NULL | CASCADE (podzadania) |
 | template | FK → task_template NULL | SET_NULL |
@@ -322,7 +322,8 @@ Szablon zadania wymaganego przez finansowanie.
 | created_at, updated_at | timestamptz | |
 | *created_by* | *FK → organization_member* | ⚠ **może brakuje** – brak na diagramie; bez niej autor zadania jest znany tylko z dziennika zdarzeń |
 
-- AK1: Wypełnione oba lub żadne z (project, funding) → IntegrityError.
+- AK1: Zadanie bez projektu → IntegrityError. Z którego finansowania pochodzi zadanie, wynika
+  z `project_funding` (zadania samego finansowania, bez projektu, nie istnieją).
 - AK2: `project_funding` należący do innego projektu → IntegrityError (złożony klucz obcy
   `(project_funding_id, project_id) → project_funding(id, project_id)`; w Django jako ograniczenie
   dodane migracją `RunSQL`, bo ORM nie obsługuje złożonych FK).
@@ -340,8 +341,8 @@ Szablon zadania wymaganego przez finansowanie.
 | Pole | Typ | Uwagi |
 |---|---|---|
 | task | FK → task | CASCADE |
-| member | FK → organization_member | PROTECT |
-| assigned_by | FK → organization_member NULL | SET_NULL |
+| assigned_to | FK → organization_member | PROTECT |
+| assigned_by | FK → organization_member NULL | PROTECT |
 | assigned_at | timestamptz | |
 | started_at, finished_at | timestamptz NULL | `finished ≥ started` (CHECK) |
 
@@ -373,11 +374,9 @@ Szablon zadania wymaganego przez finansowanie.
 | checklist_title | varchar NULL | grupuje punkty |
 | element | varchar | treść punktu |
 | order | smallint | kolejność (`order` – słowo zastrzeżone, patrz rejestr pkt 6) |
-| assignee | FK → organization_member NULL | SET_NULL |
-| done_by | FK → organization_member NULL | SET_NULL |
+| done_by | FK → organization_member NULL | PROTECT; kto odhaczył punkt |
 | done_at | timestamptz NULL | |
-| updated_at | timestamptz | |
-| *created_at* | *timestamptz* | ⚠ **może brakuje** – brak na diagramie; pozostałe tabele mają `created_at`, punkt checklisty tylko `updated_at` |
+| created_at, updated_at | timestamptz | |
 
 - AK1: `done_by` i `done_at` wypełnione oba albo żadne → IntegrityError.
 - AK2: `toggle(member)` odhacza lub cofa odhaczenie.
@@ -425,7 +424,7 @@ Szablon zadania wymaganego przez finansowanie.
 | type | varchar | lista stała (CHECK) |
 | amount | numeric(14,2) | > 0 (CHECK) |
 | currency | char(3) | |
-| spent_on | date | |
+| spent_on_date | date | |
 | document_number | varchar NULL | |
 | description | text | |
 | created_by | FK → organization_member | PROTECT |

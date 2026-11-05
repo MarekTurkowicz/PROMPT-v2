@@ -17,6 +17,8 @@ class Funding(models.Model):
     organization = models.ForeignKey(
         "api.Organization",
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name="fundings",
     )
 

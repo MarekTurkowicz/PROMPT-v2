@@ -6,7 +6,8 @@ from api.constants import Priority
 
 class Task(models.Model):
     """
-    Represents a task of a project, or of a funding alone (exactly one of the two).
+    Represents a task of a project. A task created from a funding's templates points at
+    ``project_funding``, which tells which funding it belongs to.
 
     ``project_funding`` must belong to the task's project; besides the ORM foreign key it is
     guarded by the composite foreign key (project_funding_id, project_id) added in a RunSQL
@@ -18,17 +19,8 @@ class Task(models.Model):
     project = models.ForeignKey(
         "api.Project",
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
         related_name="tasks",
         db_index=False,
-    )
-    funding = models.ForeignKey(
-        "api.Funding",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="tasks",
     )
     project_funding = models.ForeignKey(
         "api.ProjectFunding",
@@ -85,17 +77,6 @@ class Task(models.Model):
         db_table = "task"
         constraints = [
             models.CheckConstraint(
-                condition=(
-                    Q(project__isnull=False, funding__isnull=True)
-                    | Q(project__isnull=True, funding__isnull=False)
-                ),
-                name="task_one_of_project_funding",
-            ),
-            models.CheckConstraint(
-                condition=Q(project_funding__isnull=True) | Q(project__isnull=False),
-                name="task_project_funding_needs_project",
-            ),
-            models.CheckConstraint(
                 condition=Q(priority__gte=Priority.LOWEST, priority__lte=Priority.HIGHEST),
                 name="task_priority_range",
             ),
@@ -111,7 +92,6 @@ class Task(models.Model):
                 condition=Q(est_hours__isnull=True) | Q(est_hours__gt=0),
                 name="task_est_hours_positive",
             ),
-            # attaching the same funding again must not copy its templates twice (P1)
             models.UniqueConstraint(
                 fields=["project_funding", "template"],
                 condition=Q(project_funding__isnull=False, template__isnull=False),

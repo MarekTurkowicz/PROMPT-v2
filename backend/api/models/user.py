@@ -97,6 +97,11 @@ class User(AbstractBaseUser):
     def has_module_perms(self, app_label: str) -> bool:
         return self.is_active and self.is_superuser
 
+    def clean(self) -> None:
+        # forms (e.g. the admin) validate unique email and the lowercase check after clean()
+        super().clean()
+        self.email = User.objects.normalize_email(self.email)
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.email = User.objects.normalize_email(self.email)
         super().save(*args, **kwargs)

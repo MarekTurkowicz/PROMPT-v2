@@ -13,17 +13,17 @@ class TaskAssignment(models.Model):
         related_name="assignments",
         db_index=False,
     )
-    member = models.ForeignKey(
+    assigned_to = models.ForeignKey(
         "api.OrganizationMember",
         on_delete=models.PROTECT,
-        related_name="task_assignments",
+        related_name="task_assignment_to",
     )
     assigned_by = models.ForeignKey(
         "api.OrganizationMember",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        related_name="task_assignments_made",
+        related_name="task_assignments_by",
     )
 
     assigned_at = models.DateTimeField(auto_now_add=True)
@@ -34,7 +34,7 @@ class TaskAssignment(models.Model):
         db_table = "task_assignment"
         ordering = ["-assigned_at"]
         constraints = [
-            models.UniqueConstraint(fields=["task", "member"], name="task_assignment_unique"),
+            models.UniqueConstraint(fields=["task", "assigned_to"], name="task_assignment_unique"),
             models.CheckConstraint(
                 condition=(
                     Q(started_at__isnull=True)
@@ -46,4 +46,4 @@ class TaskAssignment(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.member} -> {self.task}"
+        return f"{self.assigned_to} -> {self.task}"

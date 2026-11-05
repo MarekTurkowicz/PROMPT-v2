@@ -46,6 +46,7 @@ class ActivityAction(models.TextChoices):
     ATTACHED = "attached", "Funding attached"
     DETACHED = "detached", "Funding detached"
     # extended
+    CHECKED = "checked", "Checklist item checked"
     UNCHECKED = "unchecked", "Checklist item unchecked"
     ADDED_TO_GROUP = "added_to_group", "Added to group"
     REMOVED_FROM_GROUP = "removed_from_group", "Removed from group"
