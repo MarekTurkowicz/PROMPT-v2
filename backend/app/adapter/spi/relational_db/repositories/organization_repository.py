@@ -1,7 +1,7 @@
 from app.adapter.spi.relational_db.organization import Organization as OrganizationModel
 from app.domain.entities.organization import Organization as OrganizationEntity
 
-from app.adapter.spi.relational_db.mappers.organizational_mapper import (
+from app.adapter.spi.relational_db.mappers.organization_mapper import (
     OrganizationMapper,
 )
 from app.ports.spi.db.repositories.base_port import BasePort
