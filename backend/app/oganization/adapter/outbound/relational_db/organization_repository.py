@@ -1,10 +1,10 @@
-from app.adapters.spi.relational_db.models.organization import Organization as OrganizationModel
-from app.domain.entities.organization import Organization as OrganizationEntity
+from app.oganization.adapter.spi.relational_db.organization import Organization as OrganizationModel
+from app.oganization.core.domain.entities.organization import Organization as OrganizationEntity
 
-from app.adapters.spi.relational_db.mappers.organization_mapper import (
+from app.oganization.adapter.spi.relational_db.organization_mapper import (
     OrganizationMapper,
 )
-from app.ports.spi.db.repositories.base_port import BasePort
+from app.shared.ports.spi.db.base_port import BasePort
 
 
 class OrganizationRepository(BasePort[OrganizationEntity]):

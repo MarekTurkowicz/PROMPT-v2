@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from app.domain.value_objects.organization_settings import OrganizationSettings
+from app.oganization.core.domain.value_objects.organization_settings import OrganizationSettings
 
 
 @dataclass
