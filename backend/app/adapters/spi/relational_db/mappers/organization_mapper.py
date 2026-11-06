@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.adapter.spi.relational_db.models.organization import Organization as OrganizationModel
+from app.adapters.spi.relational_db.models.organization import Organization as OrganizationModel
 from app.domain.entities.organization import Organization as OrganizationEntity
 from app.domain.value_objects.organization_settings import OrganizationSettings
 from app.ports.spi.db.base_mapper import BaseMapper
