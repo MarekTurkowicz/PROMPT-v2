@@ -32,21 +32,21 @@ Schemat obejmuje 22 relacji. Implementacja: `promt-schemat.sql` (przetestowana n
 - **PROJECT**(<u>id</u>, #organization_id, #owner_id, name, description, status, start_date, end_date, hidden_status_ids, created_at, updated_at)
 - **MILESTONE**(<u>id</u>, #project_id, name, status, due_date, position, created_at, updated_at)
 - **FUNDING**(<u>id</u>, #organization_id, type, name, funder, program, agreement_number, amount_total, currency, start_date, end_date, reporting_deadline, description, created_at)
-- **PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at)
+- **PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at, detached_at)
 - **TASK_TEMPLATE**(<u>id</u>, #funding_id, title, description, #default_status_id, default_priority, default_est_hours, default_due_days, mandatory)
 
 **Zadania**
 
-- **TASK**(<u>id</u>, #project_id, #funding_id, #project_funding_id, #milestone_id, #parent_id, #template_id, #status_id, #group_id, title, description, priority, start_date, due_date, est_hours, created_at, updated_at)
-- **TASK_ASSIGNMENT**(<u>id</u>, #task_id, #member_id, #assigned_by_id, assigned_at, started_at, finished_at)
+- **TASK**(<u>id</u>, #project_id, #project_funding_id, #milestone_id, #parent_id, #template_id, #status_id, #group_id, title, description, priority, start_date, due_date, est_hours, created_at, updated_at)
+- **TASK_ASSIGNMENT**(<u>id</u>, #task_id, #assigned_to_id, #assigned_by_id, assigned_at, started_at, finished_at)
 - **TIME_ENTRY**(<u>id</u>, #assignment_id, work_date, hours, started_at, finished_at, note, created_at, updated_at)
-- **CHECKLIST_ITEM**(<u>id</u>, #task_id, checklist_title, element, position, #assignee_id, #done_by_id, done_at)
+- **CHECKLIST_ITEM**(<u>id</u>, #task_id, checklist_title, element, position, #done_by_id, done_at, created_at, updated_at)
 
 **Współpraca, koszty i historia**
 
 - **COMMENT**(<u>id</u>, #task_id, #project_id, #author_id, #parent_id, content, created_at, updated_at)
 - **ATTACHMENT**(<u>id</u>, #task_id, #comment_id, #expense_id, #uploaded_by_id, file, original_name, mime_type, size_bytes, created_at)
-- **EXPENSE**(<u>id</u>, #project_id, #project_funding_id, #task_id, type, amount, currency, spent_on, document_number, description, #created_by_id, created_at)
+- **EXPENSE**(<u>id</u>, #project_id, #project_funding_id, #task_id, type, amount, currency, spent_on_date, document_number, description, #created_by_id, created_at)
 - **ACTIVITY_LOG**(<u>id</u>, #organization_id, #actor_id, entity_type, entity_id, action, changes, created_at)
 - **NOTIFICATION**(<u>id</u>, #activity_id, #recipient_id, content, read_at)
 
@@ -71,13 +71,12 @@ Schemat obejmuje 22 relacji. Implementacja: `promt-schemat.sql` (przetestowana n
 | organization | project | organization_id | 1 : N | obowiązkowy (1) | CASCADE |
 | organization_member | project | owner_id | 1 : N | obowiązkowy (1) | SET NULL |
 | project | milestone | project_id | 1 : N | obowiązkowy (1) | CASCADE |
-| organization | funding | organization_id | 1 : N | obowiązkowy (1) | CASCADE |
+| organization | funding | organization_id | 1 : N | opcjonalny (0..1) | CASCADE |
 | project | project_funding | project_id | 1 : N | obowiązkowy (1) | CASCADE |
 | funding | project_funding | funding_id | 1 : N | obowiązkowy (1) | CASCADE |
 | funding | task_template | funding_id | 1 : N | obowiązkowy (1) | CASCADE |
 | task_status | task_template | default_status_id | 1 : N | opcjonalny (0..1) | SET NULL |
-| project | task | project_id | 1 : N | opcjonalny (0..1) | CASCADE |
-| funding | task | funding_id | 1 : N | opcjonalny (0..1) | CASCADE |
+| project | task | project_id | 1 : N | obowiązkowy (1) | CASCADE |
 | project_funding | task | project_funding_id | 1 : N | opcjonalny (0..1) | CASCADE |
 | milestone | task | milestone_id | 1 : N | opcjonalny (0..1) | SET NULL |
 | task | task | parent_id | 1 : N | opcjonalny (0..1) | CASCADE |
@@ -85,11 +84,10 @@ Schemat obejmuje 22 relacji. Implementacja: `promt-schemat.sql` (przetestowana n
 | task_status | task | status_id | 1 : N | obowiązkowy (1) | RESTRICT |
 | member_group | task | group_id | 1 : N | opcjonalny (0..1) | SET NULL |
 | task | task_assignment | task_id | 1 : N | obowiązkowy (1) | CASCADE |
-| organization_member | task_assignment | member_id | 1 : N | obowiązkowy (1) | CASCADE |
+| organization_member | task_assignment | assigned_to_id | 1 : N | obowiązkowy (1) | CASCADE |
 | organization_member | task_assignment | assigned_by_id | 1 : N | opcjonalny (0..1) | SET NULL |
 | task_assignment | time_entry | assignment_id | 1 : N | obowiązkowy (1) | CASCADE |
 | task | checklist_item | task_id | 1 : N | obowiązkowy (1) | CASCADE |
-| organization_member | checklist_item | assignee_id | 1 : N | opcjonalny (0..1) | SET NULL |
 | organization_member | checklist_item | done_by_id | 1 : N | opcjonalny (0..1) | SET NULL |
 | task | comment | task_id | 1 : N | opcjonalny (0..1) | CASCADE |
 | project | comment | project_id | 1 : N | opcjonalny (0..1) | CASCADE |
@@ -509,14 +507,14 @@ Etap projektu z terminem.
 
 ### 11. funding
 
-Finansowanie – z bazy, dostaje firmę (grant należy do firmy i finansuje kilka jej projektów).
+Finansowanie – z bazy. Zwykle należy do firmy (grant finansuje kilka jej projektów); organization_id NULL = finansowanie nieprzypisane do jednej firmy (np. program UE dostępny dla wielu).
 
 **FUNDING**(<u>id</u>, #organization_id, type, name, funder, program, agreement_number, amount_total, currency, start_date, end_date, reporting_deadline, description, created_at)
 
 | Atrybut | Typ | Dziedzina | NULL | Klucz | Opis |
 |---|---|---|---|---|---|
 | id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | PK |  |
-| organization_id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | FK → organization |  |
+| organization_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → organization | NULL = bez jednej firmy |
 | type | `varchar` | tekst o ograniczonej długości | nie |  |  |
 | name | `varchar` | tekst o ograniczonej długości | nie |  |  |
 | funder | `varchar` | tekst o ograniczonej długości | nie |  |  |
@@ -548,9 +546,9 @@ Finansowanie – z bazy, dostaje firmę (grant należy do firmy i finansuje kilk
 
 ### 12. project_funding
 
-Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresie.
+Które finansowanie finansuje który projekt i w jakim okresie. Odpięcie ustawia detached_at zamiast usuwać rekord – ruszone zadania, godziny i wydatki dalej wskazują właściwe finansowanie i okres.
 
-**PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at)
+**PROJECT_FUNDING**(<u>id</u>, #project_id, #funding_id, allocation_start, allocation_end, is_primary, note, created_at, detached_at)
 
 | Atrybut | Typ | Dziedzina | NULL | Klucz | Opis |
 |---|---|---|---|---|---|
@@ -562,6 +560,7 @@ Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresi
 | is_primary | `bool` | wartość logiczna | nie |  |  |
 | note | `text` | tekst bez limitu | nie |  |  |
 | created_at | `timestamptz` | data i czas ze strefą | nie |  |  |
+| detached_at | `timestamptz` | data i czas ze strefą | tak |  | NULL = aktywne |
 
 **Klucze obce**
 
@@ -572,13 +571,14 @@ Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresi
 
 **Więzy**
 
-- `UNIQUE (project_id, funding_id)`
+- `UNIQUE (project_id, funding_id) WHERE detached_at IS NULL` (indeks częściowy – po odpięciu można podpiąć ponownie)
+- `UNIQUE (project_id) WHERE is_primary AND detached_at IS NULL` (jedno aktywne główne finansowanie)
 - `UNIQUE (id, project_id)                                  -- cel złożonego FK z task`
 
 **Zależności funkcyjne**
 
-- {id} → {project_id, funding_id, allocation_start, allocation_end, is_primary, note, created_at}
-- {project_id, funding_id} → {id}  (klucz kandydujący)
+- {id} → {project_id, funding_id, allocation_start, allocation_end, is_primary, note, created_at, detached_at}
+- {project_id, funding_id} → {id} tylko wśród aktywnych (unikalność częściowa – nie jest kluczem całej relacji)
 - {id, project_id} → {id}  (klucz kandydujący)
 
 **Postać normalna:** BCNF – jedynym wyznacznikiem są klucze (kandydujące).
@@ -631,16 +631,15 @@ Szablon zadania (w bazie: funding_task) – zadanie wymagane przez finansowanie.
 
 ### 14. task
 
-Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta sama informacja, bez JOIN-a): projekt ALBO samo finansowanie, opcjonalnie finansowanie projektu. Status to etykieta firmy/projektu – jego kategorię (todo / in progress / done / cancelled) zna sam status.
+Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta sama informacja, bez JOIN-a): zawsze projekt, opcjonalnie finansowanie projektu (zadanie z szablonu – z niego wiadomo, z którego finansowania pochodzi). Status to etykieta firmy/projektu – jego kategorię (todo / in progress / done / cancelled) zna sam status.
 
-**TASK**(<u>id</u>, #project_id, #funding_id, #project_funding_id, #milestone_id, #parent_id, #template_id, #status_id, #group_id, title, description, priority, start_date, due_date, est_hours, created_at, updated_at)
+**TASK**(<u>id</u>, #project_id, #project_funding_id, #milestone_id, #parent_id, #template_id, #status_id, #group_id, title, description, priority, start_date, due_date, est_hours, created_at, updated_at)
 
 | Atrybut | Typ | Dziedzina | NULL | Klucz | Opis |
 |---|---|---|---|---|---|
 | id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | PK |  |
-| project_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → project | zadanie projektu ALBO |
-| funding_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → funding | zadanie samego grantu |
-| project_funding_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → project_funding | grant w projekcie |
+| project_id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | FK → project |  |
+| project_funding_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → project_funding | zadanie z szablonu finansowania |
 | milestone_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → milestone |  |
 | parent_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → task | podzadanie |
 | template_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → task_template | z jakiego szablonu |
@@ -660,7 +659,6 @@ Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta s
 | Atrybut | Odwołuje się do | ON DELETE |
 |---|---|---|
 | project_id | project(id) | CASCADE |
-| funding_id | funding(id) | CASCADE |
 | project_funding_id | project_funding(id) | CASCADE |
 | milestone_id | milestone(id) | SET NULL |
 | parent_id | task(id) | CASCADE |
@@ -672,12 +670,10 @@ Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta s
 **Więzy**
 
 - `priority: CHECK (priority BETWEEN 1 AND 5)`
-- `CHECK ((project_id IS NULL) <> (funding_id IS NULL))`
-- `CHECK (project_funding_id IS NULL OR project_id IS NOT NULL)`
 
 **Zależności funkcyjne**
 
-- {id} → {project_id, funding_id, project_funding_id, milestone_id, parent_id, template_id, status_id, group_id, title, description, priority, start_date, due_date, est_hours, created_at, updated_at}
+- {id} → {project_id, project_funding_id, milestone_id, parent_id, template_id, status_id, group_id, title, description, priority, start_date, due_date, est_hours, created_at, updated_at}
 - {project_funding_id} → {project_id}  (zależność przechodnia – kontrolowana kopia, złożony FK)
 
 **Postać normalna:** 3NF z jedną kontrolowaną zależnością przechodnią: project_funding_id → project_id. Zgodność wymusza złożony klucz obcy (project_funding_id, project_id) → project_funding(id, project_id), więc anomalia aktualizacji nie może wystąpić.
@@ -685,7 +681,6 @@ Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta s
 **Indeksy**
 
 - `CREATE INDEX task_project_status_ix ON task (project_id, status_id, priority DESC)`
-- `CREATE INDEX task_funding_ix ON task (funding_id)`
 - `CREATE INDEX task_project_funding_ix ON task (project_funding_id)`
 - `CREATE INDEX task_milestone_ix ON task (milestone_id)`
 - `CREATE INDEX task_parent_ix ON task (parent_id)`
@@ -698,13 +693,13 @@ Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta s
 
 Z bazy: kto wykonuje zadanie i kiedy zaczął / skończył. Godziny są w time_entry.
 
-**TASK_ASSIGNMENT**(<u>id</u>, #task_id, #member_id, #assigned_by_id, assigned_at, started_at, finished_at)
+**TASK_ASSIGNMENT**(<u>id</u>, #task_id, #assigned_to_id, #assigned_by_id, assigned_at, started_at, finished_at)
 
 | Atrybut | Typ | Dziedzina | NULL | Klucz | Opis |
 |---|---|---|---|---|---|
 | id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | PK |  |
 | task_id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | FK → task |  |
-| member_id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | FK → organization_member |  |
+| assigned_to_id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | FK → organization_member |  |
 | assigned_by_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → organization_member |  |
 | assigned_at | `timestamptz` | data i czas ze strefą | nie |  |  |
 | started_at | `timestamptz` | data i czas ze strefą | tak |  |  |
@@ -715,24 +710,24 @@ Z bazy: kto wykonuje zadanie i kiedy zaczął / skończył. Godziny są w time_e
 | Atrybut | Odwołuje się do | ON DELETE |
 |---|---|---|
 | task_id | task(id) | CASCADE |
-| member_id | organization_member(id) | CASCADE |
+| assigned_to_id | organization_member(id) | CASCADE |
 | assigned_by_id | organization_member(id) | SET NULL |
 
 **Więzy**
 
-- `UNIQUE (task_id, member_id)`
+- `UNIQUE (task_id, assigned_to_id)`
 - `CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)`
 
 **Zależności funkcyjne**
 
-- {id} → {task_id, member_id, assigned_by_id, assigned_at, started_at, finished_at}
-- {task_id, member_id} → {id}  (klucz kandydujący)
+- {id} → {task_id, assigned_to_id, assigned_by_id, assigned_at, started_at, finished_at}
+- {task_id, assigned_to_id} → {id}  (klucz kandydujący)
 
 **Postać normalna:** BCNF – jedynym wyznacznikiem są klucze (kandydujące).
 
 **Indeksy**
 
-- `CREATE INDEX task_assignment_member_ix ON task_assignment (member_id)`
+- `CREATE INDEX task_assignment_assigned_to_ix ON task_assignment (assigned_to_id)`
 - `CREATE INDEX task_assignment_assigned_by_ix ON task_assignment (assigned_by_id)`
 
 ### 16. time_entry
@@ -778,7 +773,7 @@ Ewidencja czasu: data, godziny, opcjonalnie dokładny start i koniec. Wpis nale�
 
 Punkt (element) checklisty w zadaniu; checklist_title grupuje punkty, gdy zadanie ma kilka checklist.
 
-**CHECKLIST_ITEM**(<u>id</u>, #task_id, checklist_title, element, position, #assignee_id, #done_by_id, done_at)
+**CHECKLIST_ITEM**(<u>id</u>, #task_id, checklist_title, element, position, #done_by_id, done_at, created_at, updated_at)
 
 | Atrybut | Typ | Dziedzina | NULL | Klucz | Opis |
 |---|---|---|---|---|---|
@@ -787,28 +782,27 @@ Punkt (element) checklisty w zadaniu; checklist_title grupuje punkty, gdy zadani
 | checklist_title | `varchar` | tekst o ograniczonej długości | tak |  | tytuł checklisty w zadaniu |
 | element | `varchar` | tekst o ograniczonej długości | nie |  | treść punktu do odhaczenia |
 | position | `smallint` | liczba całkowita 16-bit | nie |  |  |
-| assignee_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → organization_member | kto ma odhaczyć |
-| done_by_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → organization_member |  |
+| done_by_id | `bigint` | liczba całkowita 64-bit (identyfikator) | tak | FK → organization_member | kto odhaczył |
 | done_at | `timestamptz` | data i czas ze strefą | tak |  |  |
+| created_at | `timestamptz` | data i czas ze strefą | nie |  |  |
+| updated_at | `timestamptz` | data i czas ze strefą | nie |  |  |
 
 **Klucze obce**
 
 | Atrybut | Odwołuje się do | ON DELETE |
 |---|---|---|
 | task_id | task(id) | CASCADE |
-| assignee_id | organization_member(id) | SET NULL |
 | done_by_id | organization_member(id) | SET NULL |
 
 **Zależności funkcyjne**
 
-- {id} → {task_id, checklist_title, element, position, assignee_id, done_by_id, done_at}
+- {id} → {task_id, checklist_title, element, position, done_by_id, done_at, created_at, updated_at}
 
 **Postać normalna:** BCNF – jedynym wyznacznikiem są klucze (kandydujące).
 
 **Indeksy**
 
 - `CREATE INDEX checklist_item_task_ix ON checklist_item (task_id, checklist_title, position)`
-- `CREATE INDEX checklist_item_assignee_ix ON checklist_item (assignee_id)`
 - `CREATE INDEX checklist_item_done_by_ix ON checklist_item (done_by_id)`
 
 ## Współpraca, koszty i historia
@@ -906,7 +900,7 @@ Plik zadania, komentarza albo wydatku (faktura) – model Kuby; przejmuje receip
 
 Wydatek (model Kuby) – przejmuje cost_* z task. Koszt własny projektu ALBO rozliczany z finansowania (project_funding już wskazuje projekt, więc nie powtarzamy project_id).
 
-**EXPENSE**(<u>id</u>, #project_id, #project_funding_id, #task_id, type, amount, currency, spent_on, document_number, description, #created_by_id, created_at)
+**EXPENSE**(<u>id</u>, #project_id, #project_funding_id, #task_id, type, amount, currency, spent_on_date, document_number, description, #created_by_id, created_at)
 
 | Atrybut | Typ | Dziedzina | NULL | Klucz | Opis |
 |---|---|---|---|---|---|
@@ -917,7 +911,7 @@ Wydatek (model Kuby) – przejmuje cost_* z task. Koszt własny projektu ALBO ro
 | type | `varchar` | tekst o ograniczonej długości | nie |  |  |
 | amount | `numeric(14,2)` | kwota (14 cyfr, 2 po przecinku) | nie |  |  |
 | currency | `char(3)` | kod waluty ISO 4217 | nie |  |  |
-| spent_on | `date` | data | nie |  |  |
+| spent_on_date | `date` | data | nie |  |  |
 | document_number | `varchar` | tekst o ograniczonej długości | tak |  |  |
 | description | `text` | tekst bez limitu | nie |  |  |
 | created_by_id | `bigint` | liczba całkowita 64-bit (identyfikator) | nie | FK → organization_member |  |
@@ -939,13 +933,13 @@ Wydatek (model Kuby) – przejmuje cost_* z task. Koszt własny projektu ALBO ro
 
 **Zależności funkcyjne**
 
-- {id} → {project_id, project_funding_id, task_id, type, amount, currency, spent_on, document_number, description, created_by_id, created_at}
+- {id} → {project_id, project_funding_id, task_id, type, amount, currency, spent_on_date, document_number, description, created_by_id, created_at}
 
 **Postać normalna:** BCNF – jedynym wyznacznikiem są klucze (kandydujące).
 
 **Indeksy**
 
-- `CREATE INDEX expense_project_ix ON expense (project_id, spent_on)`
+- `CREATE INDEX expense_project_ix ON expense (project_id, spent_on_date)`
 - `CREATE INDEX expense_project_funding_ix ON expense (project_funding_id)`
 - `CREATE INDEX expense_task_ix ON expense (task_id)`
 - `CREATE INDEX expense_created_by_ix ON expense (created_by_id)`

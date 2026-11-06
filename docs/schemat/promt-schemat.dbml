@@ -123,7 +123,7 @@ Table "milestone" {
 
 Table "funding" {
   "id" bigint [pk, not null]
-  "organization_id" bigint [not null]
+  "organization_id" bigint [null, note: 'null = finansowanie nieprzypisane do jednej organizacji']
   "type" varchar [not null]
   "name" varchar [not null]
   "funder" varchar [not null]
@@ -148,7 +148,8 @@ Table "project_funding" {
   "is_primary" bool [not null]
   "note" text [not null]
   "created_at" timestamptz [not null]
-  Note: 'Z bazy, bez zmian: które finansowanie finansuje który projekt i w jakim okresie.'
+  "detached_at" timestamptz [null, note: 'null = aktywne; odpięcie nie usuwa rekordu']
+  Note: 'Które finansowanie finansuje który projekt i w jakim okresie. Odpięte powiązanie zostaje (detached_at), żeby ruszone zadania, godziny i wydatki dalej wskazywały właściwe finansowanie.'
 }
 
 Table "task_template" {
@@ -166,9 +167,8 @@ Table "task_template" {
 
 Table "task" {
   "id" bigint [pk, not null]
-  "project_id" bigint [null, note: 'zadanie projektu ALBO']
-  "funding_id" bigint [null, note: 'zadanie samego grantu']
-  "project_funding_id" bigint [null, note: 'grant w projekcie']
+  "project_id" bigint [not null]
+  "project_funding_id" bigint [null, note: 'zadanie z szablonu finansowania']
   "milestone_id" bigint [null]
   "parent_id" bigint [null, note: 'podzadanie']
   "template_id" bigint [null, note: 'z jakiego szablonu']
@@ -182,13 +182,13 @@ Table "task" {
   "est_hours" "numeric(6,2)" [null]
   "created_at" timestamptz [not null]
   "updated_at" timestamptz [not null]
-  Note: 'Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta sama informacja, bez JOIN-a): projekt ALBO samo finansowanie, opcjonalnie finansowanie projektu. Status to etykieta firmy/projektu – jego kategorię (todo / in progress / done / cancelled) zna sam status.'
+  Note: 'Zadanie – z bazy. Kontekst z dawnego task_scope jest w kolumnach zadania (ta sama informacja, bez JOIN-a): zawsze projekt, opcjonalnie finansowanie projektu (zadanie z szablonu). Status to etykieta firmy/projektu – jego kategorię (todo / in progress / done / cancelled) zna sam status.'
 }
 
 Table "task_assignment" {
   "id" bigint [pk, not null]
   "task_id" bigint [not null]
-  "member_id" bigint [not null]
+  "assigned_to_id" bigint [not null]
   "assigned_by_id" bigint [null]
   "assigned_at" timestamptz [not null]
   "started_at" timestamptz [null]
@@ -215,9 +215,10 @@ Table "checklist_item" {
   "checklist_title" varchar [null, note: 'tytuł checklisty w zadaniu']
   "element" varchar [not null, note: 'treść punktu do odhaczenia']
   "position" smallint [not null]
-  "assignee_id" bigint [null, note: 'kto ma odhaczyć']
-  "done_by_id" bigint [null]
+  "done_by_id" bigint [null, note: 'kto odhaczył']
   "done_at" timestamptz [null]
+  "created_at" timestamptz [not null]
+  "updated_at" timestamptz [not null]
   Note: 'Punkt (element) checklisty w zadaniu; checklist_title grupuje punkty, gdy zadanie ma kilka checklist.'
 }
 
@@ -255,7 +256,7 @@ Table "expense" {
   "type" varchar [not null]
   "amount" "numeric(14,2)" [not null]
   "currency" "char(3)" [not null]
-  "spent_on" date [not null]
+  "spent_on_date" date [not null]
   "document_number" varchar [null]
   "description" text [not null]
   "created_by_id" bigint [not null]
@@ -307,7 +308,6 @@ Ref: "project_funding"."funding_id" > "funding"."id"
 Ref: "task_template"."funding_id" > "funding"."id"
 Ref: "task_template"."default_status_id" > "task_status"."id"
 Ref: "task"."project_id" > "project"."id"
-Ref: "task"."funding_id" > "funding"."id"
 Ref: "task"."project_funding_id" > "project_funding"."id"
 Ref: "task"."milestone_id" > "milestone"."id"
 Ref: "task"."parent_id" > "task"."id"
@@ -315,11 +315,10 @@ Ref: "task"."template_id" > "task_template"."id"
 Ref: "task"."status_id" > "task_status"."id"
 Ref: "task"."group_id" > "member_group"."id"
 Ref: "task_assignment"."task_id" > "task"."id"
-Ref: "task_assignment"."member_id" > "organization_member"."id"
+Ref: "task_assignment"."assigned_to_id" > "organization_member"."id"
 Ref: "task_assignment"."assigned_by_id" > "organization_member"."id"
 Ref: "time_entry"."assignment_id" > "task_assignment"."id"
 Ref: "checklist_item"."task_id" > "task"."id"
-Ref: "checklist_item"."assignee_id" > "organization_member"."id"
 Ref: "checklist_item"."done_by_id" > "organization_member"."id"
 Ref: "comment"."task_id" > "task"."id"
 Ref: "comment"."project_id" > "project"."id"

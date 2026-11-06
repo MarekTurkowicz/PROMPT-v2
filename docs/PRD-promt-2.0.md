@@ -253,7 +253,7 @@ Status zadania organizacji albo projektu z jedną z 4 stałych kategorii.
 
 | Pole | Typ | Uwagi |
 |---|---|---|
-| organization | FK → organization | PROTECT |
+| organization | FK → organization NULL | PROTECT; NULL = finansowanie nieprzypisane do jednej organizacji (np. program UE dostępny dla wielu) |
 | type, name, funder, program, agreement_number | varchar | |
 | amount_total | numeric(14,2) | > 0 (CHECK) |
 | currency | char(3) | 3 wielkie litery (CHECK) |
@@ -271,13 +271,17 @@ Powiązanie projektu z finansowaniem (M:N z danymi).
 | project | FK → project | PROTECT |
 | funding | FK → funding | PROTECT |
 | allocation_start, allocation_end | date NULL | `end ≥ start` (CHECK) |
-| is_primary | bool | najwyżej jedno główne na projekt |
+| is_primary | bool | najwyżej jedno aktywne główne na projekt |
 | note | text | |
 | created_at | timestamptz | |
+| detached_at | timestamptz NULL | NULL = aktywne; data odpięcia (P11) – rekord zostaje, nie jest usuwany |
 
-- AK1: Ta sama para projekt–finansowanie drugi raz → IntegrityError.
-- AK2: Drugie finansowanie główne projektu → IntegrityError (unikalność częściowa `WHERE is_primary`).
-- AK3: Projekt i finansowanie z różnych organizacji → ValidationError.
+- AK1: Ta sama para projekt–finansowanie drugi raz, gdy poprzednie powiązanie jest aktywne → IntegrityError
+  (unikalność częściowa `WHERE detached_at IS NULL`); po odpięciu można podpiąć ponownie jako nowy rekord.
+- AK2: Drugie aktywne finansowanie główne projektu → IntegrityError (unikalność częściowa
+  `WHERE is_primary AND detached_at IS NULL`); odpięte finansowanie główne nie blokuje nowego.
+- AK3: Projekt i finansowanie z różnych organizacji → ValidationError; finansowanie bez organizacji można
+  podpiąć do projektu każdej organizacji.
 - AK4: Para (id, project_id) jest unikalna – cel złożonego klucza obcego z `Task`.
 
 #### `TaskTemplate` – tabela `task_template`
@@ -306,9 +310,8 @@ Szablon zadania wymaganego przez finansowanie.
 
 | Pole | Typ | Uwagi |
 |---|---|---|
-| project | FK → project NULL | PROTECT |
-| funding | FK → funding NULL | PROTECT |
-| project_funding | FK → project_funding NULL | PROTECT; zgodny z projektem |
+| project | FK → project | PROTECT; każde zadanie należy do projektu |
+| project_funding | FK → project_funding NULL | PROTECT; zgodny z projektem; wypełnione = zadanie z szablonu finansowania |
 | milestone | FK → milestone NULL | SET_NULL |
 | parent | FK → task NULL | CASCADE (podzadania) |
 | template | FK → task_template NULL | SET_NULL |
@@ -322,7 +325,8 @@ Szablon zadania wymaganego przez finansowanie.
 | created_at, updated_at | timestamptz | |
 | *created_by* | *FK → organization_member* | ⚠ **może brakuje** – brak na diagramie; bez niej autor zadania jest znany tylko z dziennika zdarzeń |
 
-- AK1: Wypełnione oba lub żadne z (project, funding) → IntegrityError.
+- AK1: Zadanie bez projektu → IntegrityError. Z którego finansowania pochodzi zadanie, wynika
+  z `project_funding` (zadania samego finansowania, bez projektu, nie istnieją).
 - AK2: `project_funding` należący do innego projektu → IntegrityError (złożony klucz obcy
   `(project_funding_id, project_id) → project_funding(id, project_id)`; w Django jako ograniczenie
   dodane migracją `RunSQL`, bo ORM nie obsługuje złożonych FK).
@@ -340,8 +344,8 @@ Szablon zadania wymaganego przez finansowanie.
 | Pole | Typ | Uwagi |
 |---|---|---|
 | task | FK → task | CASCADE |
-| member | FK → organization_member | PROTECT |
-| assigned_by | FK → organization_member NULL | SET_NULL |
+| assigned_to | FK → organization_member | PROTECT |
+| assigned_by | FK → organization_member NULL | PROTECT |
 | assigned_at | timestamptz | |
 | started_at, finished_at | timestamptz NULL | `finished ≥ started` (CHECK) |
 
@@ -373,11 +377,9 @@ Szablon zadania wymaganego przez finansowanie.
 | checklist_title | varchar NULL | grupuje punkty |
 | element | varchar | treść punktu |
 | order | smallint | kolejność (`order` – słowo zastrzeżone, patrz rejestr pkt 6) |
-| assignee | FK → organization_member NULL | SET_NULL |
-| done_by | FK → organization_member NULL | SET_NULL |
+| done_by | FK → organization_member NULL | PROTECT; kto odhaczył punkt |
 | done_at | timestamptz NULL | |
-| updated_at | timestamptz | |
-| *created_at* | *timestamptz* | ⚠ **może brakuje** – brak na diagramie; pozostałe tabele mają `created_at`, punkt checklisty tylko `updated_at` |
+| created_at, updated_at | timestamptz | |
 
 - AK1: `done_by` i `done_at` wypełnione oba albo żadne → IntegrityError.
 - AK2: `toggle(member)` odhacza lub cofa odhaczenie.
@@ -425,7 +427,7 @@ Szablon zadania wymaganego przez finansowanie.
 | type | varchar | lista stała (CHECK) |
 | amount | numeric(14,2) | > 0 (CHECK) |
 | currency | char(3) | |
-| spent_on | date | |
+| spent_on_date | date | |
 | document_number | varchar NULL | |
 | description | text | |
 | created_by | FK → organization_member | PROTECT |
@@ -496,10 +498,13 @@ Kryteria akceptacji:
 - AK3: Szablon bez statusu domyślnego → zadanie dostaje status domyślny organizacji.
 - AK4: Błąd przy tworzeniu dowolnego zadania (np. brak statusu domyślnego) → nie powstaje ani powiązanie,
   ani żadne zadanie (wycofanie całości).
-- AK5: Ponowne podpięcie tego samego finansowania do projektu → odrzucone, bez duplikatów zadań.
+- AK5: Ponowne podpięcie tego samego finansowania, gdy poprzednie powiązanie jest aktywne → odrzucone,
+  bez duplikatów zadań. Po odpięciu (P11) ponowne podpięcie tworzy nowe powiązanie i nowe zadania
+  z szablonów; zadania z poprzedniego okresu zostają przy starym powiązaniu.
 - AK6: Zmiana szablonu po podpięciu nie zmienia utworzonych zadań; nowy szablon dodany później nie tworzy
   zadań w już podpiętych projektach.
-- AK7: Odpięcie finansowania (usunięcie `ProjectFunding`) z zadaniami lub wydatkami → odrzucone (PROTECT).
+- AK7: Twarde usunięcie `ProjectFunding` z zadaniami lub wydatkami → odrzucone (PROTECT). Odpięcie
+  finansowania to osobny proces (P11), który nie usuwa rekordu.
 
 ### P2. Założenie organizacji
 Modele: `Organization`, `TaskStatus`, `Role`, `OrganizationMember`, `RoleAssignment`.
@@ -590,6 +595,33 @@ Modele: `Task`, `TaskAssignment`, `Notification`.
 - AK2: Ponowne uruchomienie tego samego dnia nie tworzy duplikatów. ⚠ Wymaga `notification.created_at` (może brakuje, rejestr pkt 2) –
   bez niej duplikat da się wykryć tylko po treści `content`.
 
+### P11. Odpięcie finansowania od projektu
+Modele: `ProjectFunding`, `Task`, `TimeEntry`, `Expense`, `ActivityLog`. Implementacja: issue #70.
+
+Odpięcie nie usuwa `ProjectFunding` – ustawia `detached_at`. Dzięki temu praca wykonana w ramach
+finansowania (zadania, godziny, wydatki) zostaje przypisana do właściwego finansowania i okresu.
+
+Co ma się zadziać (w jednej transakcji):
+1. Zadania tego powiązania, które **nie zostały ruszone**, są usuwane.
+2. Zadania **ruszone** zostają w projekcie i dalej wskazują na to samo `project_funding`.
+3. Powiązanie dostaje `detached_at`; wydatki i godziny zostają podpięte bez zmian.
+4. W dzienniku zdarzeń powstaje jeden wpis `detached` z uzasadnieniem i liczbą usuniętych
+   i pozostawionych zadań.
+
+Zadanie jest **ruszone**, gdy ma którekolwiek z: status spoza kategorii todo, wpis czasu pracy, wydatek,
+komentarz lub załącznik, odhaczony punkt checklisty, przypisanie z `started_at`, podzadanie.
+`updated_at` nie jest kryterium – zmienia się przy każdej drobnej edycji.
+
+Kryteria akceptacji:
+- AK1: Odpięcie finansowania, którego zadania nie zostały ruszone → zadania usunięte, powiązanie
+  z `detached_at`.
+- AK2: Zadania ruszone, ich godziny i wydatki zostają i wskazują na odpięte powiązanie.
+- AK3: Odpięcie wymaga uzasadnienia; jedno uzasadnienie obejmuje usunięcie zadań obowiązkowych (P9).
+- AK4: Ponowne podpięcie tego samego finansowania tworzy nowe powiązanie i nowe zadania z szablonów;
+  zadania z poprzedniego okresu zostają przy starym (rozróżnienie po `project_funding_id`).
+- AK5: Do odpiętego powiązania nie można dodać nowego zadania ani wydatku → ValidationError.
+- AK6: Błąd w trakcie odpinania → żadna zmiana nie zostaje zapisana (wycofanie całości).
+
 ## 6. Reguły międzymodelowe (izolacja organizacji)
 
 Każdy obiekt należy pośrednio lub bezpośrednio do jednej organizacji. Model nie może łączyć obiektów
@@ -611,7 +643,7 @@ lub w powłoce Django (`manage.py shell`).
 | Grupy i role | MemberGroup, MemberGroupMember, Role, RoleAssignment | hierarchia 3 grup, role na każdym poziomie, `effective_roles` |
 | Statusy i Kanban | TaskStatus, Project | statusy organizacji i projektu, ukrycie, `visible_statuses` |
 | Projekty i etapy | Project, Milestone | projekt z etapami, postęp etapu |
-| Finansowanie i szablony | Funding, ProjectFunding, TaskTemplate, Task | podpięcie → zadania z szablonów, rollback przy błędzie |
+| Finansowanie i szablony | Funding, ProjectFunding, TaskTemplate, Task | podpięcie → zadania z szablonów, rollback przy błędzie; odpięcie zachowuje ruszone zadania, ponowne podpięcie |
 | Zadania, przypisania, pula grupy | Task, TaskAssignment | podzadanie, przekazanie grupie, wzięcie z puli, start/koniec pracy, zaległość |
 | Checklisty | ChecklistItem | dwie checklisty w zadaniu, odhaczanie, postęp |
 | Czas pracy | TimeEntry | wpis w przypisaniu, karta tygodnia, raport czasu |

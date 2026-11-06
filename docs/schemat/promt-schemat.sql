@@ -143,7 +143,7 @@ CREATE INDEX milestone_project_ix ON milestone (project_id, position);
 
 CREATE TABLE funding (
     id                  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    organization_id     bigint        NOT NULL REFERENCES organization ON DELETE CASCADE,
+    organization_id     bigint        REFERENCES organization ON DELETE CASCADE,  -- NULL = bez jednej organizacji
     type                varchar(40)   NOT NULL,
     name                varchar(200)  NOT NULL,
     funder              varchar(200)  NOT NULL DEFAULT '',
@@ -168,9 +168,13 @@ CREATE TABLE project_funding (
     is_primary        boolean     NOT NULL DEFAULT false,
     note              text        NOT NULL DEFAULT '',
     created_at        timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (project_id, funding_id),
+    detached_at       timestamptz,                           -- NULL = aktywne
     UNIQUE (id, project_id)                                  -- cel złożonego FK z task
 );
+CREATE UNIQUE INDEX project_funding_unique ON project_funding (project_id, funding_id)
+    WHERE detached_at IS NULL;                               -- po odpięciu można podpiąć ponownie
+CREATE UNIQUE INDEX project_funding_one_primary ON project_funding (project_id)
+    WHERE is_primary AND detached_at IS NULL;
 CREATE INDEX project_funding_funding_ix ON project_funding (funding_id);
 
 CREATE TABLE task_template (                                 -- w bazie: funding_task
@@ -191,9 +195,8 @@ CREATE INDEX task_template_status_ix ON task_template (default_status_id);
 
 CREATE TABLE task (
     id                  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    project_id          bigint       REFERENCES project ON DELETE CASCADE,          -- zadanie projektu ALBO
-    funding_id          bigint       REFERENCES funding ON DELETE CASCADE,          -- zadanie samego grantu
-    project_funding_id  bigint,                                                     -- grant w projekcie
+    project_id          bigint       NOT NULL REFERENCES project ON DELETE CASCADE,
+    project_funding_id  bigint,                                                     -- zadanie z szablonu finansowania
     milestone_id        bigint       REFERENCES milestone ON DELETE SET NULL,
     parent_id           bigint       REFERENCES task ON DELETE CASCADE,             -- podzadanie
     template_id         bigint       REFERENCES task_template ON DELETE SET NULL,   -- z jakiego szablonu
@@ -207,12 +210,9 @@ CREATE TABLE task (
     est_hours           numeric(6,2),
     created_at          timestamptz  NOT NULL DEFAULT now(),
     updated_at          timestamptz  NOT NULL DEFAULT now(),
-    CHECK ((project_id IS NULL) <> (funding_id IS NULL)),
-    CHECK (project_funding_id IS NULL OR project_id IS NOT NULL),
     FOREIGN KEY (project_funding_id, project_id) REFERENCES project_funding (id, project_id) ON DELETE CASCADE
 );
 CREATE INDEX task_project_status_ix ON task (project_id, status_id, priority DESC);
-CREATE INDEX task_funding_ix ON task (funding_id);
 CREATE INDEX task_project_funding_ix ON task (project_funding_id);
 CREATE INDEX task_milestone_ix ON task (milestone_id);
 CREATE INDEX task_parent_ix ON task (parent_id);
@@ -224,15 +224,15 @@ CREATE INDEX task_due_ix ON task (due_date);
 CREATE TABLE task_assignment (
     id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     task_id         bigint      NOT NULL REFERENCES task ON DELETE CASCADE,
-    member_id       bigint      NOT NULL REFERENCES organization_member ON DELETE CASCADE,
+    assigned_to_id  bigint      NOT NULL REFERENCES organization_member ON DELETE CASCADE,
     assigned_by_id  bigint      REFERENCES organization_member ON DELETE SET NULL,
     assigned_at     timestamptz NOT NULL DEFAULT now(),
     started_at      timestamptz,
     finished_at     timestamptz,
-    UNIQUE (task_id, member_id),
+    UNIQUE (task_id, assigned_to_id),
     CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)
 );
-CREATE INDEX task_assignment_member_ix ON task_assignment (member_id);
+CREATE INDEX task_assignment_assigned_to_ix ON task_assignment (assigned_to_id);
 CREATE INDEX task_assignment_assigned_by_ix ON task_assignment (assigned_by_id);
 
 CREATE TABLE time_entry (
@@ -255,12 +255,12 @@ CREATE TABLE checklist_item (
     checklist_title  varchar(120),                            -- tytuł checklisty w zadaniu
     element          varchar(300) NOT NULL,                   -- treść punktu do odhaczenia
     position     smallint     NOT NULL DEFAULT 0,
-    assignee_id  bigint       REFERENCES organization_member ON DELETE SET NULL,
     done_by_id   bigint       REFERENCES organization_member ON DELETE SET NULL,
-    done_at      timestamptz
+    done_at      timestamptz,
+    created_at   timestamptz  NOT NULL DEFAULT now(),
+    updated_at   timestamptz  NOT NULL DEFAULT now()
 );
 CREATE INDEX checklist_item_task_ix ON checklist_item (task_id, checklist_title, position);
-CREATE INDEX checklist_item_assignee_ix ON checklist_item (assignee_id);
 CREATE INDEX checklist_item_done_by_ix ON checklist_item (done_by_id);
 
 -- ── Współpraca, koszty i historia ───────────────────────────────────────────
@@ -289,14 +289,14 @@ CREATE TABLE expense (
     type                varchar(40)   NOT NULL,
     amount              numeric(14,2) NOT NULL CHECK (amount > 0),
     currency            char(3)       NOT NULL DEFAULT 'PLN',
-    spent_on            date          NOT NULL,
+    spent_on_date       date          NOT NULL,
     document_number     varchar(100),
     description         text          NOT NULL DEFAULT '',
     created_by_id       bigint        NOT NULL REFERENCES organization_member ON DELETE RESTRICT,
     created_at          timestamptz   NOT NULL DEFAULT now(),
     CHECK (num_nonnulls(project_id, project_funding_id) = 1)
 );
-CREATE INDEX expense_project_ix ON expense (project_id, spent_on);
+CREATE INDEX expense_project_ix ON expense (project_id, spent_on_date);
 CREATE INDEX expense_project_funding_ix ON expense (project_funding_id);
 CREATE INDEX expense_task_ix ON expense (task_id);
 CREATE INDEX expense_created_by_ix ON expense (created_by_id);
