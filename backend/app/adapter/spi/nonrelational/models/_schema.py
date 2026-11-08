@@ -26,12 +26,13 @@ class CollectionSpec:
         return validator
 
 
-def bson(bson_type: str, **constraints: Any) -> Schema:
+def bson(bson_type: str | list[str], **constraints: Any) -> Schema:
     return {"bsonType": bson_type, **constraints}
 
 
-def nullable(bson_type: str, **constraints: Any) -> Schema:
-    return {"bsonType": [bson_type, "null"], **constraints}
+def nullable(bson_type: str | list[str], **constraints: Any) -> Schema:
+    bson_types = [bson_type] if isinstance(bson_type, str) else bson_type
+    return {"bsonType": [*bson_types, "null"], **constraints}
 
 
 def enum(values: list[str]) -> Schema:
@@ -68,17 +69,17 @@ def array_of(items: Schema, max_items: int | None = None, **constraints: Any) ->
 
 
 def document(properties: Schema) -> Schema:
-    return obj({"_id": bson("long"), **properties})
+    return obj({"_id": LONG, **properties})
 
 
-LONG = bson("long")
+LONG = bson(["int", "long"])
 INT = bson("int")
 STRING = bson("string")
 BOOL = bson("bool")
 DATE = bson("date")
 DECIMAL = bson("decimal")
 POSITIVE_DECIMAL = bson("decimal", minimum=0, exclusiveMinimum=True)
-OPT_LONG = nullable("long")
+OPT_LONG = nullable(["int", "long"])
 OPT_INT = nullable("int")
 OPT_STRING = nullable("string")
 OPT_DATE = nullable("date")
@@ -109,10 +110,16 @@ ROLE_GRANT = obj(
 )
 
 
-def attachment(max_size_bytes: int | None = None) -> Schema:
-    size = bson("long", minimum=0)
-    if max_size_bytes is not None:
-        size["maximum"] = max_size_bytes
+MAX_ATTACHMENT_SIZE_BYTES = 50 * 1024 * 1024
+
+
+def attachment(max_size_bytes: int = MAX_ATTACHMENT_SIZE_BYTES) -> Schema:
+    size = bson(
+        ["int", "long"],
+        minimum=0,
+        exclusiveMinimum=True,
+        maximum=max_size_bytes,
+    )
     return obj(
         {
             "_id": LONG,

@@ -34,9 +34,9 @@ NOTIFICATIONS = CollectionSpec(
     rules=[{"$eq": [{"$eq": ["$kind", "event"]}, is_set("$activity_id")]}],
     indexes=[
         IndexModel(
-            [("activity_id", 1), ("recipient_user_id", 1)],
+            [("recipient_user_id", 1), ("activity_id", 1)],
             unique=True,
-            partialFilterExpression={"activity_id": {"$type": "long"}},
+            partialFilterExpression={"activity_id": {"$type": ["int", "long"]}},
         ),
         IndexModel(
             [("recipient_user_id", 1), ("dedup_key", 1)],

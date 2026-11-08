@@ -37,7 +37,7 @@ GROUPS = CollectionSpec(
         IndexModel([("organization_id", 1), ("ancestor_ids", 1)]),
         IndexModel(
             [("organization_id", 1), ("project_id", 1)],
-            partialFilterExpression={"project_id": {"$type": "long"}},
+            partialFilterExpression={"project_id": {"$type": ["int", "long"]}},
         ),
         IndexModel(
             [("organization_id", 1), ("code", 1)],

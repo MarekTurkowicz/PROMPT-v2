@@ -81,7 +81,7 @@ ACTIVITY_LOGS = CollectionSpec(
         IndexModel([("organization_id", 1), ("created_at", -1)]),
         IndexModel(
             [("organization_id", 1), ("project_id", 1), ("created_at", -1)],
-            partialFilterExpression={"project_id": {"$type": "long"}},
+            partialFilterExpression={"project_id": {"$type": ["int", "long"]}},
         ),
         IndexModel([("expires_at", 1)], expireAfterSeconds=0),
     ],

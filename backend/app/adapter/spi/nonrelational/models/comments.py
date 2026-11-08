@@ -35,11 +35,11 @@ COMMENTS = CollectionSpec(
     indexes=[
         IndexModel(
             [("organization_id", 1), ("task_id", 1), ("created_at", 1)],
-            partialFilterExpression={"task_id": {"$type": "long"}},
+            partialFilterExpression={"task_id": {"$type": ["int", "long"]}},
         ),
         IndexModel(
             [("organization_id", 1), ("project_id", 1), ("created_at", 1)],
-            partialFilterExpression={"project_id": {"$type": "long"}},
+            partialFilterExpression={"project_id": {"$type": ["int", "long"]}},
         ),
     ],
 )

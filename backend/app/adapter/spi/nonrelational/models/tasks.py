@@ -98,18 +98,18 @@ TASKS = CollectionSpec(
         IndexModel([("organization_id", 1), ("project_id", 1), ("start_date", 1), ("due_date", 1)]),
         IndexModel(
             [("organization_id", 1), ("project_funding_id", 1)],
-            partialFilterExpression={"project_funding_id": {"$type": "long"}},
+            partialFilterExpression={"project_funding_id": {"$type": ["int", "long"]}},
         ),
         IndexModel(
             [("organization_id", 1), ("parent_id", 1)],
-            partialFilterExpression={"parent_id": {"$type": "long"}},
+            partialFilterExpression={"parent_id": {"$type": ["int", "long"]}},
         ),
         IndexModel(
-            [("project_funding_id", 1), ("template_id", 1)],
+            [("organization_id", 1), ("project_funding_id", 1), ("template_id", 1)],
             unique=True,
             partialFilterExpression={
-                "project_funding_id": {"$type": "long"},
-                "template_id": {"$type": "long"},
+                "project_funding_id": {"$type": ["int", "long"]},
+                "template_id": {"$type": ["int", "long"]},
             },
         ),
     ],
