@@ -11,7 +11,6 @@ from app.oganization.adapter.outbound.relational_db.organization_mapper import (
 from app.oganization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
-from app.shared.ports.spi.db.base_port import BasePort
 
 
 class OrganizationRepository(OrganizationPort):
@@ -31,14 +30,14 @@ class OrganizationRepository(OrganizationPort):
             return None
         return OrganizationMapper.to_entity(model)
 
-    def create_obj(self, organization_model: OrganizationEntity) -> OrganizationEntity:
-        model = OrganizationMapper.to_model(organization_model)
+    def create_obj(self, organization_entity: OrganizationEntity) -> OrganizationEntity:
+        model = OrganizationMapper.to_model(organization_entity)
         model.pk = None
         model.save(force_insert=True)
         return OrganizationMapper.to_entity(model)
 
-    def update_obj(self, organization_model: OrganizationEntity) -> OrganizationEntity:
-        model = OrganizationMapper.to_model(organization_model)
+    def update_obj(self, organization_entity: OrganizationEntity) -> OrganizationEntity:
+        model = OrganizationMapper.to_model(organization_entity)
         model.save()
         return OrganizationMapper.to_entity(model)
 

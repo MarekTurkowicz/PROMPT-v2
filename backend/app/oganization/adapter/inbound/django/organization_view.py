@@ -3,7 +3,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from app.oganization.adapter.inbound.django.container import get_container
 from app.oganization.adapter.inbound.django.serializers.create_organization_serializer import (
     CreateOrganizationSerializer,
 )
@@ -19,6 +18,8 @@ from app.oganization.core.ports.api.create_organization_port import (
 
 
 class OrganizationView(APIView):
+    create_organization: CreateOrganizationPort = None  # type: ignore[assignment]  # set via as_view()
+
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         serializer = CreateOrganizationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -26,11 +27,8 @@ class OrganizationView(APIView):
 
         # TODO Poprawa resultów/strukturyzacja
 
-        create_organization: CreateOrganizationPort = (
-            get_container().create_organization
-        )
         try:
-            organization = create_organization.execute(command)
+            organization = self.create_organization.execute(command)
         except (
             InvalidOrganizationName,
             InvalidTaxId,
@@ -44,9 +42,7 @@ class OrganizationView(APIView):
             {
                 "id": None if organization.id is None else str(organization.id),
                 "name": organization.name,
-                "tax_id": (
-                    None if organization.tax_id is None else str(organization.tax_id)
-                ),
+                "tax_id": (None if organization.tax_id is None else str(organization.tax_id)),
             },
             status=status.HTTP_201_CREATED,
         )
