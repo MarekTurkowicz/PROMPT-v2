@@ -1,0 +1,2 @@
+class CreateOrganizationSerializer:
+    pass
