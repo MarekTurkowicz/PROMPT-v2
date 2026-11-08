@@ -16,8 +16,6 @@ from app.adapter.spi.nonrelational.models._schema import (
 )
 
 EXPENSE_TYPES = ["travel", "courses", "external_services", "equipment", "other"]
-MAX_SCAN_BYTES = 50 * 1024 * 1024
-
 EXPENSES = CollectionSpec(
     name="expenses",
     schema=document(
@@ -33,7 +31,7 @@ EXPENSES = CollectionSpec(
             "document_number": OPT_STRING,
             "description": STRING,
             "created_by": LONG,
-            "attachments": array_of(attachment(MAX_SCAN_BYTES), max_items=20),
+            "attachments": array_of(attachment(), max_items=20),
             "created_at": DATE,
             "updated_at": DATE,
         }
@@ -43,7 +41,7 @@ EXPENSES = CollectionSpec(
         IndexModel([("organization_id", 1), ("project_id", 1), ("spent_on_date", -1)]),
         IndexModel(
             [("organization_id", 1), ("funding_id", 1), ("spent_on_date", 1)],
-            partialFilterExpression={"funding_id": {"$type": "long"}},
+            partialFilterExpression={"funding_id": {"$type": ["int", "long"]}},
         ),
     ],
 )

@@ -43,7 +43,7 @@ TIME_ENTRIES = CollectionSpec(
         IndexModel([("organization_id", 1), ("project_id", 1), ("work_date", 1)]),
         IndexModel(
             [("organization_id", 1), ("funding_id", 1)],
-            partialFilterExpression={"funding_id": {"$type": "long"}},
+            partialFilterExpression={"funding_id": {"$type": ["int", "long"]}},
         ),
     ],
 )
