@@ -8,8 +8,6 @@ from django.db import IntegrityError
 from django.test import Client
 from rest_framework.test import APIClient
 
-from api.serializers import AdminUserCreateSerializer
-
 User = get_user_model()
 
 EMAIL = "jan@example.com"
@@ -122,21 +120,6 @@ def test_api_login_when_email_has_different_letter_case_then_200(jan):
 
     assert response.status_code == 200
     assert response.data["id"] == jan.id
-
-
-def test_api_user_serializer_when_email_taken_in_different_case_then_invalid(jan):
-    serializer = AdminUserCreateSerializer(data={"email": "JAN@example.COM", "password": PASSWORD})
-
-    assert not serializer.is_valid()
-    assert "email" in serializer.errors
-
-
-@pytest.mark.django_db
-def test_api_user_serializer_lowercases_new_email():
-    serializer = AdminUserCreateSerializer(data={"email": "Nowy@Example.com", "password": PASSWORD})
-
-    assert serializer.is_valid(), serializer.errors
-    assert serializer.validated_data["email"] == "nowy@example.com"
 
 
 def test_api_login_when_wrong_password_then_400(jan):

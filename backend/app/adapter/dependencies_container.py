@@ -1,3 +1,5 @@
-from typing import Any, Dict
+from typing import Any
 
-def build_production_dependencies_container() -> Dict[str, Any]: pass
+
+def build_dependencies_container() -> dict[str, Any]:
+    return {}
