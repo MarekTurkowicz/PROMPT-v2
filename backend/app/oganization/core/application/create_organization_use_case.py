@@ -1,8 +1,7 @@
-from app.oganization.core.application.create_organization_command import CreateOrganizationCommand
+from app.oganization.core.application.commands.create_organization_command import CreateOrganizationCommand
 from app.oganization.core.domain.entities.organization import Organization
 from app.oganization.core.domain.exceptions import (
-    TaxIdDuplicationException,
-)
+    TaxIdDuplicationException)
 from app.oganization.core.domain.value_objects.organization_settings import OrganizationSettings
 from app.oganization.core.domain.value_objects.organization_tax_id import OrganizationTaxId
 from app.oganization.core.ports.spi.db.repositories.organization_port import OrganizationPort
@@ -14,9 +13,7 @@ class CreateOrganizationUseCase:
     def execute(self, command: CreateOrganizationCommand) -> Organization:
         tax_id = OrganizationTaxId(command.tax_id) if command.tax_id is not None else None
         if tax_id is not None and self._repository.exists_by_tax_id(tax_id.value):
-            raise TaxIdDuplicationException(
-                f"Organization with tax id {tax_id.value} already exists."
-            )
+            raise TaxIdDuplicationException(tax_id.value)
 
         organization = Organization(
             id=None,

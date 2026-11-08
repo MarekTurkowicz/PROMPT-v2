@@ -8,15 +8,18 @@ from app.oganization.core.domain.exceptions import InvalidTaxId
 @dataclass(frozen=True, slots=True)
 class OrganizationTaxId:
     value: str
+    # Do przyszłego rozwoju ;)
+    country_code: str | None = None
 
     def __post_init__(self) -> None:
-        self._validate_pl_tax_id()
+        if self.country_code is None or self.country_code == "PL" :
+            self._validate_pl_tax_id()
 
     def _validate_pl_tax_id(self):
         normalized = re.sub(r"[\s-]", "", self.value)
 
         if not re.fullmatch(r"\d{10}", normalized):
-            raise InvalidTaxId("Invalid tax_id format")
+            raise InvalidTaxId(self.value,"Invalid tax_id format")
 
         checksum = sum(
             int(digit) * weight
@@ -24,7 +27,7 @@ class OrganizationTaxId:
         ) % 11
 
         if checksum == 10 or checksum != int(normalized[9]):
-            raise InvalidTaxId("Invalid tax_id checksum")
+            raise InvalidTaxId(self.value,"Invalid tax_id checksum")
 
         object.__setattr__(self, "value", normalized)
 
