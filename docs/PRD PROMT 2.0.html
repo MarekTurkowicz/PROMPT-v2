@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRD PROMT 2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+/* Dokument techniczny: stały spis rozdziałów po lewej, treść w jednej kolumnie, tabele mogą być szersze. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #5b6676;
+  --line: #d9dee6;
+  --accent: #2f5fa7;
+  --accent-soft: #e6eef9;
+  --code-bg: #eef1f5;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161d; --surface: #171d26; --ink: #e3e8ef; --muted: #98a3b3;
+    --line: #2a3340; --accent: #7fa8e6; --accent-soft: #1d2a3d; --code-bg: #1d242f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161d; --surface: #171d26; --ink: #e3e8ef; --muted: #98a3b3;
+  --line: #2a3340; --accent: #7fa8e6; --accent-soft: #1d2a3d; --code-bg: #1d242f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--font-body); }
+.layout { display: grid; grid-template-columns: 1fr; gap: 0; max-width: 1360px; margin: 0 auto; }
+nav.toc { display: none; }
+main { padding: 32px 20px 80px; min-width: 0; }
+article { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 28px 22px 40px; }
+@media (min-width: 1100px) {
+  .layout { grid-template-columns: 280px minmax(0, 1fr); }
+  nav.toc { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; align-self: start;
+    max-height: 100vh; overflow-y: auto; padding: 32px 12px 32px 20px; font-size: 14px; }
+  nav.toc .lbl { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 10px 8px; }
+  nav.toc a { color: var(--muted); text-decoration: none; padding: 5px 10px; border-radius: 6px; border-left: 2px solid transparent; }
+  nav.toc a:hover { color: var(--ink); background: var(--accent-soft); }
+  nav.toc a.on { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+  main { padding: 32px 32px 80px 12px; }
+  article { padding: 40px 48px 56px; }
+}
+article > p, article > ul, article > ol, article > blockquote { max-width: 74ch; }
+h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.25; text-wrap: balance; scroll-margin-top: 16px; }
+h1 { font-size: 15px; font-family: var(--font-body); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 4px; }
+h1 + h2 { font-size: 40px; margin: 0 0 10px; border: 0; padding: 0; }
+h2 { font-size: 28px; margin: 56px 0 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+h3 { font-size: 20px; margin: 32px 0 10px; }
+h4 { font-size: 17px; margin: 24px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { padding-left: 22px; margin: 0 0 14px; }
+li { margin: 4px 0; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+strong { font-weight: 600; }
+hr { border: 0; height: 0; margin: 8px 0; }
+code { font: 500 0.88em var(--font-mono); background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.cw { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); }
+.cw pre { margin: 0; padding: 16px 18px; }
+.cw code { background: none; padding: 0; font-size: 13px; line-height: 1.55; font-weight: 400; }
+.tw { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { background: var(--accent-soft); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td[align="center"], th[align="center"] { text-align: center; }
+blockquote { margin: 0 0 14px; padding: 8px 16px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Rozdziały">
+<div class="lbl">Rozdziały</div>
+<a href="#1-podsumowanie">1. Podsumowanie</a>
+<a href="#2-opis-produktu">2. Opis produktu</a>
+<a href="#3-role-i-uprawnienia">3. Role i uprawnienia</a>
+<a href="#4-wymagania-funkcjonalne">4. Wymagania funkcjonalne</a>
+<a href="#5-interfejs-użytkownika">5. Interfejs użytkownika</a>
+<a href="#6-architektura-heksagonalna-i-trzy-warianty-bazy">6. Architektura heksagonalna i trzy warianty bazy</a>
+<a href="#7-model-danych">7. Model danych</a>
+<a href="#8-procesy-biznesowe">8. Procesy biznesowe</a>
+<a href="#9-specyfikacja-api">9. Specyfikacja API</a>
+<a href="#10-zadania-w-tle-raporty-i-powiadomienia">10. Zadania w tle, raporty i powiadomienia</a>
+<a href="#11-wymagania-niefunkcjonalne">11. Wymagania niefunkcjonalne</a>
+<a href="#12-struktura-projektu">12. Struktura projektu</a>
+<a href="#13-strategia-testów">13. Strategia testów</a>
+<a href="#14-uruchomienie-i-środowisko">14. Uruchomienie i środowisko</a>
+<a href="#15-plan-etapów">15. Plan etapów</a>
+<a href="#16-decyzje-i-otwarte-kwestie">16. Decyzje i otwarte kwestie</a>
+<a href="#17-słownik">17. Słownik</a>
+</nav>
+<main>
+<article>
+<h1 id="product-requirements-document">Product Requirements Document</h1>
+<h2 id="promt-20--plan--run--optimise-management-tool">PROMT 2.0 – Plan • Run • Optimise Management Tool</h2>
+<p><strong>Aplikacja webowa do zarządzania projektami i finansowaniem (React + Django REST + trzy warianty bazy danych)</strong></p>
+<p><strong>Wersja dokumentu 2.0 | listopad 2026</strong></p>
+<hr>
+<h2 id="metryka-dokumentu">Metryka dokumentu</h2>
+<div class="tw"><table><thead><tr>
+<th>Pole</th>
+<th>Wartość</th>
+</tr>
+</thead><tbody><tr>
+<td>Status</td>
+<td>Wersja robocza – do przeglądu w zespole</td>
+</tr>
+<tr>
+<td>Wersja</td>
+<td>2.0 (zastępuje wersję 1.1 „warstwa danych”)</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>2026-11-06</td>
+</tr>
+<tr>
+<td>Zespół</td>
+<td>Jakub Jakacki, Jakub Kazimiruk, Marek Turkowicz</td>
+</tr>
+<tr>
+<td>Odbiorcy</td>
+<td>zespół projektowy, prowadzący zajęcia</td>
+</tr>
+<tr>
+<td>Wymagania szczegółowe</td>
+<td><code>docs/wymagania.md</code> (FR/NFR, priorytety MoSCoW)</td>
+</tr>
+<tr>
+<td>Przypadki użycia</td>
+<td><code>docs/przypadki-uzycia/</code></td>
+</tr>
+<tr>
+<td>Schematy baz</td>
+<td><code>docs/schemat/warianty/</code> – relacyjny (<code>er-1-relacyjny.drawio</code>), obiektowo-relacyjny (<code>obiektowo-relacyjny.md</code>), dokumentowy (<code>nosql-mongodb.md</code>, <code>nosql-mongodb-heksagonalny.drawio</code>)</td>
+</tr>
+<tr>
+<td>Architektura</td>
+<td>heksagonalna – szkielet <code>backend/app/</code> na <code>main</code>; porty, adaptery i decyzje dla MongoDB w <code>nosql-mongodb-heksagonalny.drawio</code> (strona 2)</td>
+</tr>
+<tr>
+<td>Analiza poprzedniej wersji</td>
+<td><code>docs/analiza-prd-i-modeli.md</code></td>
+</tr>
+<tr>
+<td>Szkielet frontendu</td>
+<td>artifact „Front aplikacji PROMT” – klikalna makieta wszystkich ekranów</td>
+</tr>
+</tbody></table></div>
+<h3 id="co-zmienia-się-względem-wersji-11">Co zmienia się względem wersji 1.1</h3>
+<div class="tw"><table><thead><tr>
+<th>Wersja 1.1</th>
+<th>Wersja 2.0</th>
+</tr>
+</thead><tbody><tr>
+<td>Tylko modele danych backendu, tylko PostgreSQL</td>
+<td>Cały produkt: frontend, API, logika, <strong>trzy warianty bazy</strong></td>
+</tr>
+<tr>
+<td>Warianty obiektowo-relacyjny i MongoDB „w kolejnym etapie”, bez architektury</td>
+<td>Architektura heksagonalna od początku: domena i porty wspólne, po jednym adapterze na każdą z trzech baz</td>
+</tr>
+<tr>
+<td>Role przykładowe (admin, PM, członek, obserwator)</td>
+<td>Hierarchia ról ustalona przez zespół: Obserwator → Użytkownik → PM → Dyrektor projektu → Dyrektor organizacji, plus administratorzy</td>
+</tr>
+<tr>
+<td>Szablony zadań obowiązkowe albo opcjonalne</td>
+<td>Każdy szablon jest obowiązkowy; zadania finansowania = kopie szablonów + zadania dodatkowe</td>
+</tr>
+<tr>
+<td>Brak wymagań dla widoków</td>
+<td>Przegląd projektu (dashboard), oś czasu, zespół jako graf, porównanie osób, raporty PDF/CSV, motyw ciemny</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="spis-treści">Spis treści</h2>
+<ol>
+<li><a href="#1-podsumowanie">Podsumowanie</a></li>
+<li><a href="#2-opis-produktu">Opis produktu</a></li>
+<li><a href="#3-role-i-uprawnienia">Role i uprawnienia</a></li>
+<li><a href="#4-wymagania-funkcjonalne">Wymagania funkcjonalne</a></li>
+<li><a href="#5-interfejs-u%C5%BCytkownika">Interfejs użytkownika</a></li>
+<li><a href="#6-architektura-heksagonalna-i-trzy-warianty-bazy">Architektura heksagonalna i trzy warianty bazy</a></li>
+<li><a href="#7-model-danych">Model danych</a></li>
+<li><a href="#8-procesy-biznesowe">Procesy biznesowe (kryteria akceptacji dla wszystkich baz)</a></li>
+<li><a href="#9-specyfikacja-api">Specyfikacja API</a></li>
+<li><a href="#10-zadania-w-tle-raporty-i-powiadomienia">Zadania w tle, raporty i powiadomienia</a></li>
+<li><a href="#11-wymagania-niefunkcjonalne">Wymagania niefunkcjonalne</a></li>
+<li><a href="#12-struktura-projektu">Struktura projektu</a></li>
+<li><a href="#13-strategia-test%C3%B3w">Strategia testów</a></li>
+<li><a href="#14-uruchomienie-i-%C5%9Brodowisko">Uruchomienie i środowisko</a></li>
+<li><a href="#15-plan-etap%C3%B3w">Plan etapów</a></li>
+<li><a href="#16-decyzje-i-otwarte-kwestie">Decyzje i otwarte kwestie</a></li>
+<li><a href="#17-s%C5%82ownik">Słownik</a></li>
+</ol>
+<hr>
+<h2 id="1-podsumowanie">1. Podsumowanie</h2>
+<p><strong>PROMT</strong> to wieloorganizacyjna aplikacja webowa do planowania i rozliczania projektów finansowanych z różnych źródeł (granty, sponsoring, darowizny, środki własne). Łączy w jednym miejscu zadania, etapy, zespół, czas pracy, finansowania z ich wymogami i budżet.</p>
+<p>Najważniejsza zasada projektu: <strong>ten sam produkt działa na trzech typach bazy danych</strong> – relacyjnej, obiektowo-relacyjnej i dokumentowej (NoSQL). Backend ma <strong>architekturę heksagonalną</strong>: domena, przypadki użycia i porty są wspólne, a każda baza ma własny adapter. Frontend i API nie wiedzą, która baza działa. Dzięki temu można uczciwie porównać trzy paradygmaty na identycznych danych i identycznych operacjach.</p>
+<h3 id="kluczowe-możliwości">Kluczowe możliwości</h3>
+<ul>
+<li><strong>Organizacje i członkowie</strong> – konto jedno na osobę, członkostwo w wielu organizacjach, profil służbowy per organizacja.</li>
+<li><strong>Role i grupy</strong> – hierarchia ról z dostępem kaskadowym (organizacja → projekt), grupy z podgrupami, grupa „Kontroler finansowy”.</li>
+<li><strong>Przegląd projektu (dashboard)</strong> – kondycja projektu, postęp etapów, wykresy zadań, czas pracy, finansowania z budżetem.</li>
+<li><strong>Zadania</strong> – podzadania, checklisty, przypisania wielu osób, pula grupy, lista z filtrami, Kanban.</li>
+<li><strong>Oś czasu</strong> – przybliżanie i przesuwanie w poziomie, tworzenie zadania przez zaznaczenie zakresu, przeciąganie zadań bez terminu na oś.</li>
+<li><strong>Zespół</strong> – graf organizacji, grup i osób; porównanie obciążenia dwóch osób.</li>
+<li><strong>Finansowania</strong> – szablony wymogów, automatyczne zadania po podpięciu do projektu, zadania dodatkowe, budżet i wydatki.</li>
+<li><strong>Raporty</strong> – raport projektu w PDF, eksport list do CSV.</li>
+<li><strong>Historia i powiadomienia</strong> – dziennik zdarzeń tylko do dopisywania, powiadomienia w aplikacji, przypomnienia o terminach.</li>
+<li><strong>Interfejs</strong> – gotowe komponenty zamiast ręcznego CSS, motyw ciemny obowiązkowo, teksty gotowe do tłumaczenia (PL, potem EN).</li>
+</ul>
+<h3 id="stan-na-dziś">Stan na dziś</h3>
+<div class="tw"><table><thead><tr>
+<th>Warstwa</th>
+<th>Stan</th>
+</tr>
+</thead><tbody><tr>
+<td>Frontend</td>
+<td><strong>Szkielet gotowy jako artifact</strong> (makieta wszystkich ekranów z danymi w pamięci). Do przeniesienia do React + TypeScript w <code>frontend/</code>.</td>
+</tr>
+<tr>
+<td>Architektura</td>
+<td>Szkielet katalogów <code>backend/app/</code> (domena, porty, adaptery) na <code>main</code>; pliki puste. <code>adapter/apps.py</code> i <code>dependencies_container.py</code> są niespójne (nazwa aplikacji <code>application</code>, inna nazwa funkcji) i aplikacja nie jest w <code>INSTALLED_APPS</code>.</td>
+</tr>
+<tr>
+<td>Backend (API, logika)</td>
+<td>Do zrobienia. Stare widoki i serializery w <code>backend/api/</code> działają na usuniętych modelach.</td>
+</tr>
+<tr>
+<td>Baza relacyjna</td>
+<td>Modele Django zgodne z diagramem wariantu 1 (22 tabele) w <code>backend/api/models/</code> – materiał dla adaptera relacyjnego; brak logiki, walidacji i procesów.</td>
+</tr>
+<tr>
+<td>Baza obiektowo-relacyjna</td>
+<td>Tylko projekt (<code>obiektowo-relacyjny.md</code>).</td>
+</tr>
+<tr>
+<td>Baza dokumentowa</td>
+<td>Projekt modelu pod architekturę heksagonalną (<code>nosql-mongodb-heksagonalny.drawio</code>).</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="2-opis-produktu">2. Opis produktu</h2>
+<h3 id="21-problem">2.1 Problem</h3>
+<p>Organizacje realizujące projekty z finansowania zewnętrznego muszą jednocześnie pilnować trzech rzeczy: pracy zespołu, wymogów każdego finansowania (raporty, terminy, obowiązkowe działania) i budżetu. Każde finansowanie ma inne procedury i terminy. Ogólne narzędzia do zadań nie znają pojęcia finansowania, a arkusze nie pokazują, kto co robi i czy projekt jest zagrożony.</p>
+<p>Kierownik projektu potrzebuje przede wszystkim <strong>widzieć stan projektu na wykresach</strong>, a nie przeglądać listy. Osoba z zarządu, która zagląda raz na jakiś czas, chce w kilka sekund zobaczyć, czy projekt idzie dobrze.</p>
+<h3 id="22-rozwiązanie">2.2 Rozwiązanie</h3>
+<p>Aplikacja, w której:</p>
+<ol>
+<li>Organizacja zakłada projekty, dzieli je na etapy i zadania, przypisuje osoby i grupy.</li>
+<li>Finansowanie definiuje swoje wymogi jako szablony zadań; po podpięciu do projektu wymogi stają się realnymi zadaniami.</li>
+<li>Czas pracy i wydatki są rejestrowane przy zadaniach i finansowaniach, więc budżet i obciążenie liczą się same.</li>
+<li>Każdy projekt ma przegląd z wykresami i wskaźnikiem kondycji, oś czasu i widok zespołu.</li>
+<li>Dostęp wynika z ról nadanych osobie albo grupie, w organizacji albo w projekcie.</li>
+</ol>
+<h3 id="23-zakres">2.3 Zakres</h3>
+<p><strong>W zakresie 2.0:</strong> wszystkie wymagania M i S z <code>docs/wymagania.md</code>, rozszerzone o ustalenia z rozdziałów 3–5 tego dokumentu, na trzech wariantach bazy.</p>
+<p><strong>Poza zakresem 2.0:</strong> płatności, czat w czasie rzeczywistym, aplikacja mobilna, wiadomości wysyłane ręcznie (FR-NOT-05), synchronizacja danych między wariantami bazy, praca jednej instancji na dwóch bazach naraz, animacje dekoracyjne (np. „spadające klocki” przy ładowaniu – pomysł odłożony).</p>
+<h3 id="24-urządzenia-i-przeglądarki">2.4 Urządzenia i przeglądarki</h3>
+<p>Tylko aplikacja webowa, responsywna od 360 px szerokości (NFR-UX-01). Główny układ projektowany dla ekranów ≥ 1280 px. Aktualne wersje Chrome, Firefox, Edge i Safari (NFR-UX-05). Oś czasu i Kanban na ekranie dotykowym: przeciąganie zastąpione wyborem z menu (zmień status, ustaw daty).</p>
+<hr>
+<h2 id="3-role-i-uprawnienia">3. Role i uprawnienia</h2>
+<h3 id="31-zasady">3.1 Zasady</h3>
+<ul>
+<li>Uprawnienia są <strong>sumą ról</strong>: własnych, ról grup osoby i ról grup nadrzędnych (FR-ACC-06).</li>
+<li>Rolę nadaje się <strong>osobie albo grupie</strong>, <strong>w całej organizacji albo w jednym projekcie</strong> (FR-ACC-05).</li>
+<li><strong>Dostęp kaskadowy:</strong> rola nadana w organizacji działa we wszystkich jej projektach; rola nadana w projekcie działa tylko w nim. Obserwator może więc widzieć całą organizację albo organizację ograniczoną do wybranych projektów.</li>
+<li>Rola to nazwany zestaw kodów uprawnień. Role wbudowane mają stały <code>code</code>, którego nie da się zmienić ani usunąć; organizacja może tworzyć role własne (FR-ACC-02).</li>
+<li>Nikt nie nada roli z uprawnieniami, których sam nie ma, ani nie zmieni własnej roli (FR-ACC-07).</li>
+<li><strong>Usuwanie obiektów nadrzędnych</strong> (projekt, finansowanie, grupa, rola) jest zarezerwowane dla Dyrektora organizacji i administratorów. Cel: kierownik projektu nie może przypadkowo „rozjechać” całego projektu.</li>
+<li>Serwer zawsze sprawdza uprawnienia; interfejs tylko ukrywa niedostępne akcje (FR-ACC-08).</li>
+</ul>
+<h3 id="32-role-wbudowane">3.2 Role wbudowane</h3>
+<p>Od najniższej:</p>
+<div class="tw"><table><thead><tr>
+<th>Rola (<code>code</code>)</th>
+<th>Kto to jest</th>
+<th>Zakres</th>
+</tr>
+</thead><tbody><tr>
+<td>Obserwator (<code>viewer</code>)</td>
+<td>osoba przeglądająca, np. członek zarządu albo osoba z zewnątrz</td>
+<td>tylko odczyt elementów, do których dostał dostęp (organizacja albo wybrane projekty)</td>
+</tr>
+<tr>
+<td>Użytkownik (<code>member</code>)</td>
+<td>pracownik realizujący zadania</td>
+<td>swoje zadania, czas pracy, checklisty, komentarze</td>
+</tr>
+<tr>
+<td>Project Manager (<code>project_manager</code>)</td>
+<td>prowadzi projekt</td>
+<td>prawie wszystko w projekcie: zadania, etapy, przypisania, grupy, dodawanie osób, finansowania i budżet; <strong>nie usuwa projektu</strong></td>
+</tr>
+<tr>
+<td>Dyrektor projektu (<code>project_director</code>)</td>
+<td>nadzoruje PM-ów, „właściciel” projektów</td>
+<td>wszystko co PM w swoich projektach + nadawanie ról w projekcie (w tym PM), zamykanie i archiwizacja projektu; <strong>bez dostępu do ustawień organizacji i bez usuwania</strong></td>
+</tr>
+<tr>
+<td>Dyrektor organizacji (<code>organization_director</code>)</td>
+<td>kierownictwo organizacji</td>
+<td>wszystkie projekty organizacji, zakładanie projektów, <strong>usuwanie</strong> projektów i finansowań</td>
+</tr>
+<tr>
+<td>Administrator organizacji (<code>organization_admin</code>)</td>
+<td>administracja organizacji</td>
+<td>członkowie, zaproszenia, role, grupy, statusy, ustawienia organizacji</td>
+</tr>
+<tr>
+<td>Administrator systemu (<code>user.is_staff</code>, nie rola)</td>
+<td>operator platformy</td>
+<td>organizacje i konta w całej platformie, blokady</td>
+</tr>
+</tbody></table></div>
+<p>Zakres Dyrektora projektu poza „nie usuwa i nie ma dostępu do organizacji” jest propozycją – patrz <a href="#16-decyzje-i-otwarte-kwestie">rozdz. 16, D2</a>. Czy Dyrektor organizacji i Administrator organizacji to jedna rola – D1.</p>
+<h3 id="33-grupy-z-uprawnieniami">3.3 Grupy z uprawnieniami</h3>
+<ul>
+<li>Grupa ma grupę nadrzędną; podgrupa dziedziczy role grupy nadrzędnej (FR-ACC-04).</li>
+<li>Przy założeniu organizacji system tworzy grupy wbudowane:<ul>
+<li><strong>Administratorzy</strong> – z rolą <code>organization_admin</code> (FR-ORG-02),</li>
+<li><strong>Kontroler finansowy</strong> – z rolą zawierającą uprawnienia finansowe w całej organizacji (odczyt i edycja finansowań, szablonów, wydatków, raport budżetu, eksport). Kontrolerem merytorycznym projektu pozostaje PM.</li>
+</ul>
+</li>
+<li>Przy założeniu projektu system tworzy <strong>grupę projektową</strong> o nazwie „<em>nazwa organizacji</em> · <em>nazwa projektu</em>” (zamiast ogólnych nazw typu „Zespół produktu”). PM może tworzyć w niej podgrupy.</li>
+</ul>
+<h3 id="34-katalog-uprawnień">3.4 Katalog uprawnień</h3>
+<p>Kody są stałą listą w kodzie (<code>Permission</code>), nie tabelą. Każda rola wbudowana jest zestawem tych kodów.</p>
+<div class="tw"><table><thead><tr>
+<th>Obszar</th>
+<th>Kody</th>
+</tr>
+</thead><tbody><tr>
+<td>Podgląd</td>
+<td><code>project.view</code>, <code>task.view</code>, <code>funding.view</code>, <code>budget.view</code>, <code>team.view</code>, <code>report.view</code></td>
+</tr>
+<tr>
+<td>Zadania</td>
+<td><code>task.create</code>, <code>task.edit</code>, <code>task.delete</code>, <code>task.assign</code>, <code>task.plan</code> (daty, oś czasu), <code>checklist.edit</code>, <code>time.log</code>, <code>comment.create</code>, <code>comment.moderate</code></td>
+</tr>
+<tr>
+<td>Projekt</td>
+<td><code>project.create</code>, <code>project.edit</code>, <code>project.close</code>, <code>project.delete</code>, <code>milestone.manage</code>, <code>status.manage_project</code>, <code>group.manage_project</code>, <code>role.grant_project</code></td>
+</tr>
+<tr>
+<td>Finanse</td>
+<td><code>funding.manage</code>, <code>funding.attach</code>, <code>template.manage</code>, <code>expense.manage</code>, <code>budget.export</code></td>
+</tr>
+<tr>
+<td>Organizacja</td>
+<td><code>member.manage</code>, <code>role.manage</code>, <code>group.manage</code>, <code>status.manage</code>, <code>org.settings</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="35-macierz-ról">3.5 Macierz ról</h3>
+<div class="tw"><table><thead><tr>
+<th>Funkcja</th>
+<th align="center">Obserwator</th>
+<th align="center">Użytkownik</th>
+<th align="center">PM</th>
+<th align="center">Dyr. projektu</th>
+<th align="center">Dyr. organizacji</th>
+<th align="center">Admin organizacji</th>
+</tr>
+</thead><tbody><tr>
+<td>Podgląd projektów, zadań, dashboardów (w zakresie dostępu)</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Własne zadania, czas pracy, checklisty, komentarze</td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Tworzenie i edycja zadań, przypisywanie, planowanie na osi czasu</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Etapy, statusy projektu, grupy projektowe, dodawanie osób</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Finansowania, szablony, wydatki, budżet</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Nadawanie ról w projekcie (do PM włącznie)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Zamykanie i archiwizacja projektu</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Zakładanie projektu</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td><strong>Usuwanie</strong> projektu, finansowania, grupy, roli</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+</tr>
+<tr>
+<td>Członkowie, role, grupy i ustawienia organizacji</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔</td>
+</tr>
+</tbody></table></div>
+<p>PM nadaje w swoim projekcie role Obserwator i Użytkownik. Administrator systemu ma dostęp do wszystkiego plus panel platformy.</p>
+<h3 id="36-kryteria-akceptacji">3.6 Kryteria akceptacji</h3>
+<ul>
+<li>AK1: Obserwator z rolą w projekcie A nie widzi projektu B tej samej organizacji; z rolą w organizacji widzi oba.</li>
+<li>AK2: PM nie może usunąć projektu (API zwraca 403, przycisku nie ma w interfejsie).</li>
+<li>AK3: Osoba w podgrupie grupy „Kontroler finansowy” edytuje wydatki w każdym projekcie organizacji.</li>
+<li>AK4: Próba nadania roli z uprawnieniem, którego nadający nie ma → 403.</li>
+<li>AK5: Kryteria AK1–AK4 przechodzą na każdym z trzech wariantów bazy.</li>
+</ul>
+<hr>
+<h2 id="4-wymagania-funkcjonalne">4. Wymagania funkcjonalne</h2>
+<p>Mapa ekranów odpowiada szkieletowi frontendu (artifact). Nazwy tras są robocze.</p>
+<div class="tw"><table><thead><tr>
+<th>Obszar</th>
+<th>Trasa</th>
+<th>Rozdział</th>
+</tr>
+</thead><tbody><tr>
+<td>Przegląd organizacji</td>
+<td><code>/overview</code></td>
+<td>4.12</td>
+</tr>
+<tr>
+<td>Projekty</td>
+<td><code>/projects</code></td>
+<td>4.2</td>
+</tr>
+<tr>
+<td>Finansowania</td>
+<td><code>/fundings</code></td>
+<td>4.8</td>
+</tr>
+<tr>
+<td>Zadania (Moje zadania i wszystkie)</td>
+<td><code>/tasks</code></td>
+<td>4.4</td>
+</tr>
+<tr>
+<td>Czas pracy (karta tygodnia)</td>
+<td><code>/time</code></td>
+<td>4.10</td>
+</tr>
+<tr>
+<td>Projekt: Przegląd · Zadania · Kanban · Etapy · Oś czasu · Zespół · Czas pracy · Finansowania · Budżet · Komentarze · Historia · Ustawienia</td>
+<td><code>/projects/:id/...</code></td>
+<td>4.3–4.11</td>
+</tr>
+<tr>
+<td>Administracja: Członkowie · Grupy · Role · Statusy · Ustawienia · Dziennik</td>
+<td><code>/admin/...</code></td>
+<td>4.1, 4.13</td>
+</tr>
+</tbody></table></div>
+<h3 id="41-organizacje-członkowie-i-grupy">4.1 Organizacje, członkowie i grupy</h3>
+<ul>
+<li><strong>Organizacja:</strong> nazwa (nieunikalna), NIP (unikalny w systemie, gdy podany; pusty zapisywany jako NULL), identyfikator techniczny niezależny od obu. Ustawienia: strefa czasowa, waluta, nazwy 5 poziomów priorytetu, dni robocze (FR-ORG-07).</li>
+<li><strong>Użytkownik per organizacja:</strong> jedno konto, osobne członkostwo z profilem służbowym (e-mail, telefon, stanowisko, avatar) w każdej organizacji. Przełącznik organizacji w nagłówku (FR-AUTH-05).</li>
+<li><strong>Członkowie organizacji</strong> – jedna lista wszystkich członków, bez dzielenia na sekcje. Wyszukiwarka po imieniu, nazwisku, e-mailu i stanowisku; filtr po grupie i statusie członkostwa.</li>
+<li><strong>Gdzie jest osoba:</strong> wybranie osoby z wyszukiwarki rozwija jej grupy, role i projekty.</li>
+<li><strong>Grupy</strong> (Administracja → Grupy) – drzewo. Kliknięcie grupy pokazuje jej podgrupy i osoby. Filtrowanie i wyszukiwanie jak na liście członków.</li>
+<li>Statusy członkostwa, zaproszenia, blokady i ochrona ostatniego administratora – bez zmian względem FR-ORG-03…09.</li>
+</ul>
+<h3 id="42-projekty">4.2 Projekty</h3>
+<ul>
+<li>Lista projektów z kafelkami: nazwa, właściciel, status, okres, pasek postępu, wskaźnik kondycji (4.3), główne finansowanie.</li>
+<li>Widok projektu: <strong>nagłówek z osobą odpowiedzialną</strong> (właściciel projektu z avatarem, po lewej stronie nagłówka) i zakładki z mapy ekranów.</li>
+<li>Statusy projektu: planowany, aktywny, zamknięty, anulowany, zarchiwizowany. Usuwanie wg 3.5.</li>
+</ul>
+<h3 id="43-przegląd-projektu-dashboard">4.3 Przegląd projektu (dashboard)</h3>
+<p>Pierwsza zakładka projektu. Cel: po dłuższej przerwie w kilka sekund zobaczyć, co się dzieje i czy jest dobrze. <strong>Bez komentarzy i bez historii</strong> – te mają własne zakładki.</p>
+<div class="tw"><table><thead><tr>
+<th>Element</th>
+<th>Zawartość</th>
+</tr>
+</thead><tbody><tr>
+<td>Wskaźnik kondycji</td>
+<td>duży, kolorowy baner: „W porządku” / „Wymaga uwagi” / „Zagrożony” z listą przyczyn</td>
+</tr>
+<tr>
+<td>Kafelki liczbowe</td>
+<td>postęp projektu (%), zadania w toku, zadania zaległe, godziny zarejestrowane vs szacowane, budżet wykorzystany (%), najbliższy termin etapu. Kliknięcie kafelka przenosi do listy zadań z tym filtrem.</td>
+</tr>
+<tr>
+<td>Etapy</td>
+<td>lista etapów z paskiem postępu (zrobione / wszystkie, bez anulowanych); kliknięcie rozwija zadania etapu</td>
+</tr>
+<tr>
+<td>Zadania na wykresie</td>
+<td>rozkład zadań wg kategorii i statusu (odpowiednik Kanbanu jako wykres)</td>
+</tr>
+<tr>
+<td>Przepływ i wydajność</td>
+<td>zadania utworzone vs zamknięte w tygodniach; aktywność w dniach tygodnia; obciążenie osób (zadania w toku na osobę)</td>
+</tr>
+<tr>
+<td>Czas pracy</td>
+<td>godziny w tygodniach, podział na osoby</td>
+</tr>
+<tr>
+<td>Finansowania i budżet</td>
+<td>dla każdego finansowania projektu: alokacja, wydatki, pozostało, postęp zadań finansowania</td>
+</tr>
+<tr>
+<td>Oś czasu (podgląd)</td>
+<td>etapy i zadania w bieżącym miesiącu; kliknięcie otwiera pełną oś czasu</td>
+</tr>
+</tbody></table></div>
+<p><strong>Reguły kondycji</strong> (progi w ustawieniach organizacji, wartości domyślne do potwierdzenia):</p>
+<div class="tw"><table><thead><tr>
+<th>Warunek</th>
+<th>Wynik</th>
+</tr>
+</thead><tbody><tr>
+<td>etap po terminie z niezakończonymi zadaniami, budżet &gt; 100% albo &gt; 20% zadań zaległych</td>
+<td>Zagrożony</td>
+</tr>
+<tr>
+<td>zadania zaległe &gt; 0, budżet &gt; 90% albo godziny &gt; 110% szacowanych</td>
+<td>Wymaga uwagi</td>
+</tr>
+<tr>
+<td>żaden z powyższych</td>
+<td>W porządku</td>
+</tr>
+</tbody></table></div>
+<p>AK: wszystkie liczby dashboardu pochodzą z jednego endpointu (<code>/overview</code>) liczonego po stronie serwera; wynik jest identyczny na trzech bazach dla tego samego zbioru danych.</p>
+<h3 id="44-zadania-i-podzadania">4.4 Zadania i podzadania</h3>
+<ul>
+<li>Pola zadania jak w FR-TASK-01; priorytet 1–5 z nazwami z ustawień organizacji.</li>
+<li><strong>Podzadania:</strong> kliknięcie zadania na liście rozwija jego podzadania (wiele poziomów, bez cykli). Podzadanie jest pełnym zadaniem (ma własne osoby, czas, status).</li>
+<li><strong>Osoba odpowiedzialna:</strong> na liście, karcie Kanbanu i pasku osi czasu avatar przypisanej osoby jest po lewej stronie (przy wielu osobach – pierwsza i licznik „+N”).</li>
+<li><strong>Kafelki-filtry nad listą:</strong> Wszystkie · Moje · Zaległe · W toku · Bez terminu. Kliknięty kafelek jest podświetlony i filtruje listę; ponowne kliknięcie zdejmuje filtr.</li>
+<li><strong>Panel filtrów z boku:</strong> priorytety i statusy jako przełączane etykiety, etap, grupa, osoba, finansowanie, zakres terminów; pod filtrami małe wykresy dla przefiltrowanego zbioru (liczba wg statusu i priorytetu).</li>
+<li><strong>Szczegóły zadania</strong> otwierają się w <strong>panelu bocznym</strong> (szybki podgląd bez opuszczania listy, osi czasu czy Kanbanu): opis, osoby, daty, podzadania, checklisty z postępem, czas, załączniki, komentarze, historia zadania.</li>
+<li>Pula grupy, przypisania z datą rozpoczęcia i zakończenia pracy, zaległość – wg FR-TASK-04, 05, 10.</li>
+<li>Usunięcie zadania utworzonego z szablonu finansowania wymaga uzasadnienia (P9).</li>
+</ul>
+<h3 id="45-kanban">4.5 Kanban</h3>
+<ul>
+<li>Kolumny = 4 kategorie statusów, sekcje = statusy widoczne w projekcie (FR-TASK-07).</li>
+<li>Przeciągnięcie karty zmienia status (zapis w historii, powiadomienia – P5).</li>
+<li>Karta: tytuł, lewy pasek koloru priorytetu, avatar osoby, termin (czerwony, gdy zaległe), postęp checklisty.</li>
+<li>Te same filtry co lista zadań.</li>
+</ul>
+<h3 id="46-oś-czasu">4.6 Oś czasu</h3>
+<p>Najważniejszy widok planowania; ma pokazywać na bieżąco, co dzieje się teraz.</p>
+<ul>
+<li><strong>Nawigacja:</strong> przybliżanie i oddalanie (kółko myszy, gest), przesuwanie <strong>w lewo i w prawo</strong> (przeciągnięcie tła) oraz w górę i w dół między wierszami. Przyciski skali: <strong>Dzień</strong> (z podziałką godzinową), <strong>Tydzień</strong>, <strong>Miesiąc</strong> (z podziałką na dni), oraz <strong>Dziś</strong>.</li>
+<li><strong>Wiersze:</strong> przełącznik „według osób” / „według etapów”.</li>
+<li><strong>Etapy</strong> jako zakresy w tle; kliknięcie etapu rozwija listę jego zadań.</li>
+<li><strong>Kolory paska zadania:</strong> lewy pasek = priorytet (od krytycznego do najniższego), tło = status (kolor statusu z ustawień).</li>
+<li><strong>Tworzenie zadania z osi:</strong> zaznaczenie zakresu (kliknij i przeciągnij po pustym miejscu) otwiera okno szybkiego tworzenia z wypełnionymi datami i – w widoku „według osób” – przypisaną osobą. Bez osobnego przycisku „Dodaj zadanie”.</li>
+<li><strong>Zadania bez terminu:</strong> pod osią lista kafelków „Do zaplanowania” (zadania bez dat, także przypisane, którym osoba musi ustawić daty). Przeciągnięcie kafelka na oś ustawia daty (i osobę w widoku „według osób”).</li>
+<li><strong>Zmiana terminu:</strong> przeciągnięcie paska przesuwa daty, rozciągnięcie krawędzi zmienia początek albo koniec. Zapis w historii jako <code>rescheduled</code>.</li>
+<li>Obserwator i Użytkownik bez <code>task.plan</code> widzą oś tylko do odczytu.</li>
+</ul>
+<p>AK: utworzenie zadania przez zaznaczenie zakresu 10–14 listopada daje zadanie z <code>start_date = 10.11</code>, <code>due_date = 14.11</code>; przeciągnięcie kafelka bez terminu na oś zapisuje daty jednym żądaniem <code>PATCH</code>.</p>
+<h3 id="47-zespół">4.7 Zespół</h3>
+<ul>
+<li><strong>Graf zespołu:</strong> organizacja → grupy → podgrupy → osoby, jako interaktywne drzewo albo graf (zwijanie gałęzi, przybliżanie, kliknięcie osoby otwiera jej kartę). W projekcie graf zaczyna się od grupy projektowej.</li>
+<li><strong>Wyszukiwanie osoby</strong> podświetla jej miejsca w grafie.</li>
+<li><strong>Porównanie osób:</strong> zaznaczenie dwóch (do czterech) osób pokazuje ich karty obok siebie: zadania zrobione / w toku / zaległe, godziny w wybranym okresie vs szacowane, wykres porównawczy. Cel: wyrównanie obciążenia – od razu widać, że jedna osoba ma 60 zadań w toku, a druga 1.</li>
+<li>Lista członków projektu z rolami w projekcie (FR-PRJ-06).</li>
+</ul>
+<h3 id="48-finansowania">4.8 Finansowania</h3>
+<p><strong>Moduł organizacji (<code>/fundings</code>):</strong></p>
+<ul>
+<li>Lista finansowań: typ (grant, sponsoring, darowizna, wewnętrzne), nazwa, grantodawca, program, numer umowy, kwota i waluta, okres, termin raportowania.</li>
+<li>Szczegóły finansowania: opis, <strong>szablony zadań</strong> (wymogi), projekty, do których jest podpięte, zarejestrowany czas.</li>
+<li><strong>Każdy szablon jest obowiązkowy.</strong> Nie ma szablonów opcjonalnych; działania nieobowiązkowe PM dodaje jako zwykłe zadania.</li>
+<li>Zmiana szablonu nie zmienia zadań już utworzonych w projektach.</li>
+</ul>
+<p><strong>Zakładka projektu „Finansowania”:</strong></p>
+<ul>
+<li>Lista finansowań podpiętych do projektu (alokacja: okres i kwota, finansowanie główne). Kliknięcie finansowania rozwija jego zawartość.</li>
+<li>W rozwiniętym finansowaniu dwa przełączane widoki:<ul>
+<li><strong>Szablony</strong> – wymogi finansowania (tylko do odczytu, z informacją, które zadanie z niego powstało),</li>
+<li><strong>Zadania</strong> – wszystkie realne zadania tego finansowania w projekcie: <strong>kopie szablonów</strong> (oznaczone „z szablonu”) i <strong>zadania dodatkowe</strong>, które PM podpiął do finansowania, bo są potrzebne do spełnienia wymogu (np. wymóg „transmisja wydarzenia” → zadanie dodatkowe „zakup kamery”).</li>
+</ul>
+</li>
+<li>Z tego widoku edytuje się zadania (kopie), nie szablony.</li>
+<li>Pod listą: postęp zadań finansowania, budżet (alokacja, wydatki, pozostało), czas pracy.</li>
+</ul>
+<p>AK: podpięcie finansowania z 3 szablonami tworzy w projekcie 3 zadania widoczne w widoku „Zadania” z oznaczeniem „z szablonu”; zadanie utworzone ręcznie z wybranym finansowaniem projektu pojawia się w tym samym widoku bez oznaczenia.</p>
+<h3 id="49-budżet-i-wydatki">4.9 Budżet i wydatki</h3>
+<ul>
+<li>Wydatek: typ (podróże, szkolenia, usługi zewnętrzne, sprzęt, inne), kwota, waluta, data, numer dokumentu, opis, opcjonalnie zadanie, skan dokumentu (limit 50 MB).</li>
+<li>Wydatek jest kosztem własnym projektu albo jest rozliczany z finansowania projektu (FR-COST-02).</li>
+<li>Raport budżetu: alokacja, wydatki, pozostało – dla finansowania i dla projektu; wykres wydatków w czasie i wg typu.</li>
+<li>Waluta wydatku rozliczanego z finansowania = waluta finansowania (walidacja w serwisie).</li>
+</ul>
+<h3 id="410-czas-pracy">4.10 Czas pracy</h3>
+<ul>
+<li>Wpis: data, godziny, opcjonalnie godziny od–do, opis; tylko osoba przypisana do zadania (FR-TIME-01, 02).</li>
+<li>Karta tygodnia osoby (<code>/time</code>): dni × zadania (FR-TIME-03).</li>
+<li>Zakładka projektu „Czas pracy”: według osób, według finansowania, według zadań; porównanie z czasem szacowanym, wykresy.</li>
+</ul>
+<h3 id="411-checklisty-komentarze-załączniki-historia">4.11 Checklisty, komentarze, załączniki, historia</h3>
+<p>Bez zmian względem <code>docs/wymagania.md</code> (FR-CHK, FR-COL, FR-HIST, FR-NOT): kilka checklist w zadaniu z kolejnością punktów i osobą odpowiedzialną, wątki komentarzy w zadaniu i projekcie, załączniki do zadań, komentarzy i wydatków, historia zadania, projektu i organizacji, powiadomienia z licznikiem nieprzeczytanych.</p>
+<h3 id="412-przegląd-organizacji">4.12 Przegląd organizacji</h3>
+<p>Strona startowa po zalogowaniu (<code>/overview</code>), dla osób z dostępem do wielu projektów (np. Dyrektor organizacji, Obserwator z zarządu):</p>
+<ul>
+<li>kafelki projektów z kondycją i postępem (kliknięcie → przegląd projektu),</li>
+<li>finansowania organizacji z budżetem (alokacje, wydatki, pozostało),</li>
+<li>czas pracy organizacji w tygodniach,</li>
+<li>zadania zaległe we wszystkich dostępnych projektach,</li>
+<li>najbliższe terminy etapów i raportowania finansowań.</li>
+</ul>
+<p>Widoczne są tylko projekty z zakresu dostępu osoby.</p>
+<h3 id="413-raporty-i-eksport">4.13 Raporty i eksport</h3>
+<ul>
+<li><strong>Raport projektu (PDF)</strong> – generowany na żądanie dla wybranego okresu: dane projektu, kondycja, etapy z postępem, zadania zrobione w okresie i zaległe, czas pracy, finansowania i budżet, wykresy z dashboardu. Dostępny z przeglądu projektu (przycisk „Raport”).</li>
+<li><strong>Eksport CSV</strong> – z listy zadań (z aktywnymi filtrami), czasu pracy i wydatków.</li>
+<li>Uprawnienie <code>report.view</code> (PDF) i <code>budget.export</code> (CSV z kwotami).</li>
+</ul>
+<h3 id="414-administracja">4.14 Administracja</h3>
+<ul>
+<li>Organizacji: członkowie (zaproszenia, statusy, profil, blokada konta), grupy, role (własne i wbudowane), statusy zadań (4 kategorie, kolor, kolejność, domyślny), ustawienia (w tym progi kondycji), dziennik zdarzeń z filtrami.</li>
+<li>Systemu: lista organizacji i kont, blokowanie, zakładanie organizacji (FR-ADM-01).</li>
+</ul>
+<hr>
+<h2 id="5-interfejs-użytkownika">5. Interfejs użytkownika</h2>
+<h3 id="51-szkielet-z-artifactu">5.1 Szkielet z artifactu</h3>
+<p>Artifact „Front aplikacji PROMT” jest <strong>wzorcem układu, nawigacji i zachowania</strong> ekranów, a nie kodem produkcyjnym. Frontend w <code>frontend/</code> powstaje od nowa w React + TypeScript, ekran po ekranie według makiety, z danymi z API.</p>
+<p>Zasady przeniesienia:</p>
+<ul>
+<li>Ekran jest gotowy, gdy ma odpowiednik każdej akcji z makiety i działa na prawdziwym API.</li>
+<li>Ręcznie pisany CSS z makiety <strong>nie jest przenoszony</strong>. Interfejs korzysta z gotowych komponentów, dostosowywanych tylko motywem i klasami.</li>
+<li>Rozwiązania z makiety, które zespół odrzucił (np. drugi układ szczegółów zadania), nie są przenoszone.</li>
+</ul>
+<h3 id="52-technologia-frontendu">5.2 Technologia frontendu</h3>
+<div class="tw"><table><thead><tr>
+<th>Obszar</th>
+<th>Wybór</th>
+<th>Uzasadnienie</th>
+</tr>
+</thead><tbody><tr>
+<td>Komponenty</td>
+<td><strong>shadcn/ui</strong> (Radix + Tailwind)</td>
+<td>darmowe, dostępne (klawiatura, ARIA), pasują do Tailwind już używanego w repo</td>
+</tr>
+<tr>
+<td>Wykresy i graf zespołu</td>
+<td><strong>ECharts</strong> (<code>echarts-for-react</code>)</td>
+<td>już w zależnościach; ma wykresy, drzewa i grafy. <code>recharts</code> do usunięcia (jedna biblioteka)</td>
+</tr>
+<tr>
+<td>Oś czasu</td>
+<td><strong>vis-timeline</strong></td>
+<td>już w zależnościach; obsługuje przybliżanie, przesuwanie, zaznaczanie zakresu i przeciąganie z zewnątrz</td>
+</tr>
+<tr>
+<td>Kanban</td>
+<td><strong>@hello-pangea/dnd</strong></td>
+<td>już w zależnościach</td>
+</tr>
+<tr>
+<td>Stan i dane</td>
+<td>Redux Toolkit + RTK Query, react-hook-form + zod</td>
+<td>bez zmian</td>
+</tr>
+<tr>
+<td>Tłumaczenia</td>
+<td><strong>react-i18next</strong> (nowa zależność)</td>
+<td>teksty poza komponentami od pierwszego ekranu, PL domyślnie</td>
+</tr>
+</tbody></table></div>
+<h3 id="53-wygląd">5.3 Wygląd</h3>
+<ul>
+<li><strong>Motyw ciemny obowiązkowy</strong>, jasny dostępny; domyślnie wg ustawień systemu, wybór zapamiętany w przeglądarce. Oba motywy spełniają kontrast WCAG 2.1 AA.</li>
+<li><strong>Kolory jako tokeny motywu</strong>, nie wartości wpisane w komponentach. Paleta priorytetów (5 poziomów) i kolory statusów (z ustawień organizacji) muszą być czytelne w obu motywach.</li>
+<li><strong>Paski postępu</strong> wszędzie, gdzie jest postęp: projekt, etap, finansowanie, checklista.</li>
+<li><strong>Wykresy są mile widziane</strong> – statystyki na dashboardach, w zespole, czasie pracy i budżecie.</li>
+<li><strong>Kafelki liczbowe są klikalne</strong> i działają jak filtry (podświetlenie aktywnego).</li>
+<li>Każda operacja zapisu daje potwierdzenie albo czytelny błąd (NFR-UX-04).</li>
+</ul>
+<hr>
+<h2 id="6-architektura-heksagonalna-i-trzy-warianty-bazy">6. Architektura heksagonalna i trzy warianty bazy</h2>
+<h3 id="61-warstwy">6.1 Warstwy</h3>
+<p>Backend ma architekturę heksagonalną (porty i adaptery): w środku jest domena i przypadki użycia, które nie wiedzą nic o bazie ani o HTTP. Świat zewnętrzny łączy się z nimi wyłącznie przez <strong>porty</strong> (interfejsy), a <strong>adaptery</strong> te porty implementują. Szkielet katalogów jest na <code>main</code> w <code>backend/app/</code>.</p>
+<div class="cw"><pre><code>                    React SPA
+                        │ HTTP/JSON
+                        ▼
+  adapter/api ─────── Django + DRF: widoki, uwierzytelnianie (simplejwt), polecenia manage.py
+                        │ wywołuje
+                        ▼
+  ports/api ───────── przypadki użycia (P1–P12 i zapytania widoków)
+                        │
+  domain/entities ─── encje domeny (dataclasses), reguły
+  service/ ────────── implementacja przypadków użycia
+                        │ korzysta z
+                        ▼
+  ports/spi ───────── repozytoria agregatów, UnitOfWork, IdGenerator, zapytania raportowe
+                        │ implementują
+       ┌────────────────┼──────────────────────────┐
+       ▼                ▼                          ▼
+  adapter/spi/      adapter/spi/              adapter/spi/
+  relational        object_relational         nonrelational
+  Django ORM        psycopg + ręczny SQL      PyMongo
+  PostgreSQL        PostgreSQL (typy, ENUM,   MongoDB, replica set
+  (22 tabele)       domeny, dziedziczenie)    (11 kolekcji + counters)
+
+  adapter/dependencies_container.py – składa zależności przy starcie (AppConfig.ready)</code></pre></div>
+<h3 id="62-zasady">6.2 Zasady</h3>
+<ul>
+<li><strong>Reguła zależności:</strong> <code>domain</code> i <code>service</code> nie importują Django, DRF, psycopg ani PyMongo. Zależności wskazują tylko do środka. Regułę pilnuje automatycznie <code>import-linter</code> w CI (nowa zależność deweloperska: kontrakt importów sprawdzany przy każdym PR).</li>
+<li><strong>Encje domeny</strong> to czysty Python (<code>dataclasses</code>), identyfikatory <code>int</code>. Kontraktem portów są encje i DTO – nigdy <code>QuerySet</code>, wiersz psycopg ani surowy dokument BSON.</li>
+<li><strong><code>adapter/api</code></strong> serializuje DTO z <code>ports/api</code> (serializer DRF albo Pydantic). Nie używa <code>ModelSerializer</code> na encjach domeny, bo działa on tylko z ORM.</li>
+<li><strong>Jedna instancja = jeden wariant bazy.</strong> <code>dependencies_container</code> wybiera implementacje <code>ports/spi</code> na podstawie zmiennej <code>DATA_BACKEND</code> = <code>relational</code> | <code>object_relational</code> | <code>nonrelational</code>. Nie ma mieszania wariantów ani synchronizacji danych między nimi.</li>
+<li><strong>Konto i logowanie zostają w Django i PostgreSQL we wszystkich wariantach:</strong> <code>user</code> (<code>AUTH_USER_MODEL</code>), sesje, panel admina, JWT. Warianty różnią się danymi domeny. W MongoDB są tylko odwołania <code>user_id</code> / <code>recipient_user_id</code> i kopia <code>display_name</code>.</li>
+<li><strong>Te same identyfikatory w każdej bazie:</strong> <code>bigint</code> w PostgreSQL, <code>_id: long</code> w MongoDB, nadawane przez port <code>IdGenerator</code> (sekwencje w PostgreSQL, kolekcja <code>counters</code> w MongoDB, przy wsadach rezerwacja zakresu). Dzięki temu testy portów, adresy API i seed są identyczne dla trzech baz.</li>
+<li><strong>Logika i reguły są w serwisach i domenie</strong>, więc działają tak samo na każdej bazie: izolacja organizacji, uprawnienia, statusy widoczne w projekcie, ochrona ostatniego administratora, waluta wydatku, <code>PROTECT</code> / <code>CASCADE</code> / <code>SET_NULL</code> tam, gdzie baza nie ma kluczy obcych. Ograniczenia w bazie (FK, CHECK, walidator <code>$jsonSchema</code>) są dodatkową ochroną, nie jedynym miejscem reguły.</li>
+<li><strong>Transakcje</strong> przez port <code>UnitOfWork</code>: <code>transaction.atomic</code> (relacyjny), transakcja psycopg (obiektowo-relacyjny), <code>ClientSession.with_transaction</code> (MongoDB – wymaga replica setu, w Dockerze jednowęzłowego <code>rs0</code>).</li>
+<li><strong>Blokada optymistyczna:</strong> korzenie agregatów z tablicami mają <code>version</code>; zapis <code>updateOne({_id, version})</code> z <code>$inc</code>, brak trafienia = konflikt współbieżności (409). Dla zgodności portu ta sama kolumna jest w obu wariantach PostgreSQL.</li>
+<li><strong>Izolacja organizacji:</strong> każdy dokument domeny ma <code>organization_id</code> i jest on na początku każdego indeksu; bazowa klasa repozytorium zawsze dokłada filtr organizacji. W PostgreSQL ten sam warunek dokłada bazowe repozytorium adaptera.</li>
+<li><strong>Uprawnienia:</strong> efektywne role osoby w projekcie to jedna operacja portu i jedno zapytanie na każdej bazie (w MongoDB jeden potok <code>members → $lookup groups → $lookup przodków</code>), zgodnie z NFR-PERF-03.</li>
+</ul>
+<h3 id="63-porty">6.3 Porty</h3>
+<p><strong><code>ports/api</code> – przypadki użycia</strong> (wejście do aplikacji): procesy P1–P12 z rozdz. 8 oraz zapytania widoków: przegląd projektu i organizacji, oś czasu, Kanban, lista zadań z filtrami, graf zespołu, porównanie osób, raporty czasu i budżetu, historia, raport PDF i eksport CSV.</p>
+<p><strong><code>ports/spi</code> – wyjście do danych.</strong> Jeden agregat domeny = jedno repozytorium (w MongoDB = jeden dokument). Adaptery relacyjne rozkładają agregat na tabele.</p>
+<div class="tw"><table><thead><tr>
+<th>Port</th>
+<th>Agregat i jego części</th>
+</tr>
+</thead><tbody><tr>
+<td><code>OrganizationRepository</code></td>
+<td>organizacja z ustawieniami, statusami i rolami organizacji</td>
+</tr>
+<tr>
+<td><code>MemberRepository</code></td>
+<td>członkostwo z profilem służbowym, przynależnością do grup i nadaniami ról; wyszukiwanie; efektywne role</td>
+</tr>
+<tr>
+<td><code>GroupRepository</code></td>
+<td>grupa z hierarchią (przodkowie), grupy projektowe</td>
+</tr>
+<tr>
+<td><code>ProjectRepository</code></td>
+<td>projekt z etapami, podpięciami finansowań i statusami projektu</td>
+</tr>
+<tr>
+<td><code>FundingRepository</code></td>
+<td>finansowanie z szablonami zadań</td>
+</tr>
+<tr>
+<td><code>TaskRepository</code></td>
+<td>zadanie z przypisaniami, checklistą i załącznikami; podzadania, pula grupy</td>
+</tr>
+<tr>
+<td><code>TimeEntryRepository</code></td>
+<td>wpisy czasu, karta tygodnia</td>
+</tr>
+<tr>
+<td><code>CommentRepository</code></td>
+<td>wątki komentarzy z załącznikami</td>
+</tr>
+<tr>
+<td><code>ExpenseRepository</code></td>
+<td>wydatki z załącznikami</td>
+</tr>
+<tr>
+<td><code>ActivityLogRepository</code></td>
+<td>dziennik zdarzeń – adapter nie ma operacji update ani delete</td>
+</tr>
+<tr>
+<td><code>NotificationRepository</code></td>
+<td>skrzynka odbiorcy (konto), nieprzeczytane</td>
+</tr>
+<tr>
+<td><code>UnitOfWork</code></td>
+<td>transakcja obejmująca wiele repozytoriów</td>
+</tr>
+<tr>
+<td><code>IdGenerator</code></td>
+<td>identyfikatory <code>long</code> niezależne od bazy</td>
+</tr>
+<tr>
+<td><code>ReportQueries</code></td>
+<td>agregaty tylko do odczytu: dashboardy, kondycja, porównanie osób, sumy czasu i budżetu, dane do PDF i CSV</td>
+</tr>
+</tbody></table></div>
+<p><code>ReportQueries</code> to propozycja tego dokumentu (patrz D8). Agregaty dashboardów liczy się w każdej bazie inaczej (SQL <code>GROUP BY</code>, potok agregacji MongoDB na skopiowanych polach), więc to osobny port, a nie metody repozytoriów. To też jeden z głównych punktów porównania baz.</p>
+<h3 id="64-ograniczenia-każdej-bazy-i-jak-je-obchodzimy">6.4 Ograniczenia każdej bazy i jak je obchodzimy</h3>
+<div class="tw"><table><thead><tr>
+<th>Ograniczenie</th>
+<th>Rozwiązanie</th>
+</tr>
+</thead><tbody><tr>
+<td>Django ORM nie obsłuży MongoDB</td>
+<td>adapter <code>nonrelational</code> na PyMongo, poza <code>DATABASES</code>; mapuje dokument ↔ encję bez modeli Django. <code>django-mongodb-backend</code> odpada, bo zakłada klucze ObjectId</td>
+</tr>
+<tr>
+<td>ORM nie obsłuży typów obiektowych i dziedziczenia PostgreSQL</td>
+<td>adapter <code>object_relational</code> na psycopg i ręcznym SQL</td>
+</tr>
+<tr>
+<td>MongoDB nie ma kluczy obcych ani <code>on_delete</code></td>
+<td>spójność odwołań sprawdza serwis / adapter przy zapisie: <code>PROTECT</code> = <code>countDocuments</code> przed usunięciem, <code>CASCADE</code> / <code>SET_NULL</code> = <code>deleteMany</code> / <code>updateMany</code> w tej samej transakcji</td>
+</tr>
+<tr>
+<td>Unikalność wewnątrz tablicy jednego dokumentu (nazwa roli, jeden domyślny status, jedno główne finansowanie)</td>
+<td>indeks tego nie zapewni → reguła domeny + warunek w filtrze <code>updateOne</code></td>
+</tr>
+<tr>
+<td>Limit 16 MB dokumentu</td>
+<td>osadzane są tylko tablice ograniczone w domenie; dane rosnące bez końca (czas, komentarze, wydatki, historia, powiadomienia) to osobne kolekcje</td>
+</tr>
+<tr>
+<td>Kopie danych w MongoDB</td>
+<td>tylko pola niezmienne lub rzadko zmieniane (<code>status_category</code>, <code>organization_id</code>, <code>display_name</code>, odwołania w <code>time_entries</code> i <code>expenses</code>), każda kopia ma wskazane źródło</td>
+</tr>
+<tr>
+<td>Typy</td>
+<td><code>Decimal</code> ↔ <code>Decimal128</code>, data jako 00:00 UTC, plik jako klucz w magazynie plików</td>
+</tr>
+</tbody></table></div>
+<h3 id="65-schemat-i-migracje-w-każdym-wariancie">6.5 Schemat i migracje w każdym wariancie</h3>
+<div class="tw"><table><thead><tr>
+<th>Wariant</th>
+<th>Definicja schematu</th>
+<th>Polecenie</th>
+</tr>
+</thead><tbody><tr>
+<td>Relacyjny</td>
+<td>migracje Django (konto i tabele Django + 22 tabele domeny)</td>
+<td><code>manage.py migrate</code></td>
+</tr>
+<tr>
+<td>Obiektowo-relacyjny</td>
+<td>migracje Django dla konta + wersjonowane pliki SQL (typy, domeny, tabele, dziedziczenie) w osobnej bazie</td>
+<td><code>manage.py migrate</code> + <code>manage.py migrate_or</code></td>
+</tr>
+<tr>
+<td>Dokumentowy</td>
+<td>migracje Django dla konta + kolekcje, walidatory <code>$jsonSchema</code> (<code>validationLevel: strict</code>), indeksy, TTL powiadomień</td>
+<td><code>manage.py migrate</code> + <code>manage.py init_mongo</code></td>
+</tr>
+</tbody></table></div>
+<p>Każde polecenie jest idempotentne i odtwarza schemat na pustej bazie (NFR-MAINT-05).</p>
+<hr>
+<h2 id="7-model-danych">7. Model danych</h2>
+<h3 id="71-model-logiczny-wspólny">7.1 Model logiczny (wspólny)</h3>
+<p>Wszystkie warianty przechowują te same dane logiczne:</p>
+<div class="tw"><table><thead><tr>
+<th>Obszar</th>
+<th>Encje</th>
+</tr>
+</thead><tbody><tr>
+<td>Ludzie i dostęp</td>
+<td>User, Organization, OrganizationMember, MemberGroup, MemberGroupMember, Role, RoleAssignment</td>
+</tr>
+<tr>
+<td>Praca</td>
+<td>Project, Milestone, TaskStatus, Task, TaskAssignment, ChecklistItem, TimeEntry</td>
+</tr>
+<tr>
+<td>Finanse</td>
+<td>Funding, ProjectFunding, TaskTemplate, Expense</td>
+</tr>
+<tr>
+<td>Współpraca i ślad</td>
+<td>Comment, Attachment, ActivityLog, Notification</td>
+</tr>
+</tbody></table></div>
+<p>Szczegóły pól, ograniczeń i kryteriów akceptacji wariantu relacyjnego: diagram <code>er-1-relacyjny.drawio</code> i specyfikacja modeli z wersji 1.1 tego dokumentu (rozdz. 4), z poprawkami z 7.3.</p>
+<h3 id="72-odwzorowanie-w-wariantach">7.2 Odwzorowanie w wariantach</h3>
+<div class="tw"><table><thead><tr>
+<th>Element logiczny</th>
+<th>Relacyjny (22 tabele)</th>
+<th>Obiektowo-relacyjny</th>
+<th>Dokumentowy (11 kolekcji + <code>counters</code>)</th>
+</tr>
+</thead><tbody><tr>
+<td>Konto (<code>user</code>), sesje, admin</td>
+<td>PostgreSQL, Django</td>
+<td>PostgreSQL, Django</td>
+<td>PostgreSQL, Django; w dokumentach tylko <code>user_id</code> i kopia <code>display_name</code></td>
+</tr>
+<tr>
+<td>Statusy, role organizacji</td>
+<td>tabele <code>task_status</code>, <code>role</code></td>
+<td>tabele z ENUM <code>status_category_t</code></td>
+<td><code>organizations.statuses[]</code>, <code>organizations.roles[]</code>; statusy projektu w <code>projects.statuses[]</code></td>
+</tr>
+<tr>
+<td>Członkostwo w grupie</td>
+<td>tabela łącząca</td>
+<td><code>member_ids bigint[]</code></td>
+<td><code>members.groups[]</code></td>
+</tr>
+<tr>
+<td>Nadania ról</td>
+<td><code>role_assignment</code></td>
+<td>tabela z typem kontekstu</td>
+<td><code>members.role_grants[]</code> / <code>groups.role_grants[]</code> (osoba albo grupa wynika z miejsca)</td>
+</tr>
+<tr>
+<td>Hierarchia grup</td>
+<td><code>parent_id</code></td>
+<td><code>parent_id</code></td>
+<td><code>parent_id</code> + kopia <code>ancestor_ids</code></td>
+</tr>
+<tr>
+<td>Etapy, podpięcia finansowań</td>
+<td>tabele</td>
+<td>tabele, <code>allocation daterange</code></td>
+<td><code>projects.milestones[]</code>, <code>projects.fundings[]</code></td>
+</tr>
+<tr>
+<td>Szablony zadań</td>
+<td><code>task_template</code></td>
+<td>tabela</td>
+<td><code>fundings.templates[]</code></td>
+</tr>
+<tr>
+<td>Przypisania, checklista, załączniki zadania</td>
+<td>tabele</td>
+<td><code>checklist_item_t[]</code>, <code>attachment_t[]</code></td>
+<td><code>tasks.assignments[]</code>, <code>tasks.checklist[]</code>, <code>tasks.attachments[]</code></td>
+</tr>
+<tr>
+<td>Kwota + waluta</td>
+<td>dwie kolumny</td>
+<td><code>money_t</code></td>
+<td><code>amount: {value: Decimal128, currency}</code></td>
+</tr>
+<tr>
+<td>Wspólne cechy projektu, etapu, zadania</td>
+<td>powtórzone kolumny</td>
+<td>dziedziczenie z <code>work_item</code></td>
+<td>–</td>
+</tr>
+<tr>
+<td>Historia, powiadomienia</td>
+<td>tabele</td>
+<td>tabele z <code>jsonb</code></td>
+<td><code>activity_logs</code>, <code>notifications</code> (TTL)</td>
+</tr>
+<tr>
+<td>Identyfikatory</td>
+<td>sekwencje <code>bigint</code></td>
+<td>sekwencje <code>bigint</code></td>
+<td><code>_id: long</code> z <code>counters</code> (port <code>IdGenerator</code>)</td>
+</tr>
+</tbody></table></div>
+<h3 id="73-zmiany-schematu-wynikające-z-tego-prd">7.3 Zmiany schematu wynikające z tego PRD</h3>
+<p>Każda zmiana obowiązuje we <strong>wszystkich trzech wariantach</strong> (diagram relacyjny, <code>obiektowo-relacyjny.md</code>, <code>nosql-mongodb.md</code>).</p>
+<div class="tw"><table><thead><tr>
+<th>#</th>
+<th>Zmiana</th>
+<th>Powód</th>
+</tr>
+</thead><tbody><tr>
+<td>Z1</td>
+<td><code>task_template.mandatory</code> – usunięte; każdy szablon obowiązkowy</td>
+<td>ustalenie zespołu (4.8)</td>
+</tr>
+<tr>
+<td>Z2</td>
+<td><code>task.from_template</code> bool – kopiowane przy tworzeniu zadania z szablonu</td>
+<td>ochrona zadań z szablonu nie może zależeć od żywego szablonu (<code>template_id</code> może zostać wyzerowane)</td>
+</tr>
+<tr>
+<td>Z3</td>
+<td><code>role.code</code> NULL, unikalny w organizacji; kody ról wbudowanych z 3.2</td>
+<td>rozpoznanie roli administratora i ról wbudowanych niezależnie od nazwy</td>
+</tr>
+<tr>
+<td>Z4</td>
+<td><code>member_group.organization</code> NOT NULL, nowe <code>member_group.project_id</code> NULL</td>
+<td>izolacja; grupy projektowe (3.3)</td>
+</tr>
+<tr>
+<td>Z5</td>
+<td><code>project_funding.allocated_amount</code></td>
+<td>budżet finansowania w projekcie (4.3, 4.8)</td>
+</tr>
+<tr>
+<td>Z6</td>
+<td><code>task_assignment.removed_at</code></td>
+<td>odpięcie osoby, która zarejestrowała czas</td>
+</tr>
+<tr>
+<td>Z7</td>
+<td><code>time_entry.work_date</code> NOT NULL, <code>started_at</code> NULL</td>
+<td>wpis „3 h we wtorek” bez wymyślania godziny</td>
+</tr>
+<tr>
+<td>Z8</td>
+<td><code>activity_log.project_id</code> (bez FK) + indeks</td>
+<td>historia projektu jednym zapytaniem</td>
+</tr>
+<tr>
+<td>Z9</td>
+<td><code>notification.created_at</code></td>
+<td>sortowanie i retencja (<code>organization_id</code> – patrz D7)</td>
+</tr>
+<tr>
+<td>Z10</td>
+<td><code>organization_member.created_at</code></td>
+<td>data zaproszenia</td>
+</tr>
+<tr>
+<td>Z11</td>
+<td><code>task.created_by</code></td>
+<td>autor zadania bez złączenia z historią</td>
+</tr>
+<tr>
+<td>Z12</td>
+<td><code>organization.settings</code>: progi kondycji projektu</td>
+<td>reguły z 4.3</td>
+</tr>
+<tr>
+<td>Z13</td>
+<td><code>version</code> int w korzeniach agregatów z tablicami (organizacja, członkostwo, grupa, projekt, finansowanie, zadanie)</td>
+<td>blokada optymistyczna (6.2), ten sam kontrakt portu w trzech bazach</td>
+</tr>
+<tr>
+<td>Z14</td>
+<td><code>expense.project_id</code> zawsze wymagane, <code>project_funding</code> opcjonalne</td>
+<td>raport budżetu projektu bez <code>OR</code>; tak już w modelu dokumentowym</td>
+</tr>
+</tbody></table></div>
+<p>Z5–Z11 i Z14 pochodzą z analizy <code>docs/analiza-prd-i-modeli.md</code> (A1, A3–A8, B2, B3), tam są pełne uzasadnienia. Z13 i Z14 są już w modelu dokumentowym (<code>nosql-mongodb-heksagonalny.drawio</code>).</p>
+<hr>
+<h2 id="8-procesy-biznesowe">8. Procesy biznesowe</h2>
+<p>Procesy są przypadkami użycia z <code>ports/api</code>, implementowanymi raz, w <code>service/</code>. Kryteria akceptacji są testami kontraktowymi uruchamianymi <strong>na każdym z trzech adapterów</strong> (rozdz. 13).</p>
+<div class="tw"><table><thead><tr>
+<th>#</th>
+<th>Proces</th>
+<th>Kryteria akceptacji (skrót)</th>
+</tr>
+</thead><tbody><tr>
+<td>P1</td>
+<td>Podpięcie finansowania tworzy zadania z szablonów</td>
+<td>po jednym zadaniu na szablon, z <code>from_template</code>, <code>project_funding</code>, terminem = początek alokacji + <code>default_due_days</code>; błąd przy dowolnym zadaniu wycofuje całość; drugie podpięcie tego samego finansowania odrzucone</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Założenie organizacji</td>
+<td>statusy we wszystkich 4 kategoriach, jeden domyślny; role wbudowane z 3.2; grupy „Administratorzy” i „Kontroler finansowy”; twórca aktywnym administratorem</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Zaproszenie, przyjęcie, zmiana statusu członka</td>
+<td><code>invited → active</code> z datą; zawieszenie ostatniego administratora odrzucone; zawieszony nie widzi danych organizacji</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>Nadanie roli i wyliczenie uprawnień</td>
+<td>dziedziczenie z grup nadrzędnych; rola projektu A nie działa w B; jedno zapytanie</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Zmiana statusu zadania</td>
+<td>wpis <code>status_changed</code> + po jednym powiadomieniu na odbiorcę (bez autora); błąd powiadomień wycofuje zmianę</td>
+</tr>
+<tr>
+<td>P6</td>
+<td>Pula grupy i praca nad zadaniem</td>
+<td>wzięcie tylko przez członka grupy; czas tylko z przypisaniem</td>
+</tr>
+<tr>
+<td>P7</td>
+<td>Ukrycie statusu organizacji w projekcie</td>
+<td>nie da się ukryć statusu z zadaniami ani statusu domyślnego używanego przez P1</td>
+</tr>
+<tr>
+<td>P8</td>
+<td>Wydatek z dokumentem</td>
+<td>rozliczany z finansowania wskazuje podpięcie; ta sama waluta; wpis w historii</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>Usunięcie zadania z szablonu</td>
+<td>bez uzasadnienia odrzucone; z uzasadnieniem – wpis z treścią uzasadnienia; usunięcie zadania nadrzędnego nie omija tej reguły dla podzadań</td>
+</tr>
+<tr>
+<td>P10</td>
+<td>Przypomnienia o terminach</td>
+<td>jutro i po terminie, kategorie todo / w toku; ponowne uruchomienie tego dnia bez duplikatów</td>
+</tr>
+<tr>
+<td>P11</td>
+<td>Utworzenie projektu</td>
+<td>grupa projektowa „organizacja · projekt”; właściciel z rolą PM w projekcie</td>
+</tr>
+<tr>
+<td>P12</td>
+<td>Planowanie z osi czasu</td>
+<td>utworzenie zadania z zakresem dat i osobą jednym żądaniem; zmiana dat zapisuje <code>rescheduled</code></td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="9-specyfikacja-api">9. Specyfikacja API</h2>
+<p>REST, JSON, prefiks <code>/api/</code>, warstwa <code>adapter/api</code>. Identyfikatory są liczbami całkowitymi w każdym wariancie bazy (6.2). Dane organizacji zawsze pod <code>/api/orgs/{org}/…</code>, więc izolacja jest widoczna w adresie i sprawdzana w jednym miejscu. Zapis agregatu ze starą wartością <code>version</code> zwraca 409. Listy stronicowane, najwyżej 100 elementów (NFR-PERF-05). Dokumentacja OpenAPI pod <code>/api/docs</code> (FR-ADM-02).</p>
+<div class="tw"><table><thead><tr>
+<th>Metoda</th>
+<th>Ścieżka</th>
+<th>Cel</th>
+</tr>
+</thead><tbody><tr>
+<td>GET</td>
+<td><code>/api/health</code></td>
+<td>stan aplikacji i wariant bazy</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/auth/login</code>, <code>/api/auth/refresh</code>, <code>/api/auth/logout</code></td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>GET/PATCH</td>
+<td><code>/api/me</code></td>
+<td>profil konta, zmiana hasła</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/me/organizations</code></td>
+<td>organizacje osoby</td>
+</tr>
+<tr>
+<td>GET/POST</td>
+<td><code>/api/me/notifications</code>, <code>/api/me/notifications/read</code></td>
+<td>skrzynka, oznaczanie przeczytanych</td>
+</tr>
+<tr>
+<td>GET/PATCH</td>
+<td><code>/api/orgs/{org}</code></td>
+<td>organizacja i ustawienia</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/overview</code></td>
+<td>przegląd organizacji (4.12)</td>
+</tr>
+<tr>
+<td>GET/POST</td>
+<td><code>/api/orgs/{org}/members</code></td>
+<td>lista z wyszukiwaniem i filtrami, zaproszenie</td>
+</tr>
+<tr>
+<td>GET/PATCH</td>
+<td><code>/api/orgs/{org}/members/{id}</code></td>
+<td>profil, status, „gdzie jest osoba”</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/members/compare?ids=…</code></td>
+<td>porównanie 2–4 osób (4.7)</td>
+</tr>
+<tr>
+<td>GET/POST/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/groups[/{id}]</code></td>
+<td>drzewo grup, członkowie grupy</td>
+</tr>
+<tr>
+<td>GET/POST/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/roles[/{id}]</code>, <code>/role-assignments</code></td>
+<td>role i nadania</td>
+</tr>
+<tr>
+<td>GET/POST/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/statuses[/{id}]</code></td>
+<td>statusy organizacji i projektu, ukrywanie</td>
+</tr>
+<tr>
+<td>GET/POST</td>
+<td><code>/api/orgs/{org}/projects</code></td>
+<td>projekty w zakresie dostępu</td>
+</tr>
+<tr>
+<td>GET/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/projects/{id}</code></td>
+<td>szczegóły, zamknięcie, usunięcie (3.5)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/projects/{id}/overview</code></td>
+<td>dashboard projektu z kondycją (4.3)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/projects/{id}/timeline?from=&amp;to=&amp;rows=</code></td>
+<td>dane osi czasu (zadania, etapy, zadania bez terminu)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/projects/{id}/team</code></td>
+<td>graf zespołu projektu</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/projects/{id}/time-report</code>, <code>/budget</code>, <code>/history</code></td>
+<td>raporty i historia projektu</td>
+</tr>
+<tr>
+<td>GET/POST/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/projects/{id}/milestones[/{mid}]</code></td>
+<td>etapy</td>
+</tr>
+<tr>
+<td>GET/POST/DELETE</td>
+<td><code>/api/orgs/{org}/projects/{id}/fundings[/{pf}]</code></td>
+<td>podpięcia (P1)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/projects/{id}/fundings/{pf}/tasks</code></td>
+<td>zadania finansowania: z szablonu i dodatkowe</td>
+</tr>
+<tr>
+<td>GET/POST/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/fundings[/{id}]</code>, <code>/fundings/{id}/templates</code></td>
+<td>finansowania i szablony</td>
+</tr>
+<tr>
+<td>GET/POST</td>
+<td><code>/api/orgs/{org}/tasks</code></td>
+<td>lista z filtrami (projekt, moje, zaległe, bez terminu, …), tworzenie</td>
+</tr>
+<tr>
+<td>GET/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/tasks/{id}</code></td>
+<td>szczegóły, zmiana (także dat i statusu), usunięcie z uzasadnieniem</td>
+</tr>
+<tr>
+<td>POST/DELETE</td>
+<td><code>/api/orgs/{org}/tasks/{id}/assignments</code>, <code>/take</code></td>
+<td>przypisania, wzięcie z puli</td>
+</tr>
+<tr>
+<td>GET/POST/PATCH/DELETE</td>
+<td><code>/api/orgs/{org}/tasks/{id}/checklist</code>, <code>/time-entries</code>, <code>/comments</code>, <code>/attachments</code></td>
+<td>elementy zadania</td>
+</tr>
+<tr>
+<td>GET/POST/PATCH</td>
+<td><code>/api/orgs/{org}/expenses</code></td>
+<td>wydatki</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/activity</code></td>
+<td>dziennik zdarzeń z filtrami</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/projects/{id}/report.pdf?from=&amp;to=</code></td>
+<td>raport PDF</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/orgs/{org}/export/{tasks|time|expenses}.csv</code></td>
+<td>eksport z filtrami listy</td>
+</tr>
+<tr>
+<td>GET/PATCH</td>
+<td><code>/api/admin/organizations</code>, <code>/api/admin/users</code></td>
+<td>panel administratora systemu</td>
+</tr>
+</tbody></table></div>
+<p>Kody błędów: 400 walidacja (z polem i kodem reguły), 401, 403 brak uprawnienia, 404 także dla obiektów innej organizacji (nie ujawniamy istnienia), 409 konflikt reguły (np. ostatni administrator, duplikat podpięcia).</p>
+<hr>
+<h2 id="10-zadania-w-tle-raporty-i-powiadomienia">10. Zadania w tle, raporty i powiadomienia</h2>
+<ul>
+<li><strong>Przypomnienia o terminach (P10):</strong> polecenie <code>manage.py send_reminders</code> uruchamiane raz dziennie przez harmonogram kontenera. Tworzy powiadomienia w aplikacji.</li>
+<li><strong>E-mail</strong> (zaproszenia, reset hasła, przypomnienia) jest <strong>wyłączalny</strong> (<code>EMAIL_ENABLED</code>). Bez skonfigurowanego serwera SMTP aplikacja działa w pełni: zaproszenie pokazuje link do skopiowania, a powiadomienia są tylko w aplikacji.</li>
+<li><strong>Raport PDF</strong> generowany synchronicznie z szablonu HTML (WeasyPrint w kontenerze backendu); wykresy jako SVG. Limit czasu 30 s; przy dużych projektach możliwe przejście na zadanie w tle w kolejnej wersji.</li>
+<li><strong>Retencja:</strong> powiadomienia 180 dni (TTL w MongoDB, polecenie czyszczące w wariantach PostgreSQL), historia wg ustawień organizacji (NFR-AUD-02).</li>
+</ul>
+<hr>
+<h2 id="11-wymagania-niefunkcjonalne">11. Wymagania niefunkcjonalne</h2>
+<p>Obowiązują wszystkie NFR z <code>docs/wymagania.md</code>. Dodatkowo:</p>
+<div class="tw"><table><thead><tr>
+<th>ID</th>
+<th>Wymaganie</th>
+<th>Kryterium akceptacji</th>
+</tr>
+</thead><tbody><tr>
+<td>NFR-DB-01</td>
+<td>Każdy wariant bazy realizuje całe API</td>
+<td>100% testów kontraktowych portów zielonych na każdym adapterze</td>
+</tr>
+<tr>
+<td>NFR-DB-02</td>
+<td>Ten sam wynik na każdej bazie</td>
+<td>dla tego samego seeda odpowiedzi <code>/overview</code>, list zadań i raportu budżetu są identyczne, łącznie z identyfikatorami</td>
+</tr>
+<tr>
+<td>NFR-ARCH-01</td>
+<td>Reguła zależności architektury heksagonalnej</td>
+<td><code>import-linter</code> w CI: <code>domain</code> i <code>service</code> bez importów Django, DRF, psycopg, PyMongo; <code>ports</code> bez importów adapterów</td>
+</tr>
+<tr>
+<td>NFR-DB-03</td>
+<td>Izolacja organizacji niezależna od bazy</td>
+<td>testy NFR-SEC-01 uruchamiane na trzech wariantach</td>
+</tr>
+<tr>
+<td>NFR-DB-04</td>
+<td>Porównywalność</td>
+<td>ten sam deterministyczny zbiór danych (<code>seed --seed S</code>) we wszystkich wariantach; pomiary wg rozdz. 13.4</td>
+</tr>
+<tr>
+<td>NFR-PERF-06</td>
+<td>Dashboard projektu</td>
+<td><code>/overview</code> &lt; 500 ms (p95) dla projektu z 2 000 zadań na każdym wariancie</td>
+</tr>
+<tr>
+<td>NFR-PERF-07</td>
+<td>Oś czasu</td>
+<td>dane osi dla 500 zadań &lt; 300 ms; przewijanie i przybliżanie płynne (bez ponownego pobierania przy każdym ruchu)</td>
+</tr>
+<tr>
+<td>NFR-UX-06</td>
+<td>Motyw ciemny</td>
+<td>wszystkie ekrany w obu motywach; kontrast AA sprawdzony automatycznie (axe w testach E2E)</td>
+</tr>
+<tr>
+<td>NFR-UX-07</td>
+<td>Tłumaczenia</td>
+<td>brak tekstów wpisanych w komponenty (lint); komplet kluczy PL</td>
+</tr>
+<tr>
+<td>NFR-UX-08</td>
+<td>Gotowe komponenty</td>
+<td>brak własnych plików CSS poza motywem i tokenami</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="12-struktura-projektu">12. Struktura projektu</h2>
+<p>Backend według szkieletu architektury heksagonalnej z <code>main</code> (<code>backend/app/</code>). Stary pakiet <code>backend/api/</code> zostaje tylko jako źródło modeli Django dla adaptera relacyjnego i jest wygaszany w F0–F2.</p>
+<div class="cw"><pre><code>backend/
+  app/
+    domain/
+      entities/        encje domeny (dataclasses), enumy, katalog uprawnień, reguły
+    service/           przypadki użycia P1–P12 i zapytania widoków
+    ports/
+      api/             interfejsy przypadków użycia + DTO wejścia/wyjścia
+      spi/             repozytoria agregatów, UnitOfWork, IdGenerator, ReportQueries
+    adapter/
+      apps.py          AppConfig.ready → dependencies_container
+      dependencies_container.py   wybór adapterów wg DATA_BACKEND
+      api/             DRF: widoki, serializery DTO, uwierzytelnianie, uprawnienia,
+                       raporty PDF i CSV, polecenia manage.py
+      spi/
+        relational/        entities/ (modele Django), repository/
+        object_relational/ SQL schematu, repozytoria na psycopg
+        nonrelational/     walidatory, indeksy, repozytoria na PyMongo
+  core/                ustawienia Django (konto, sesje, JWT – zawsze PostgreSQL)
+  tests/
+    unit/              domena i serwisy na adapterach w pamięci
+    contract/          testy portów spi – ten sam zestaw na trzech adapterach
+    api/               endpointy, izolacja, uprawnienia
+frontend/src/
+  app/                 routing, store, motyw, i18n
+  components/ui/       komponenty shadcn/ui
+  features/            overview, projects, tasks, kanban, timeline, team,
+                       fundings, budget, time, reports, admin, auth
+docs/
+  PRD-promt-2.0.md, wymagania.md, przypadki-uzycia/, schemat/, badania/ (wyniki pomiarów)</code></pre></div>
+<hr>
+<h2 id="13-strategia-testów">13. Strategia testów</h2>
+<h3 id="131-backend">13.1 Backend</h3>
+<ul>
+<li><strong>Testy jednostkowe domeny i serwisów</strong> na adapterach w pamięci (implementacje <code>ports/spi</code> na słownikach) – szybkie, bez bazy: reguły, uprawnienia, kondycja projektu, procesy. Architektura heksagonalna daje to bez mockowania ORM.</li>
+<li><strong>Testy kontraktowe portów</strong> – jeden zestaw, parametryzowany adapterem (<code>relational</code>, <code>object_relational</code>, <code>nonrelational</code>), na prawdziwych bazach w Dockerze. Obejmują wszystkie porty z 6.3 i procesy P1–P12. Ten sam seed i te same identyfikatory w każdym wariancie.</li>
+<li><strong>Testy API</strong> – endpointy, kody błędów, izolacja organizacji, macierz ról (3.6); w CI na wariancie relacyjnym, pełny przebieg na trzech wariantach przed scaleniem do <code>main</code>.</li>
+<li><strong>Kontrakt importów</strong> (<code>import-linter</code>) – NFR-ARCH-01.</li>
+<li>Testy liczby zapytań dla list (NFR-PERF-04) w wariancie relacyjnym.</li>
+</ul>
+<h3 id="132-frontend">13.2 Frontend</h3>
+<ul>
+<li>Vitest + Testing Library + MSW: formularze, filtry, kafelki-filtry, oś czasu (tworzenie z zakresu, przeciąganie), porównanie osób.</li>
+<li>Playwright E2E: logowanie i wybór organizacji, przegląd projektu, zadanie od utworzenia na osi czasu do zamknięcia na Kanbanie, podpięcie finansowania, wydatek, raport PDF, administracja ról.</li>
+</ul>
+<h3 id="133-bramki-jakości">13.3 Bramki jakości</h3>
+<p>ruff, mypy strict, eslint, tsc strict, pokrycie logiki backendu ≥ 70% (NFR-MAINT-03); każda zmiana przez PR z CI (NFR-MAINT-04).</p>
+<h3 id="134-pomiary-porównawcze">13.4 Pomiary porównawcze</h3>
+<p>Polecenie <code>manage.py benchmark --scenario all</code> (na instancji z danym <code>DATA_BACKEND</code>) zapisuje wyniki do CSV w <code>docs/badania/</code>.</p>
+<div class="tw"><table><thead><tr>
+<th>Scenariusz</th>
+<th>Operacja</th>
+</tr>
+</thead><tbody><tr>
+<td>B1</td>
+<td>Kanban projektu z 500 zadaniami</td>
+</tr>
+<tr>
+<td>B2</td>
+<td>„Moje zadania” osoby w 20 projektach</td>
+</tr>
+<tr>
+<td>B3</td>
+<td>Dane osi czasu projektu (miesiąc)</td>
+</tr>
+<tr>
+<td>B4</td>
+<td>Dashboard projektu (<code>/overview</code>)</td>
+</tr>
+<tr>
+<td>B5</td>
+<td>Raport budżetu finansowania podpiętego do 5 projektów</td>
+</tr>
+<tr>
+<td>B6</td>
+<td>Historia projektu (ostatnie 100 zdarzeń)</td>
+</tr>
+<tr>
+<td>B7</td>
+<td>Sprawdzenie uprawnienia (efektywne role)</td>
+</tr>
+<tr>
+<td>B8</td>
+<td>Odhaczenie punktu checklisty</td>
+</tr>
+<tr>
+<td>B9</td>
+<td>Podpięcie finansowania z 10 szablonami (transakcja)</td>
+</tr>
+</tbody></table></div>
+<p>Rozmiar zbioru: 100 organizacji, 100 000 zadań (NFR-SCAL-01); scenariusz rozszerzony 1 mln zadań – D6. Każdy scenariusz: rozgrzewka, 30 powtórzeń, mediana i p95.</p>
+<hr>
+<h2 id="14-uruchomienie-i-środowisko">14. Uruchomienie i środowisko</h2>
+<ul>
+<li><code>docker compose up</code> uruchamia frontend, backend i bazę wybranego wariantu (NFR-PORT-01). PostgreSQL działa zawsze (konto, sesje, admin). Profile Compose: <code>relational</code> (domena w tej samej bazie PostgreSQL), <code>object_relational</code> (domena w osobnej bazie PostgreSQL), <code>nonrelational</code> (dodatkowo MongoDB ≥ 7.0 jako jednowęzłowy replica set <code>rs0</code>).</li>
+<li>Wariant wybiera <code>DATA_BACKEND</code> w <code>.env</code>; wartości przykładowe w <code>.env.example</code>. Sekrety tylko w <code>.env</code> (NFR-SEC-07).</li>
+<li>Dane demonstracyjne: <code>manage.py seed --orgs N --tasks M --seed S</code> – ten sam zbiór logiczny i te same identyfikatory w każdym wariancie (FR-ADM-03).</li>
+<li>Wszystkie narzędzia są darmowe i działają lokalnie; brak zależności od płatnych usług.</li>
+</ul>
+<hr>
+<h2 id="15-plan-etapów">15. Plan etapów</h2>
+<p>Kolejność; bez dat. Etapy F5 i F6 mogą iść równolegle z F3–F4, gdy porty z F1 są zamknięte – to bezpośrednia korzyść z architektury heksagonalnej.</p>
+<div class="tw"><table><thead><tr>
+<th>Etap</th>
+<th>Zakres</th>
+<th>Gotowe, gdy</th>
+</tr>
+</thead><tbody><tr>
+<td>F0 – Porządki</td>
+<td>szkielet <code>backend/app</code> spójny i zarejestrowany (<code>AppConfig</code> z poprawną nazwą i funkcją kontenera, wpis w <code>INSTALLED_APPS</code>); aplikacja startuje bez odwołań do starych modeli; decyzje D1–D8 podjęte; zmiany Z1–Z14 na diagramach trzech wariantów</td>
+<td><code>manage.py check</code> i CI zielone; <code>import-linter</code> skonfigurowany; rejestr decyzji bez otwartych pozycji blokujących</td>
+</tr>
+<tr>
+<td>F1 – Domena, porty, adapter relacyjny</td>
+<td>encje domeny, <code>ports/api</code> i <code>ports/spi</code>, <code>UnitOfWork</code>, <code>IdGenerator</code>, serwisy P1–P12, adaptery w pamięci, <code>adapter/spi/relational</code>, seed</td>
+<td>testy jednostkowe i kontraktowe zielone na adapterze relacyjnym</td>
+</tr>
+<tr>
+<td>F2 – API</td>
+<td>endpointy z rozdz. 9, JWT, uprawnienia, OpenAPI</td>
+<td>testy API (w tym izolacja i macierz ról) zielone; <code>/api/docs</code> kompletne</td>
+</tr>
+<tr>
+<td>F3 – Frontend</td>
+<td>shadcn/ui, motyw ciemny, i18n; ekrany wg mapy z rozdz. 4 na prawdziwym API, w kolejności: projekty i zadania → Kanban i oś czasu → przegląd projektu → zespół → finansowania i budżet → administracja</td>
+<td>każda trasa makiety ma odpowiednik w React; E2E ścieżek z 13.2 zielone</td>
+</tr>
+<tr>
+<td>F4 – Raporty i powiadomienia</td>
+<td>PDF, CSV, przypomnienia, retencja</td>
+<td>raport PDF dla projektu z seeda generuje się &lt; 30 s; P10 bez duplikatów</td>
+</tr>
+<tr>
+<td>F5 – Adapter obiektowo-relacyjny</td>
+<td>schemat SQL, <code>migrate_or</code>, <code>adapter/spi/object_relational</code></td>
+<td>100% testów kontraktowych i API zielonych z <code>DATA_BACKEND=object_relational</code></td>
+</tr>
+<tr>
+<td>F6 – Adapter dokumentowy</td>
+<td>kolekcje, walidatory, indeksy, <code>counters</code>, <code>init_mongo</code>, <code>adapter/spi/nonrelational</code></td>
+<td>100% testów kontraktowych i API zielonych z <code>DATA_BACKEND=nonrelational</code></td>
+</tr>
+<tr>
+<td>F7 – Badania</td>
+<td>pomiary B1–B9 na trzech wariantach, porównanie w <code>docs/badania/</code></td>
+<td>CSV z wynikami trzech wariantów i opis wniosków</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="16-decyzje-i-otwarte-kwestie">16. Decyzje i otwarte kwestie</h2>
+<h3 id="161-do-decyzji-zespołu">16.1 Do decyzji zespołu</h3>
+<div class="tw"><table><thead><tr>
+<th>#</th>
+<th>Kwestia</th>
+<th>Propozycja</th>
+</tr>
+</thead><tbody><tr>
+<td>D1</td>
+<td>Dyrektor organizacji i Administrator organizacji – jedna rola czy dwie?</td>
+<td>dwie: dyrektor = decyzje biznesowe i usuwanie, administrator = ludzie i ustawienia</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Zakres Dyrektora projektu ponad PM</td>
+<td>nadawanie ról w projekcie (w tym PM), zamykanie i archiwizacja projektu</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Przegląd organizacji – te same widżety co przegląd projektu, zagregowane?</td>
+<td>tak, w zakresie z 4.12</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Progi kondycji projektu</td>
+<td>wartości z 4.3, edytowalne w ustawieniach organizacji</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>Alerty (<code>alert_raised</code>, <code>alert_resolved</code> w modelu) i brak akcji <code>checked</code></td>
+<td>alert = zmiana kondycji projektu na „Wymaga uwagi” / „Zagrożony”; dodać <code>checked</code></td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Rozmiar zbioru w pomiarach: 100 000 czy 1 mln zadań</td>
+<td>oba: 100 000 jako podstawowy, 1 mln jako rozszerzony</td>
+</tr>
+<tr>
+<td>D7</td>
+<td><code>notification.organization_id</code>: analiza (A6) chce go do filtrowania po bieżącej organizacji i ukrywania przypomnień po odejściu z niej; model dokumentowy go pomija (odbiorcą jest konto, klucz shardu <code>recipient_user_id</code>)</td>
+<td>dodać jako pole opcjonalne (bez wpływu na klucz shardu), we wszystkich wariantach</td>
+</tr>
+<tr>
+<td>D8</td>
+<td>Agregaty dashboardów i raportów jako osobny port <code>ReportQueries</code></td>
+<td>tak – zapytania tylko do odczytu, implementowane w każdym adapterze osobno</td>
+</tr>
+<tr>
+<td>D9</td>
+<td>Nazwa zmiennej wyboru adaptera (na diagramie oznaczona jako propozycja)</td>
+<td><code>DATA_BACKEND</code> = <code>relational</code> | <code>object_relational</code> | <code>nonrelational</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="162-ustalone">16.2 Ustalone</h3>
+<div class="tw"><table><thead><tr>
+<th>Decyzja</th>
+<th>Uzasadnienie</th>
+</tr>
+</thead><tbody><tr>
+<td>Architektura heksagonalna (<code>backend/app</code> na <code>main</code>)</td>
+<td>jedna domena i jedne porty, trzy adaptery bazy; adaptery można rozwijać równolegle</td>
+</tr>
+<tr>
+<td>Konto, sesje, admin i JWT zawsze w Django i PostgreSQL</td>
+<td>warianty porównują dane domeny; logowanie nie zależy od wariantu</td>
+</tr>
+<tr>
+<td>Identyfikatory <code>long</code> we wszystkich bazach (<code>IdGenerator</code>, w MongoDB <code>counters</code>)</td>
+<td>te same testy portów, adresy API i seed dla trzech baz</td>
+</tr>
+<tr>
+<td>Adapter MongoDB na PyMongo, bez <code>django-mongodb-backend</code></td>
+<td>backend Django zakłada klucze ObjectId, a domena ma <code>int</code></td>
+</tr>
+<tr>
+<td>Szczegóły zadania w panelu bocznym (drugi układ z makiety usunięty)</td>
+<td>szybki podgląd bez opuszczania listy, osi czasu i Kanbanu</td>
+</tr>
+<tr>
+<td>Wszystkie szablony obowiązkowe</td>
+<td>działania opcjonalne to zwykłe zadania</td>
+</tr>
+<tr>
+<td>Lista członków organizacji bez podziału na sekcje; struktura w grupach</td>
+<td>czytelność, filtrowanie po grupach</td>
+</tr>
+<tr>
+<td>Komentarze i historia poza przeglądem projektu</td>
+<td>przegląd ma pokazywać stan, nie strumień zdarzeń</td>
+</tr>
+<tr>
+<td>Gotowe komponenty zamiast ręcznego CSS</td>
+<td>utrzymanie; ręczny CSS makiety był trudny w naprawach</td>
+</tr>
+<tr>
+<td>Motyw ciemny obowiązkowo</td>
+<td>wymóg zespołu</td>
+</tr>
+<tr>
+<td>Jedna biblioteka wykresów (ECharts)</td>
+<td>mniej zależności; obsługuje też graf zespołu</td>
+</tr>
+<tr>
+<td>Usuwanie obiektów nadrzędnych tylko Dyrektor organizacji i administratorzy</td>
+<td>PM nie może „rozjechać” projektu</td>
+</tr>
+</tbody></table></div>
+<h3 id="163-otwarte-z-analizy-poprzedniej-wersji">16.3 Otwarte z analizy poprzedniej wersji</h3>
+<p>Sprzeczności W1–W4 i luki K4–K8 z <code>docs/analiza-prd-i-modeli.md</code> (m.in. <code>TimeEntry</code> PROTECT vs usuwanie zadań, kaskadowe usuwanie podzadań z pominięciem P9, ukrycie statusu domyślnego) muszą być rozstrzygnięte w F0 i obowiązują we wszystkich wariantach.</p>
+<hr>
+<h2 id="17-słownik">17. Słownik</h2>
+<div class="tw"><table><thead><tr>
+<th>Termin</th>
+<th>Znaczenie</th>
+</tr>
+</thead><tbody><tr>
+<td><strong>Organizacja</strong></td>
+<td>firma lub instytucja; właściciel wszystkich danych poza kontem osoby</td>
+</tr>
+<tr>
+<td><strong>Członkostwo</strong></td>
+<td>przynależność osoby do organizacji z profilem służbowym i statusem</td>
+</tr>
+<tr>
+<td><strong>Grupa</strong></td>
+<td>zbiór członków z hierarchią; może mieć role; grupa projektowa należy do projektu</td>
+</tr>
+<tr>
+<td><strong>Rola</strong></td>
+<td>nazwany zestaw kodów uprawnień, nadawany osobie albo grupie, w organizacji albo w projekcie</td>
+</tr>
+<tr>
+<td><strong>Dostęp kaskadowy</strong></td>
+<td>rola w organizacji obejmuje wszystkie jej projekty</td>
+</tr>
+<tr>
+<td><strong>Etap</strong></td>
+<td>część projektu z terminem; postęp = odsetek zrobionych zadań</td>
+</tr>
+<tr>
+<td><strong>Finansowanie</strong></td>
+<td>źródło środków (grant, sponsoring, darowizna, wewnętrzne) z kwotą, okresem i wymogami</td>
+</tr>
+<tr>
+<td><strong>Szablon zadania</strong></td>
+<td>obowiązkowy wymóg finansowania; po podpięciu do projektu staje się zadaniem</td>
+</tr>
+<tr>
+<td><strong>Zadanie dodatkowe finansowania</strong></td>
+<td>zwykłe zadanie projektu podpięte do finansowania, potrzebne do spełnienia wymogu</td>
+</tr>
+<tr>
+<td><strong>Kondycja projektu</strong></td>
+<td>wynik reguł z 4.3: W porządku / Wymaga uwagi / Zagrożony</td>
+</tr>
+<tr>
+<td><strong>Wariant bazy</strong></td>
+<td>jedna z trzech implementacji danych: relacyjna, obiektowo-relacyjna, dokumentowa</td>
+</tr>
+<tr>
+<td><strong>Architektura heksagonalna</strong></td>
+<td>układ, w którym domena i przypadki użycia są w środku, a baza i HTTP łączą się z nimi tylko przez porty i adaptery</td>
+</tr>
+<tr>
+<td><strong>Port</strong></td>
+<td>interfejs na granicy aplikacji: <code>ports/api</code> (wejście – przypadki użycia), <code>ports/spi</code> (wyjście – dane)</td>
+</tr>
+<tr>
+<td><strong>Adapter</strong></td>
+<td>implementacja portu dla konkretnej technologii: DRF (<code>adapter/api</code>) albo baza (<code>adapter/spi/...</code>)</td>
+</tr>
+<tr>
+<td><strong>Agregat</strong></td>
+<td>encja z częściami zapisywanymi razem (np. projekt z etapami); jeden agregat = jedno repozytorium</td>
+</tr>
+<tr>
+<td><strong>Repozytorium</strong></td>
+<td>port <code>spi</code> do zapisu i odczytu jednego agregatu, z implementacją w każdym adapterze bazy</td>
+</tr>
+<tr>
+<td><strong>DTO</strong></td>
+<td>obiekt danych na granicy portu, niezależny od bazy i HTTP</td>
+</tr>
+<tr>
+<td><strong>Blokada optymistyczna</strong></td>
+<td>wykrycie równoczesnej edycji przez porównanie pola <code>version</code> przy zapisie</td>
+</tr>
+<tr>
+<td><strong>Test kontraktowy</strong></td>
+<td>test uruchamiany bez zmian na każdym wariancie bazy</td>
+</tr>
+</tbody></table></div>
+
+</article>
+</main>
+</div>
+<script>
+document.addEventListener("click", function (e) {
+  var a = e.target.closest('a[href^="#"]');
+  if (!a) return;
+  var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+  if (!el) return;
+  e.preventDefault();
+  el.scrollIntoView();
+});
+var links = Array.prototype.slice.call(document.querySelectorAll("nav.toc a"));
+var heads = links.map(function (l) { return document.getElementById(decodeURIComponent(l.getAttribute("href").slice(1))); });
+function mark() {
+  var cur = 0;
+  heads.forEach(function (h, i) { if (h && h.getBoundingClientRect().top < 120) cur = i; });
+  links.forEach(function (l, i) { l.classList.toggle("on", i === cur); });
+}
+window.addEventListener("scroll", mark, { passive: true });
+mark();
+</script>
+</body>
+</html>

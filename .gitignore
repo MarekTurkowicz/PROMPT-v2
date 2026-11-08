@@ -81,4 +81,4 @@ backend/.python-version
 *.pshistory
 
 # Local docs
-docs/
+docs/schemat
