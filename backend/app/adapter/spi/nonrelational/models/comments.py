@@ -2,8 +2,10 @@ from pymongo import IndexModel
 
 from app.adapter.spi.nonrelational.models._schema import (
     DATE,
+    INT,
     LONG,
     OPT_LONG,
+    PRESENT_ID,
     CollectionSpec,
     array_of,
     attachment,
@@ -22,6 +24,7 @@ COMMENT_SCHEMA = document(
         "attachments": array_of(attachment(), max_items=20),
         "created_at": DATE,
         "updated_at": DATE,
+        "version": INT,
     }
 )
 COMMENT_SCHEMA["oneOf"] = [
@@ -35,11 +38,11 @@ COMMENTS = CollectionSpec(
     indexes=[
         IndexModel(
             [("organization_id", 1), ("task_id", 1), ("created_at", 1)],
-            partialFilterExpression={"task_id": {"$type": ["int", "long"]}},
+            partialFilterExpression={"task_id": PRESENT_ID},
         ),
         IndexModel(
             [("organization_id", 1), ("project_id", 1), ("created_at", 1)],
-            partialFilterExpression={"project_id": {"$type": ["int", "long"]}},
+            partialFilterExpression={"project_id": PRESENT_ID},
         ),
     ],
 )

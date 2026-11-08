@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any
 
+from bson import Decimal128
 from pymongo import IndexModel
 
 Schema = dict[str, Any]
@@ -9,6 +11,11 @@ Expr = dict[str, Any]
 STATUS_CATEGORIES = ["todo", "in_progress", "done", "cancelled"]
 CURRENCY_PATTERN = "^[A-Z]{3}$"
 COLOR_PATTERN = "^#[0-9A-Fa-f]{6}$"
+
+# Partial filters that skip null or missing values: the planner can prove that `field = value`
+# implies a range like these, but never a $type filter, so such an index stays usable.
+PRESENT_ID: Expr = {"$gte": 0}
+PRESENT_STRING: Expr = {"$gte": ""}
 
 
 @dataclass(frozen=True)
@@ -72,28 +79,44 @@ def document(properties: Schema) -> Schema:
     return obj({"_id": LONG, **properties})
 
 
+def varchar(max_length: int, *, null: bool = False) -> Schema:
+    """String that fits PostgreSQL ``varchar(max_length)`` of the relational model."""
+    return (nullable if null else bson)("string", maxLength=max_length)
+
+
+def numeric(digits: int, places: int, *, null: bool = False) -> Schema:
+    """Positive decimal that fits PostgreSQL ``numeric(digits, places)`` of the relational model."""
+    step = Decimal(1).scaleb(-places)
+    largest = Decimal(10) ** (digits - places) - step
+    return (nullable if null else bson)(
+        "decimal",
+        minimum=0,
+        exclusiveMinimum=True,
+        maximum=Decimal128(largest),
+        multipleOf=Decimal128(step),
+    )
+
+
 LONG = bson(["int", "long"])
 INT = bson("int")
 STRING = bson("string")
 BOOL = bson("bool")
 DATE = bson("date")
-DECIMAL = bson("decimal")
-POSITIVE_DECIMAL = bson("decimal", minimum=0, exclusiveMinimum=True)
 OPT_LONG = nullable(["int", "long"])
-OPT_INT = nullable("int")
 OPT_STRING = nullable("string")
 OPT_DATE = nullable("date")
 PRIORITY = bson("int", minimum=1, maximum=5)
+POSITION = bson("int", minimum=0, maximum=32767)  # PositiveSmallIntegerField
 
-MONEY = obj({"value": POSITIVE_DECIMAL, "currency": bson("string", pattern=CURRENCY_PATTERN)})
+MONEY = obj({"value": numeric(14, 2), "currency": bson("string", pattern=CURRENCY_PATTERN)})
 
 STATUS = obj(
     {
         "_id": LONG,
         "category": enum(STATUS_CATEGORIES),
-        "name": STRING,
+        "name": varchar(60),
         "color": bson("string", pattern=COLOR_PATTERN),
-        "position": INT,
+        "position": POSITION,
         "is_default": BOOL,
         "is_active": BOOL,
     }
@@ -124,9 +147,9 @@ def attachment(max_size_bytes: int = MAX_ATTACHMENT_SIZE_BYTES) -> Schema:
         {
             "_id": LONG,
             "uploaded_by": LONG,
-            "file": STRING,
-            "original_name": STRING,
-            "mime_type": STRING,
+            "file": varchar(500),
+            "original_name": varchar(255),
+            "mime_type": varchar(100),
             "size_bytes": size,
             "created_at": DATE,
         }
@@ -160,3 +183,21 @@ def every(array: str, alias: str, condition: Expr) -> Expr:
             {"$map": {"input": {"$ifNull": [array, []]}, "as": alias, "in": condition}}
         ]
     }
+
+
+def at_most_one(array: str, alias: str, condition: Expr | str) -> Expr:
+    matching = {"$filter": {"input": {"$ifNull": [array, []]}, "as": alias, "cond": condition}}
+    return {"$lte": [{"$size": matching}, 1]}
+
+
+def distinct(values: str | Expr, *, skip_null: bool = False) -> Expr:
+    """No value of an array expression such as ``$statuses.name`` occurs twice in the document."""
+    array: Expr = {"$ifNull": [values, []]}
+    if skip_null:
+        array = {"$filter": {"input": array, "as": "v", "cond": {"$ne": ["$$v", None]}}}
+    return {"$eq": [{"$size": {"$setUnion": [array]}}, {"$size": array}]}
+
+
+def distinct_role_grants(array: str) -> Expr:
+    """One grant per (role, project), like ``role_assignment_unique`` in PostgreSQL."""
+    return distinct({"$map": {"input": array, "as": "g", "in": ["$$g.role_id", "$$g.project_id"]}})

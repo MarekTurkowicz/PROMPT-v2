@@ -6,15 +6,20 @@ from app.adapter.spi.nonrelational.models._schema import (
     INT,
     LONG,
     OPT_DATE,
+    POSITION,
     STATUS,
     STRING,
     CollectionSpec,
     array_of,
+    at_most_one,
+    distinct,
     document,
     enum,
     every,
+    is_unset,
     not_before,
     obj,
+    varchar,
 )
 
 PROJECT_STATUSES = ["planned", "active", "closed", "cancelled", "archived"]
@@ -24,10 +29,10 @@ HEALTH_STATES = ["ok", "attention", "at_risk"]
 MILESTONE = obj(
     {
         "_id": LONG,
-        "name": STRING,
+        "name": varchar(200),
         "status": enum(MILESTONE_STATUSES),
         "due_date": OPT_DATE,
-        "position": INT,
+        "position": POSITION,
         "created_at": DATE,
         "updated_at": DATE,
     }
@@ -46,11 +51,19 @@ PROJECT_FUNDING = obj(
     }
 )
 
-# open decision D5: last evaluated health, used only to raise alerts
+# last evaluated health, used only to raise alerts; pending CORE-2 decision (#72)
 HEALTH = obj(
     {"state": enum(HEALTH_STATES), "reasons": array_of(STRING), "evaluated_at": DATE},
     null=True,
 )
+
+ATTACHED_FUNDINGS = {
+    "$filter": {
+        "input": {"$ifNull": ["$fundings", []]},
+        "as": "f",
+        "cond": is_unset("$$f.detached_at"),
+    }
+}
 
 PROJECTS = CollectionSpec(
     name="projects",
@@ -58,7 +71,7 @@ PROJECTS = CollectionSpec(
         {
             "organization_id": LONG,
             "owner_id": LONG,
-            "name": STRING,
+            "name": varchar(200),
             "description": STRING,
             "status": enum(PROJECT_STATUSES),
             "start_date": OPT_DATE,
@@ -66,7 +79,7 @@ PROJECTS = CollectionSpec(
             "hidden_status_ids": array_of(LONG, uniqueItems=True),
             "statuses": array_of(STATUS, max_items=30),
             "milestones": array_of(MILESTONE, max_items=100),
-            "fundings": array_of(PROJECT_FUNDING),
+            "fundings": array_of(PROJECT_FUNDING, max_items=100),
             "health": HEALTH,
             "created_at": DATE,
             "updated_at": DATE,
@@ -75,6 +88,10 @@ PROJECTS = CollectionSpec(
     ),
     rules=[
         not_before("$end_date", "$start_date"),
+        distinct("$statuses._id"),
+        distinct("$statuses.name"),
+        distinct({"$map": {"input": ATTACHED_FUNDINGS, "as": "f", "in": "$$f.funding_id"}}),
+        at_most_one("$fundings", "f", {"$and": ["$$f.is_primary", is_unset("$$f.detached_at")]}),
         every("$fundings", "f", not_before("$$f.allocation_end", "$$f.allocation_start")),
     ],
     indexes=[

@@ -1,3 +1,6 @@
+from bson import Decimal128
+
+from api.models.activity_log import ActivityAction, EntityType
 from app.adapter.spi.nonrelational.models import COLLECTIONS
 from app.adapter.spi.nonrelational.models.activity_logs import ACTIVITY_LOGS
 from app.adapter.spi.nonrelational.models.comments import COMMENTS
@@ -10,54 +13,6 @@ from app.adapter.spi.nonrelational.models.projects import PROJECTS
 from app.adapter.spi.nonrelational.models.tasks import TASKS
 from app.adapter.spi.nonrelational.models.time_entries import TIME_ENTRIES
 
-EXPECTED_ENTITY_TYPES = [
-    "organization",
-    "organization_member",
-    "member_group",
-    "role",
-    "role_assignment",
-    "task_status",
-    "project",
-    "milestone",
-    "funding",
-    "project_funding",
-    "task_template",
-    "task",
-    "task_assignment",
-    "time_entry",
-    "checklist_item",
-    "comment",
-    "attachment",
-    "expense",
-]
-
-EXPECTED_ACTIVITY_ACTIONS = [
-    "created",
-    "updated",
-    "deleted",
-    "status_changed",
-    "rescheduled",
-    "assigned",
-    "unassigned",
-    "granted",
-    "revoked",
-    "attached",
-    "detached",
-    "checked",
-    "unchecked",
-    "added_to_group",
-    "removed_from_group",
-    "invited",
-    "reminder_sent",
-    "moved",
-    "hidden",
-    "shown",
-    "archived",
-    "restored",
-    "alert_raised",
-    "alert_resolved",
-]
-
 
 def test_project_funding_preserves_detached_records_and_has_only_prd_fields() -> None:
     project_properties = PROJECTS.schema["properties"]
@@ -68,7 +23,7 @@ def test_project_funding_preserves_detached_records_and_has_only_prd_fields() ->
     assert funding_properties["detached_at"] == {"bsonType": ["date", "null"]}
     assert "allocated_amount" not in funding_properties
     assert "start_date" not in milestone_properties
-    assert "maxItems" not in fundings_schema
+    assert fundings_schema["maxItems"] == 100
 
 
 def test_funding_can_be_shared_without_an_organization() -> None:
@@ -94,6 +49,11 @@ def test_task_always_belongs_to_project_without_direct_funding_reference() -> No
     assert "oneOf" not in TASKS.schema
 
 
+def test_task_relies_on_template_mandatory_flag_instead_of_a_copy() -> None:
+    assert "from_template" not in TASKS.schema["properties"]
+    assert "from_template" not in str(TASKS.rules)
+
+
 def test_checklist_item_does_not_add_an_assignee_absent_from_prd() -> None:
     checklist_properties = TASKS.schema["properties"]["checklist"]["items"]["properties"]
 
@@ -103,13 +63,25 @@ def test_checklist_item_does_not_add_an_assignee_absent_from_prd() -> None:
 def test_activity_log_dictionaries_match_relational_model() -> None:
     properties = ACTIVITY_LOGS.schema["properties"]
 
-    assert properties["entity_type"]["enum"] == EXPECTED_ENTITY_TYPES
-    assert properties["action"]["enum"] == EXPECTED_ACTIVITY_ACTIONS
+    assert properties["entity_type"]["enum"] == list(EntityType.values)
+    assert properties["action"]["enum"] == list(ActivityAction.values)
 
 
-def test_diagram_only_versions_are_not_part_of_prd_schema() -> None:
-    assert "version" not in COMMENTS.schema["properties"]
-    assert "version" not in EXPENSES.schema["properties"]
+def test_every_root_with_embedded_documents_has_a_version() -> None:
+    checked: set[str] = set()
+
+    for collection in COLLECTIONS:
+        properties = collection.schema["properties"]
+        embeds_documents = any(
+            prop.get("bsonType") == "array" and "properties" in prop["items"]
+            for prop in properties.values()
+        )
+        if embeds_documents:
+            checked.add(collection.name)
+            assert properties["version"] == {"bsonType": "int"}, collection.name
+            assert "version" in collection.schema["required"], collection.name
+
+    assert {"comments", "expenses"} <= checked
 
 
 def test_identifiers_accept_bson_int32_and_int64() -> None:
@@ -122,33 +94,49 @@ def test_identifiers_accept_bson_int32_and_int64() -> None:
     assert COUNTERS.schema["properties"]["seq"]["bsonType"] == ["int", "long"]
 
 
-def test_partial_indexes_include_both_bson_integer_types() -> None:
-    checked_fields: set[str] = set()
+def test_no_partial_index_filters_by_bson_type() -> None:
+    # The query planner never proves that `field = value` satisfies a $type filter.
+    filters = [
+        index.document["partialFilterExpression"]
+        for collection in COLLECTIONS
+        for index in collection.indexes
+        if "partialFilterExpression" in index.document
+    ]
 
-    for collection in COLLECTIONS:
-        for index in collection.indexes:
-            partial = index.document.get("partialFilterExpression", {})
-            for field_name, condition in partial.items():
-                if (
-                    field_name.endswith("_id")
-                    and "$type" in condition
-                    and condition["$type"] != "string"
-                ):
-                    checked_fields.add(f"{collection.name}.{field_name}")
-                    assert condition["$type"] == ["int", "long"]
+    assert filters
+    assert all("$type" not in str(partial) for partial in filters)
 
-    assert checked_fields == {
-        "activity_logs.project_id",
-        "comments.project_id",
-        "comments.task_id",
-        "expenses.funding_id",
-        "groups.organization_id",
-        "groups.project_id",
-        "notifications.activity_id",
-        "tasks.parent_id",
-        "tasks.project_funding_id",
-        "tasks.template_id",
-        "time_entries.funding_id",
+
+def test_indexes_on_optional_fields_skip_missing_values_with_range_filters() -> None:
+    partial = {
+        f"{collection.name}:{','.join(index.document['key'])}": index.document[
+            "partialFilterExpression"
+        ]
+        for collection in COLLECTIONS
+        for index in collection.indexes
+        if "partialFilterExpression" in index.document
+    }
+
+    assert partial == {
+        "organizations:tax_id": {"tax_id": {"$gte": ""}},
+        "groups:organization_id,name": {"organization_id": {"$gte": 0}},
+        "groups:organization_id,project_id": {"project_id": {"$gte": 0}},
+        "groups:organization_id,code": {"code": {"$gte": ""}},
+        "tasks:organization_id,due_date": {"status_category": {"$in": ["todo", "in_progress"]}},
+        "tasks:organization_id,project_funding_id": {"project_funding_id": {"$gte": 0}},
+        "tasks:organization_id,parent_id": {"parent_id": {"$gte": 0}},
+        "tasks:organization_id,group_id": {"group_id": {"$gte": 0}},
+        "tasks:organization_id,project_funding_id,template_id": {
+            "project_funding_id": {"$gte": 0},
+            "template_id": {"$gte": 0},
+        },
+        "time_entries:organization_id,funding_id": {"funding_id": {"$gte": 0}},
+        "comments:organization_id,task_id,created_at": {"task_id": {"$gte": 0}},
+        "comments:organization_id,project_id,created_at": {"project_id": {"$gte": 0}},
+        "expenses:organization_id,funding_id,spent_on_date": {"funding_id": {"$gte": 0}},
+        "activity_logs:organization_id,project_id,created_at": {"project_id": {"$gte": 0}},
+        "notifications:recipient_user_id,activity_id": {"activity_id": {"$gte": 0}},
+        "notifications:recipient_user_id,dedup_key": {"dedup_key": {"$gte": ""}},
     }
 
 
@@ -187,14 +175,21 @@ def test_unique_notification_indexes_start_with_recipient_shard_key() -> None:
     assert all(next(iter(index["key"])) == "recipient_user_id" for index in unique_indexes)
 
 
-def test_time_entry_requires_start_and_allows_an_open_interval() -> None:
+def test_time_entry_follows_prd_interval_without_separate_work_date() -> None:
     properties = TIME_ENTRIES.schema["properties"]
+    indexed_fields = {field for index in TIME_ENTRIES.indexes for field in index.document["key"]}
 
+    assert properties["project_id"] == {"bsonType": ["int", "long"]}
+    assert ["assignment_id", "started_at"] in [
+        list(i.document["key"]) for i in TIME_ENTRIES.indexes
+    ]
     assert properties["started_at"] == {"bsonType": "date"}
     assert "started_at" in TIME_ENTRIES.schema["required"]
     assert properties["finished_at"] == {"bsonType": ["date", "null"]}
     assert "finished_at" not in TIME_ENTRIES.schema["required"]
-    assert "maximum" not in properties["hours"]
+    assert "work_date" not in properties
+    assert "work_date" not in indexed_fields
+    assert properties["hours"]["maximum"] == Decimal128("999.99")  # numeric(5,2), no 24 h cap
     assert TIME_ENTRIES.rules == [
         {
             "$or": [
@@ -215,4 +210,4 @@ def test_group_without_organization_matches_relational_null_semantics() -> None:
 
     assert organization_id["bsonType"] == ["int", "long", "null"]
     assert "organization_id" not in GROUPS.schema["required"]
-    assert name_index["partialFilterExpression"] == {"organization_id": {"$type": ["int", "long"]}}
+    assert name_index["partialFilterExpression"] == {"organization_id": {"$gte": 0}}

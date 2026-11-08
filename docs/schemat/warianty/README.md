@@ -16,7 +16,8 @@ Końce linii: `||` dokładnie jeden · `|o` zero lub jeden · `|<` jeden lub wie
 
 | Pliki | Model |
 |---|---|
-| `nosql-mongodb.drawio`, `nosql-mongodb.md` | dokumentowy (MongoDB): kolekcje, dokumenty osadzone, odwołania, indeksy, zapytania |
+| `nosql-mongodb.drawio`, `nosql-mongodb.md` | dokumentowy (MongoDB), pierwsza wersja: kolekcje, dokumenty osadzone, odwołania, indeksy, zapytania |
+| `nosql-mongodb-2.0.drawio` | dokumentowy (MongoDB) wdrażany w `backend/app/adapter/spi/nonrelational`: 11 kolekcji + counters, walidatory, indeksy, heksagon i bilans względem PG; zgodny z kodem |
 | `obiektowo-relacyjny.drawio`, `obiektowo-relacyjny.md` | obiektowo-relacyjny (PostgreSQL): typy złożone, ENUM, domeny, dziedziczenie, tablice, zakresy |
 
 Diagramy przypadków użycia: `docs/przypadki-uzycia/`.

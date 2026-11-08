@@ -1,13 +1,13 @@
 from pymongo import IndexModel
 
 from app.adapter.spi.nonrelational.models._schema import (
-    BOOL,
     DATE,
     INT,
     LONG,
     OPT_DATE,
     OPT_LONG,
-    OPT_STRING,
+    POSITION,
+    PRESENT_ID,
     PRIORITY,
     STATUS_CATEGORIES,
     STRING,
@@ -15,14 +15,14 @@ from app.adapter.spi.nonrelational.models._schema import (
     array_of,
     attachment,
     both_or_neither,
+    distinct,
     document,
     enum,
     every,
-    implies,
-    is_set,
     not_before,
-    nullable,
+    numeric,
     obj,
+    varchar,
 )
 
 ASSIGNMENT = obj(
@@ -40,9 +40,9 @@ ASSIGNMENT = obj(
 CHECKLIST_ITEM = obj(
     {
         "_id": LONG,
-        "checklist_title": OPT_STRING,
-        "element": STRING,
-        "order": INT,
+        "checklist_title": varchar(120, null=True),
+        "element": varchar(300),
+        "order": POSITION,
         "done_by": OPT_LONG,
         "done_at": OPT_DATE,
         "created_at": DATE,
@@ -58,16 +58,15 @@ TASK_SCHEMA = document(
         "milestone_id": OPT_LONG,
         "parent_id": OPT_LONG,
         "template_id": OPT_LONG,
-        "from_template": BOOL,
         "status_id": LONG,
         "status_category": enum(STATUS_CATEGORIES),
         "group_id": OPT_LONG,
-        "title": STRING,
+        "title": varchar(200),
         "description": STRING,
         "priority": PRIORITY,
         "start_date": OPT_DATE,
         "due_date": OPT_DATE,
-        "est_hours": nullable("decimal", minimum=0, exclusiveMinimum=True),
+        "est_hours": numeric(6, 2, null=True),
         "created_by": LONG,
         "assignments": array_of(ASSIGNMENT, max_items=50),
         "checklist": array_of(CHECKLIST_ITEM, max_items=200),
@@ -82,9 +81,8 @@ TASKS = CollectionSpec(
     name="tasks",
     schema=TASK_SCHEMA,
     rules=[
-        implies(is_set("$project_funding_id"), is_set("$project_id")),
-        implies(is_set("$template_id"), {"$eq": ["$from_template", True]}),
         not_before("$due_date", "$start_date"),
+        distinct("$assignments.member_id"),
         every("$assignments", "a", not_before("$$a.finished_at", "$$a.started_at")),
         every("$checklist", "c", both_or_neither("$$c.done_by", "$$c.done_at")),
     ],
@@ -98,19 +96,20 @@ TASKS = CollectionSpec(
         IndexModel([("organization_id", 1), ("project_id", 1), ("start_date", 1), ("due_date", 1)]),
         IndexModel(
             [("organization_id", 1), ("project_funding_id", 1)],
-            partialFilterExpression={"project_funding_id": {"$type": ["int", "long"]}},
+            partialFilterExpression={"project_funding_id": PRESENT_ID},
         ),
         IndexModel(
             [("organization_id", 1), ("parent_id", 1)],
-            partialFilterExpression={"parent_id": {"$type": ["int", "long"]}},
+            partialFilterExpression={"parent_id": PRESENT_ID},
+        ),
+        IndexModel(
+            [("organization_id", 1), ("group_id", 1)],
+            partialFilterExpression={"group_id": PRESENT_ID},
         ),
         IndexModel(
             [("organization_id", 1), ("project_funding_id", 1), ("template_id", 1)],
             unique=True,
-            partialFilterExpression={
-                "project_funding_id": {"$type": ["int", "long"]},
-                "template_id": {"$type": ["int", "long"]},
-            },
+            partialFilterExpression={"project_funding_id": PRESENT_ID, "template_id": PRESENT_ID},
         ),
     ],
 )

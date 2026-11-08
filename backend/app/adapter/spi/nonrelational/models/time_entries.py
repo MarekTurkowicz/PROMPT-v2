@@ -6,10 +6,11 @@ from app.adapter.spi.nonrelational.models._schema import (
     OPT_DATE,
     OPT_LONG,
     OPT_STRING,
+    PRESENT_ID,
     CollectionSpec,
-    bson,
     document,
     is_unset,
+    numeric,
 )
 
 TIME_ENTRIES = CollectionSpec(
@@ -20,10 +21,9 @@ TIME_ENTRIES = CollectionSpec(
             "assignment_id": LONG,
             "task_id": LONG,
             "member_id": LONG,
-            "project_id": OPT_LONG,
+            "project_id": LONG,
             "funding_id": OPT_LONG,
-            "work_date": DATE,
-            "hours": bson("decimal", minimum=0, exclusiveMinimum=True),
+            "hours": numeric(5, 2),
             "started_at": DATE,
             "finished_at": OPT_DATE,
             "note": OPT_STRING,
@@ -35,13 +35,13 @@ TIME_ENTRIES = CollectionSpec(
         {"$or": [is_unset("$finished_at"), {"$gt": ["$finished_at", "$started_at"]}]},
     ],
     indexes=[
-        IndexModel([("organization_id", 1), ("member_id", 1), ("work_date", -1)]),
-        IndexModel([("organization_id", 1), ("task_id", 1), ("work_date", 1)]),
-        IndexModel([("assignment_id", 1)]),
-        IndexModel([("organization_id", 1), ("project_id", 1), ("work_date", 1)]),
+        IndexModel([("organization_id", 1), ("member_id", 1), ("started_at", -1)]),
+        IndexModel([("organization_id", 1), ("task_id", 1), ("started_at", 1)]),
+        IndexModel([("assignment_id", 1), ("started_at", -1)]),
+        IndexModel([("organization_id", 1), ("project_id", 1), ("started_at", 1)]),
         IndexModel(
             [("organization_id", 1), ("funding_id", 1)],
-            partialFilterExpression={"funding_id": {"$type": ["int", "long"]}},
+            partialFilterExpression={"funding_id": PRESENT_ID},
         ),
     ],
 )

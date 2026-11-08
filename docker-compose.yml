@@ -23,6 +23,20 @@ services:
       timeout: 5s
       retries: 10
 
+  mongo:
+    image: mongo:9.0
+    container_name: promt_mongo
+    restart: on-failure
+    ports:
+      - "27017:27017"
+    networks:
+      - my-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ping: 1})"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   frontend:
     build:
       context: ./frontend
