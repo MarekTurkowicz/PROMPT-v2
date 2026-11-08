@@ -7,7 +7,6 @@ from app.adapter.spi.nonrelational.models._schema import (
     OPT_LONG,
     OPT_STRING,
     CollectionSpec,
-    both_or_neither,
     bson,
     document,
     is_unset,
@@ -24,8 +23,8 @@ TIME_ENTRIES = CollectionSpec(
             "project_id": OPT_LONG,
             "funding_id": OPT_LONG,
             "work_date": DATE,
-            "hours": bson("decimal", minimum=0, exclusiveMinimum=True, maximum=24),
-            "started_at": OPT_DATE,
+            "hours": bson("decimal", minimum=0, exclusiveMinimum=True),
+            "started_at": DATE,
             "finished_at": OPT_DATE,
             "note": OPT_STRING,
             "created_at": DATE,
@@ -33,8 +32,7 @@ TIME_ENTRIES = CollectionSpec(
         }
     ),
     rules=[
-        both_or_neither("$started_at", "$finished_at"),
-        {"$or": [is_unset("$started_at"), {"$gt": ["$finished_at", "$started_at"]}]},
+        {"$or": [is_unset("$finished_at"), {"$gt": ["$finished_at", "$started_at"]}]},
     ],
     indexes=[
         IndexModel([("organization_id", 1), ("member_id", 1), ("work_date", -1)]),

@@ -20,7 +20,7 @@ GROUPS = CollectionSpec(
     name="groups",
     schema=document(
         {
-            "organization_id": LONG,
+            "organization_id": OPT_LONG,
             "project_id": OPT_LONG,
             "code": nullable_enum(BUILTIN_GROUP_CODES),
             "parent_id": OPT_LONG,
@@ -33,7 +33,11 @@ GROUPS = CollectionSpec(
         }
     ),
     indexes=[
-        IndexModel([("organization_id", 1), ("name", 1)], unique=True),
+        IndexModel(
+            [("organization_id", 1), ("name", 1)],
+            unique=True,
+            partialFilterExpression={"organization_id": {"$type": ["int", "long"]}},
+        ),
         IndexModel([("organization_id", 1), ("ancestor_ids", 1)]),
         IndexModel(
             [("organization_id", 1), ("project_id", 1)],

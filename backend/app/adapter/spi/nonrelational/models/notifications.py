@@ -15,7 +15,6 @@ from app.adapter.spi.nonrelational.models._schema import (
 )
 
 NOTIFICATION_KINDS = ["event", "due_soon", "overdue", "alert"]
-RETENTION_SECONDS = 180 * 24 * 60 * 60
 
 NOTIFICATIONS = CollectionSpec(
     name="notifications",
@@ -44,6 +43,5 @@ NOTIFICATIONS = CollectionSpec(
             partialFilterExpression={"dedup_key": {"$type": "string"}},
         ),
         IndexModel([("recipient_user_id", 1), ("read_at", 1), ("created_at", -1)]),
-        IndexModel([("created_at", 1)], expireAfterSeconds=RETENTION_SECONDS),
     ],
 )

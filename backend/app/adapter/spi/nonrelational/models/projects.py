@@ -66,7 +66,7 @@ PROJECTS = CollectionSpec(
             "hidden_status_ids": array_of(LONG, uniqueItems=True),
             "statuses": array_of(STATUS, max_items=30),
             "milestones": array_of(MILESTONE, max_items=100),
-            "fundings": array_of(PROJECT_FUNDING, max_items=20),
+            "fundings": array_of(PROJECT_FUNDING),
             "health": HEALTH,
             "created_at": DATE,
             "updated_at": DATE,
