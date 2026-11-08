@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from app.oganization.core.application.create_organization_command import CreateOrganizationCommand
 from app.oganization.core.domain.entities.organization import Organization
 from app.oganization.core.domain.exceptions import (
@@ -14,15 +12,16 @@ class CreateOrganizationUseCase:
         self._repository = repository
 
     def execute(self, command: CreateOrganizationCommand) -> Organization:
-        tax_id = command.tax_id
-
-        if tax_id is not None and self._repository.exists_by_tax_id(tax_id):
-            raise TaxIdDuplicationException(f"Organization with tax id {tax_id} already exists.")
+        tax_id = OrganizationTaxId(command.tax_id) if command.tax_id is not None else None
+        if tax_id is not None and self._repository.exists_by_tax_id(tax_id.value):
+            raise TaxIdDuplicationException(
+                f"Organization with tax id {tax_id.value} already exists."
+            )
 
         organization = Organization(
             id=None,
             name=command.name,
-            tax_id=OrganizationTaxId(tax_id) if tax_id is not None else None,
+            tax_id=tax_id,
             is_active=True,
             settings=OrganizationSettings(
                 timezone=command.timezone,
