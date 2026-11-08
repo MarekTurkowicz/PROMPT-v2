@@ -6,6 +6,8 @@ from app.adapter.spi.nonrelational.models._schema import (
     OPT_DATE,
     OPT_LONG,
     OPT_STRING,
+    PRESENT_ID,
+    PRESENT_STRING,
     STRING,
     CollectionSpec,
     document,
@@ -21,7 +23,7 @@ NOTIFICATIONS = CollectionSpec(
     schema=document(
         {
             "recipient_user_id": LONG,
-            "organization_id": OPT_LONG,  # open decision D7
+            "organization_id": OPT_LONG,  # pending CORE-2 decision (#72)
             "activity_id": OPT_LONG,
             "kind": enum(NOTIFICATION_KINDS),
             "dedup_key": OPT_STRING,
@@ -35,13 +37,14 @@ NOTIFICATIONS = CollectionSpec(
         IndexModel(
             [("recipient_user_id", 1), ("activity_id", 1)],
             unique=True,
-            partialFilterExpression={"activity_id": {"$type": ["int", "long"]}},
+            partialFilterExpression={"activity_id": PRESENT_ID},
         ),
         IndexModel(
             [("recipient_user_id", 1), ("dedup_key", 1)],
             unique=True,
-            partialFilterExpression={"dedup_key": {"$type": "string"}},
+            partialFilterExpression={"dedup_key": PRESENT_STRING},
         ),
         IndexModel([("recipient_user_id", 1), ("read_at", 1), ("created_at", -1)]),
+        IndexModel([("recipient_user_id", 1), ("created_at", -1)]),
     ],
 )

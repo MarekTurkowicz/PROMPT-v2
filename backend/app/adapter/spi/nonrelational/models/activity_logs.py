@@ -5,6 +5,7 @@ from app.adapter.spi.nonrelational.models._schema import (
     LONG,
     OPT_DATE,
     OPT_LONG,
+    PRESENT_ID,
     CollectionSpec,
     bson,
     document,
@@ -81,7 +82,7 @@ ACTIVITY_LOGS = CollectionSpec(
         IndexModel([("organization_id", 1), ("created_at", -1)]),
         IndexModel(
             [("organization_id", 1), ("project_id", 1), ("created_at", -1)],
-            partialFilterExpression={"project_id": {"$type": ["int", "long"]}},
+            partialFilterExpression={"project_id": PRESENT_ID},
         ),
         IndexModel([("expires_at", 1)], expireAfterSeconds=0),
     ],
