@@ -84,11 +84,6 @@ class User(AbstractBaseUser):
     def __str__(self) -> str:
         return self.email
 
-    def clean(self) -> None:
-        # full_clean() checks user_email_lowercase, so forms must normalize before it runs
-        super().clean()
-        self.email = User.objects.normalize_email(self.email)
-
     def get_full_name(self) -> str:
         return f"{self.first_name} {self.last_name}".strip()
 

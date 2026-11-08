@@ -181,13 +181,20 @@ class TaskTemplateAdmin(admin.ModelAdmin[TaskTemplate]):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin[Task]):
-    list_display = ("id", "title", "status", "priority", "project", "funding", "due_date")
-    list_select_related = ("status", "project", "funding")
+    list_display = (
+        "id",
+        "title",
+        "status",
+        "priority",
+        "project",
+        "project_funding",
+        "due_date",
+    )
+    list_select_related = ("status", "project", "project_funding")
     list_filter = ("priority", ("project", admin.RelatedOnlyFieldListFilter))
     search_fields = ("title", "description")
     autocomplete_fields = [
         "project",
-        "funding",
         "project_funding",
         "milestone",
         "parent",
@@ -199,16 +206,23 @@ class TaskAdmin(admin.ModelAdmin[Task]):
 
 @admin.register(TaskAssignment)
 class TaskAssignmentAdmin(admin.ModelAdmin[TaskAssignment]):
-    list_display = ("task", "member", "assigned_by", "assigned_at", "started_at", "finished_at")
+    list_display = (
+        "task",
+        "assigned_to",
+        "assigned_by",
+        "assigned_at",
+        "started_at",
+        "finished_at",
+    )
     list_select_related = (
         "task",
-        "member__user",
-        "member__organization",
+        "assigned_to__user",
+        "assigned_to__organization",
         "assigned_by__user",
         "assigned_by__organization",
     )
-    search_fields = ("task__title", "member__user__email")
-    autocomplete_fields = ["task", "member", "assigned_by"]
+    search_fields = ("task__title", "assigned_to__user__email")
+    autocomplete_fields = ["task", "assigned_to", "assigned_by"]
 
 
 @admin.register(TimeEntry)
@@ -216,10 +230,10 @@ class TimeEntryAdmin(admin.ModelAdmin[TimeEntry]):
     list_display = ("id", "assignment", "hours", "started_at", "finished_at")
     list_select_related = (
         "assignment__task",
-        "assignment__member__user",
-        "assignment__member__organization",
+        "assignment__assigned_to__user",
+        "assignment__assigned_to__organization",
     )
-    search_fields = ("assignment__task__title", "assignment__member__user__email")
+    search_fields = ("assignment__task__title", "assignment__assigned_to__user__email")
     autocomplete_fields = ["assignment"]
 
 
@@ -228,7 +242,7 @@ class ChecklistItemAdmin(admin.ModelAdmin[ChecklistItem]):
     list_display = ("id", "task", "checklist_title", "element", "order", "done_at")
     list_select_related = ("task",)
     search_fields = ("element", "checklist_title", "task__title")
-    autocomplete_fields = ["task", "assignee", "done_by"]
+    autocomplete_fields = ["task", "done_by"]
 
 
 # ---------- Współpraca, koszty, historia ----------
