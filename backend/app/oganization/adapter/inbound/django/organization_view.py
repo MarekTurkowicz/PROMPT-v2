@@ -1,11 +1,10 @@
-from django.apps import apps
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from app.apps import ApplicationConfig
-from app.oganization.adapter.inbound.django.create_organization_serializer import (
+from app.oganization.adapter.inbound.django.container import get_container
+from app.oganization.adapter.inbound.django.serializers.create_organization_serializer import (
     CreateOrganizationSerializer,
 )
 from app.oganization.core.domain.exceptions import (
@@ -14,6 +13,7 @@ from app.oganization.core.domain.exceptions import (
     InvalidTaxId,
     TaxIdDuplicationException,
 )
+from app.oganization.core.ports.api.create_organization_port import CreateOrganizationPort
 
 
 class OrganizationView(APIView):
@@ -22,18 +22,15 @@ class OrganizationView(APIView):
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command()
 
-        application = apps.get_app_config("app")
-        if not isinstance(application, ApplicationConfig):
-            raise RuntimeError("Application container is unavailable.")
-
         #TODO Poprawa resultów/strukturyzacja
 
+        create_organization: CreateOrganizationPort = get_container().create_organization
         try:
-            organization = application.container.create_organization.execute(command)
-        except (InvalidOrganizationName, InvalidTaxId, InvalidOrganizationSettings) as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
-        except TaxIdDuplicationException as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+            organization = create_organization.execute(command)
+        except (InvalidOrganizationName, InvalidTaxId, InvalidOrganizationSettings) as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except TaxIdDuplicationException as e:
+            return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
 
         return Response(
             {

@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
-from app.oganization.core.application.create_organization_command import CreateOrganizationCommand
+from app.oganization.core.ports.api.commands.update_organization_settings_command import (
+    UpdateOrganizationSettingsCommand,
+)
 
 
-class CreateOrganizationSerializer(serializers.Serializer):
-    name = serializers.CharField()
-    tax_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+class UpdateOrganizationSettingsSerializer(serializers.Serializer):
     timezone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     currency = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     priority_levels = serializers.ListField(
@@ -14,8 +14,12 @@ class CreateOrganizationSerializer(serializers.Serializer):
         allow_null=True,
     )
 
-    def validate_tax_id(self, value: str | None) -> str | None:
-        return _blank_to_none(value)
+    def validate(self, attrs: dict) -> dict:
+        if not attrs:
+            raise serializers.ValidationError(
+                "At least one settings field is required."
+            )
+        return attrs
 
     def validate_timezone(self, value: str | None) -> str | None:
         return _blank_to_none(value)
@@ -23,14 +27,11 @@ class CreateOrganizationSerializer(serializers.Serializer):
     def validate_currency(self, value: str | None) -> str | None:
         return _blank_to_none(value)
 
-    def create_command(self) -> CreateOrganizationCommand:
+    def create_command(self, organization_id: int) -> UpdateOrganizationSettingsCommand:
         data = self.validated_data
-        return CreateOrganizationCommand(
-            name=data["name"],
-            tax_id=data.get("tax_id"),
-            timezone=data.get("timezone"),
-            currency=data.get("currency"),
-            priority_levels=data.get("priority_levels"),
+        return UpdateOrganizationSettingsCommand(
+            organization_id=organization_id,
+            **data,
         )
 
 
