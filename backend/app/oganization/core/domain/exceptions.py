@@ -2,13 +2,28 @@ class DomainException(Exception):
     pass
 
 class InvalidOrganizationName(DomainException):
-    pass
+    organization_name: str
+    exception_message: str
+
+    def __init__(self, organization_name: str, msg: str) -> None:
+        self.organization_name = organization_name
+        self.exception_message = f"Invalid organization name: {self.organization_name} Reason: {msg}"
+        super().__init__(self.exception_message)
 
 class InvalidTaxId(DomainException):
-    pass
+    tax_id: str
+
+    def __init__(self, tax_id: str, msg: str) -> None:
+        self.tax_id = tax_id
+        self.exception_message = f"Invalid tax_id: {self.tax_id} Reason: {msg}"
+        super().__init__(self.exception_message)
 
 class InvalidOrganizationSettings(DomainException):
     pass
 
 class TaxIdDuplicationException(DomainException):
-    pass
+    tax_id : str
+
+    def __init__(self, tax_id: str) -> None:
+        self.tax_id = tax_id
+        super().__init__(f"An organization with tax_id {tax_id} already exists")
