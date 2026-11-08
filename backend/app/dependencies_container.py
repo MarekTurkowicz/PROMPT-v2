@@ -7,7 +7,9 @@ from app.oganization.core.application.create_organization_use_case import (
 from app.oganization.core.application.update_organization_settings_use_case import (
     UpdateOrganizationSettingsUseCase,
 )
-from app.oganization.core.ports.api.create_organization_port import CreateOrganizationPort
+from app.oganization.core.ports.api.create_organization_port import (
+    CreateOrganizationPort,
+)
 from app.oganization.core.ports.api.update_organization_settings_port import (
     UpdateOrganizationSettingsPort,
 )

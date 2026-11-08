@@ -12,22 +12,25 @@ class OrganizationTaxId:
     country_code: str | None = None
 
     def __post_init__(self) -> None:
-        if self.country_code is None or self.country_code == "PL" :
+        if self.country_code is None or self.country_code == "PL":
             self._validate_pl_tax_id()
 
     def _validate_pl_tax_id(self):
         normalized = re.sub(r"[\s-]", "", self.value)
 
         if not re.fullmatch(r"\d{10}", normalized):
-            raise InvalidTaxId(self.value,"Invalid tax_id format")
+            raise InvalidTaxId(self.value, "Invalid tax_id format")
 
-        checksum = sum(
-            int(digit) * weight
-            for digit, weight in zip(normalized[:9], POLISH_TAX_ID_WEIGHTS)
-        ) % 11
+        checksum = (
+            sum(
+                int(digit) * weight
+                for digit, weight in zip(normalized[:9], POLISH_TAX_ID_WEIGHTS)
+            )
+            % 11
+        )
 
         if checksum == 10 or checksum != int(normalized[9]):
-            raise InvalidTaxId(self.value,"Invalid tax_id checksum")
+            raise InvalidTaxId(self.value, "Invalid tax_id checksum")
 
         object.__setattr__(self, "value", normalized)
 
