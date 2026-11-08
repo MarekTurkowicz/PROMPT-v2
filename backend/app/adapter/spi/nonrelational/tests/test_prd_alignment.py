@@ -1,11 +1,14 @@
 from app.adapter.spi.nonrelational.models import COLLECTIONS
 from app.adapter.spi.nonrelational.models.activity_logs import ACTIVITY_LOGS
 from app.adapter.spi.nonrelational.models.comments import COMMENTS
+from app.adapter.spi.nonrelational.models.counters import COUNTERS
 from app.adapter.spi.nonrelational.models.expenses import EXPENSES
 from app.adapter.spi.nonrelational.models.fundings import FUNDINGS
+from app.adapter.spi.nonrelational.models.groups import GROUPS
 from app.adapter.spi.nonrelational.models.notifications import NOTIFICATIONS
 from app.adapter.spi.nonrelational.models.projects import PROJECTS
 from app.adapter.spi.nonrelational.models.tasks import TASKS
+from app.adapter.spi.nonrelational.models.time_entries import TIME_ENTRIES
 
 EXPECTED_ENTITY_TYPES = [
     "organization",
@@ -58,12 +61,14 @@ EXPECTED_ACTIVITY_ACTIONS = [
 
 def test_project_funding_preserves_detached_records_and_has_only_prd_fields() -> None:
     project_properties = PROJECTS.schema["properties"]
-    funding_properties = project_properties["fundings"]["items"]["properties"]
+    fundings_schema = project_properties["fundings"]
+    funding_properties = fundings_schema["items"]["properties"]
     milestone_properties = project_properties["milestones"]["items"]["properties"]
 
     assert funding_properties["detached_at"] == {"bsonType": ["date", "null"]}
     assert "allocated_amount" not in funding_properties
     assert "start_date" not in milestone_properties
+    assert "maxItems" not in fundings_schema
 
 
 def test_funding_can_be_shared_without_an_organization() -> None:
@@ -71,6 +76,13 @@ def test_funding_can_be_shared_without_an_organization() -> None:
 
     assert organization_id["bsonType"] == ["int", "long", "null"]
     assert "organization_id" not in FUNDINGS.schema["required"]
+
+
+def test_task_template_keeps_prd_mandatory_flag() -> None:
+    template_schema = FUNDINGS.schema["properties"]["templates"]["items"]
+
+    assert template_schema["properties"]["mandatory"] == {"bsonType": "bool"}
+    assert "mandatory" in template_schema["required"]
 
 
 def test_task_always_belongs_to_project_without_direct_funding_reference() -> None:
@@ -107,6 +119,7 @@ def test_identifiers_accept_bson_int32_and_int64() -> None:
         "long",
         "null",
     ]
+    assert COUNTERS.schema["properties"]["seq"]["bsonType"] == ["int", "long"]
 
 
 def test_partial_indexes_include_both_bson_integer_types() -> None:
@@ -129,6 +142,7 @@ def test_partial_indexes_include_both_bson_integer_types() -> None:
         "comments.project_id",
         "comments.task_id",
         "expenses.funding_id",
+        "groups.organization_id",
         "groups.project_id",
         "notifications.activity_id",
         "tasks.parent_id",
@@ -171,3 +185,34 @@ def test_unique_notification_indexes_start_with_recipient_shard_key() -> None:
     ]
 
     assert all(next(iter(index["key"])) == "recipient_user_id" for index in unique_indexes)
+
+
+def test_time_entry_requires_start_and_allows_an_open_interval() -> None:
+    properties = TIME_ENTRIES.schema["properties"]
+
+    assert properties["started_at"] == {"bsonType": "date"}
+    assert "started_at" in TIME_ENTRIES.schema["required"]
+    assert properties["finished_at"] == {"bsonType": ["date", "null"]}
+    assert "finished_at" not in TIME_ENTRIES.schema["required"]
+    assert "maximum" not in properties["hours"]
+    assert TIME_ENTRIES.rules == [
+        {
+            "$or": [
+                {"$eq": [{"$ifNull": ["$finished_at", None]}, None]},
+                {"$gt": ["$finished_at", "$started_at"]},
+            ]
+        }
+    ]
+
+
+def test_notifications_are_not_deleted_by_ttl() -> None:
+    assert all("expireAfterSeconds" not in index.document for index in NOTIFICATIONS.indexes)
+
+
+def test_group_without_organization_matches_relational_null_semantics() -> None:
+    organization_id = GROUPS.schema["properties"]["organization_id"]
+    name_index = next(index.document for index in GROUPS.indexes if index.document.get("unique"))
+
+    assert organization_id["bsonType"] == ["int", "long", "null"]
+    assert "organization_id" not in GROUPS.schema["required"]
+    assert name_index["partialFilterExpression"] == {"organization_id": {"$type": ["int", "long"]}}

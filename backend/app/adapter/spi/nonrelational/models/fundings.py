@@ -1,6 +1,7 @@
 from pymongo import IndexModel
 
 from app.adapter.spi.nonrelational.models._schema import (
+    BOOL,
     DATE,
     INT,
     LONG,
@@ -29,6 +30,7 @@ TASK_TEMPLATE = obj(
         "default_priority": PRIORITY,
         "default_est_hours": nullable("decimal", minimum=0, exclusiveMinimum=True),
         "default_due_days": nullable("int", minimum=0),
+        "mandatory": BOOL,
     }
 )
 
