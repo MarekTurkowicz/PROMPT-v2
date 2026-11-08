@@ -13,7 +13,9 @@ from app.oganization.core.domain.exceptions import (
     InvalidTaxId,
     TaxIdDuplicationException,
 )
-from app.oganization.core.ports.api.create_organization_port import CreateOrganizationPort
+from app.oganization.core.ports.api.create_organization_port import (
+    CreateOrganizationPort,
+)
 
 
 class OrganizationView(APIView):
@@ -22,12 +24,18 @@ class OrganizationView(APIView):
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command()
 
-        #TODO Poprawa resultów/strukturyzacja
+        # TODO Poprawa resultów/strukturyzacja
 
-        create_organization: CreateOrganizationPort = get_container().create_organization
+        create_organization: CreateOrganizationPort = (
+            get_container().create_organization
+        )
         try:
             organization = create_organization.execute(command)
-        except (InvalidOrganizationName, InvalidTaxId, InvalidOrganizationSettings) as e:
+        except (
+            InvalidOrganizationName,
+            InvalidTaxId,
+            InvalidOrganizationSettings,
+        ) as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except TaxIdDuplicationException as e:
             return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
@@ -36,7 +44,9 @@ class OrganizationView(APIView):
             {
                 "id": None if organization.id is None else str(organization.id),
                 "name": organization.name,
-                "tax_id": None if organization.tax_id is None else str(organization.tax_id),
+                "tax_id": (
+                    None if organization.tax_id is None else str(organization.tax_id)
+                ),
             },
             status=status.HTTP_201_CREATED,
         )

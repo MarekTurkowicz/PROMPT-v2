@@ -9,9 +9,7 @@ class Unset:
 UNSET = Unset()
 
 
-
 @dataclass(frozen=True, slots=True)
-
 class UpdateOrganizationSettingsCommand:
     organization_id: int
     timezone: str | None | Unset = UNSET

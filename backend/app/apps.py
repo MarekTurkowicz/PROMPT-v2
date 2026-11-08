@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from django.apps import AppConfig
 
-
 if TYPE_CHECKING:
     from app.dependencies_container import DependenciesContainer
 
@@ -15,4 +14,5 @@ class ApplicationConfig(AppConfig):
 
     def ready(self) -> None:
         from app.dependencies_container import DependenciesContainer
+
         self.container = DependenciesContainer()

@@ -6,6 +6,7 @@ class Organization(models.Model):
     """
     Represents a customer organization (tenant) that owns all data except user accounts.
     """
+
     name = models.CharField(max_length=200)
     tax_id = models.CharField(max_length=20, null=True, blank=True)
     is_active = models.BooleanField(default=True)
