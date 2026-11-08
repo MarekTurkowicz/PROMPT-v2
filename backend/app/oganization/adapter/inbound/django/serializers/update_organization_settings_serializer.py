@@ -16,9 +16,7 @@ class UpdateOrganizationSettingsSerializer(serializers.Serializer):
 
     def validate(self, attrs: dict) -> dict:
         if not attrs:
-            raise serializers.ValidationError(
-                "At least one settings field is required."
-            )
+            raise serializers.ValidationError("At least one settings field is required.")
         return attrs
 
     def validate_timezone(self, value: str | None) -> str | None:

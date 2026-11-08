@@ -22,9 +22,7 @@ class CreateOrganizationUseCase(CreateOrganizationPort):
         self._repository = repository
 
     def execute(self, command: CreateOrganizationCommand) -> Organization:
-        tax_id = (
-            OrganizationTaxId(command.tax_id) if command.tax_id is not None else None
-        )
+        tax_id = OrganizationTaxId(command.tax_id) if command.tax_id is not None else None
         if tax_id is not None and self._repository.exists_by_tax_id(tax_id.value):
             raise TaxIdDuplicationException(tax_id.value)
 

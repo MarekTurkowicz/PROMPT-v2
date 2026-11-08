@@ -3,7 +3,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from app.oganization.adapter.inbound.django.container import get_container
 from app.oganization.adapter.inbound.django.serializers.update_organization_settings_serializer import (
     UpdateOrganizationSettingsSerializer,
 )
@@ -17,6 +16,8 @@ from app.oganization.core.ports.api.update_organization_settings_port import (
 
 
 class OrganizationSettingsView(APIView):
+    update_organization_settings: UpdateOrganizationSettingsPort = None  # type: ignore[assignment]  # set via as_view()
+
     def patch(
         self, request: Request, organization_id: int, *args: object, **kwargs: object
     ) -> Response:
@@ -24,11 +25,8 @@ class OrganizationSettingsView(APIView):
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command(organization_id)
 
-        update_settings: UpdateOrganizationSettingsPort = (
-            get_container().update_organization_settings
-        )
         try:
-            organization = update_settings.execute(command)
+            organization = self.update_organization_settings.execute(command)
         except OrganizationNotFound as e:
             return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
         except InvalidOrganizationSettings as e:

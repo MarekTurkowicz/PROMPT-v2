@@ -1,8 +1,6 @@
 from dataclasses import replace
-from typing import TypeGuard
 
 from app.oganization.core.ports.api.commands.update_organization_settings_command import (
-    UNSET,
     UpdateOrganizationSettingsCommand,
 )
 from app.oganization.core.domain.entities.organization import Organization
@@ -16,6 +14,7 @@ from app.oganization.core.ports.api.update_organization_settings_port import (
 from app.oganization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
+from app.shared.core.utils import is_not_unset
 
 
 class UpdateOrganizationSettingsUseCase(UpdateOrganizationSettingsPort):
@@ -31,21 +30,13 @@ class UpdateOrganizationSettingsUseCase(UpdateOrganizationSettingsPort):
         updated = replace(
             organization,
             settings=OrganizationSettings(
-                timezone=(
-                    current.timezone if command.timezone is UNSET else command.timezone
-                ),
-                currency=(
-                    current.currency if command.currency is UNSET else command.currency
-                ),
+                timezone=(command.timezone if is_not_unset(command.timezone) else current.timezone),
+                currency=(command.currency if is_not_unset(command.currency) else current.currency),
                 priority_levels=(
-                    current.priority_levels
-                    if command.priority_levels is UNSET
-                    else command.priority_levels
+                    command.priority_levels
+                    if is_not_unset(command.priority_levels)
+                    else current.priority_levels
                 ),
             ),
         )
         return self._repository.update_obj(updated)
-
-    @staticmethod
-    def _is_set(value: T | Unset) -> TypeGuard[T]:
-        return value is not UNSET
