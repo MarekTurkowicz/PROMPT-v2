@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Sequence
 
 from app.oganization.core.domain.exceptions import InvalidOrganizationSettings
 
@@ -7,7 +8,7 @@ from app.oganization.core.domain.exceptions import InvalidOrganizationSettings
 class OrganizationSettings:
     timezone: str | None
     currency: str | None
-    priority_levels: tuple[str, str, str, str, str] | None
+    priority_levels: Sequence[str] | None
 
     def __post_init__(self) -> None:
         levels = self.priority_levels
