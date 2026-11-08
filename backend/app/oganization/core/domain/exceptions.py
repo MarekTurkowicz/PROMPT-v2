@@ -21,6 +21,12 @@ class InvalidTaxId(DomainException):
 class InvalidOrganizationSettings(DomainException):
     pass
 
+
+class OrganizationNotFound(DomainException):
+    def __init__(self, organization_id: int) -> None:
+        self.organization_id = organization_id
+        super().__init__(f"Organization {organization_id} does not exist.")
+
 class TaxIdDuplicationException(DomainException):
     tax_id : str
 

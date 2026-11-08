@@ -9,13 +9,6 @@ from app.shared.ports.spi.db.base_port import BasePort
 
 
 class OrganizationRepository(OrganizationPort):
-    # def get_by_id(self, obj_id: int) -> OrganizationEntity | None:
-    #     try:
-    #         model = OrganizationModel.objects.get(id=obj_id)
-    #         return OrganizationMapper.to_entity(model)
-    #     except OrganizationModel.DoesNotExist:
-    #         return None
-    #
     # def get_all(self) -> list[OrganizationEntity]:
     #     return list(
     #         OrganizationMapper.to_entity(organization_model)
@@ -25,17 +18,24 @@ class OrganizationRepository(OrganizationPort):
     def exists_by_tax_id(self, tax_id: str) -> bool:
         return OrganizationModel.objects.filter(tax_id=tax_id).exists()
 
-    def create_obj(self, obj: OrganizationEntity) -> OrganizationEntity:
-        model = OrganizationMapper.to_model(obj)
+    def get_by_id(self, organization_id: int) -> OrganizationEntity | None:
+        try:
+            model = OrganizationModel.objects.get(pk=organization_id)
+        except OrganizationModel.DoesNotExist:
+            return None
+        return OrganizationMapper.to_entity(model)
+
+    def create_obj(self, organization_model: OrganizationEntity) -> OrganizationEntity:
+        model = OrganizationMapper.to_model(organization_model)
         model.pk = None
         model.save(force_insert=True)
         return OrganizationMapper.to_entity(model)
 
-    # def update_obj(self, obj: OrganizationEntity) -> OrganizationEntity:
-    #     model = OrganizationMapper.to_model(obj)
-    #     model.save()
-    #     return OrganizationMapper.to_entity(obj)
-    #
+    def update_obj(self, organization_model: OrganizationEntity) -> OrganizationEntity:
+        model = OrganizationMapper.to_model(organization_model)
+        model.save()
+        return OrganizationMapper.to_entity(model)
+
     # def delete_by_id(self, obj_id: int) -> bool:
     #     deleted_count, _ = OrganizationModel.objects.filter(id=obj_id).delete()
     #     return deleted_count > 0
