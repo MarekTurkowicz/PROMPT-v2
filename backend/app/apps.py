@@ -1,12 +1,18 @@
-from typing import Dict, Any
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from django.apps import AppConfig
 
 
+if TYPE_CHECKING:
+    from app.dependencies_container import DependenciesContainer
+
+
 class ApplicationConfig(AppConfig):
-    name = "application"
-    container: Dict[str, Any]
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "app"
+    container: DependenciesContainer
 
     def ready(self) -> None:
-        from .dependencies_container import DependenciesContainer
-        container = DependenciesContainer()
+        from app.dependencies_container import DependenciesContainer
+        self.container = DependenciesContainer()

@@ -15,6 +15,7 @@ class Organization(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        app_label = "app"
         db_table = "organization"
         ordering = ["name"]
         constraints = [

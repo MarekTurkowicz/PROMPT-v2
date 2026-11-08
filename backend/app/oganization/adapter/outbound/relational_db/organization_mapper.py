@@ -1,8 +1,11 @@
 from typing import Any
 
-from app.oganization.adapter.spi.relational_db.organization import Organization as OrganizationModel
+from app.oganization.adapter.outbound.relational_db.organization import (
+    Organization as OrganizationModel,
+)
 from app.oganization.core.domain.entities.organization import Organization as OrganizationEntity
-from app.oganization.core.domain import OrganizationSettings
+from app.oganization.core.domain.value_objects.organization_settings import OrganizationSettings
+from app.oganization.core.domain.value_objects.organization_tax_id import OrganizationTaxId
 from app.shared.ports.spi.db.base_mapper import BaseMapper
 
 
@@ -12,7 +15,7 @@ class OrganizationMapper(BaseMapper[OrganizationModel, OrganizationEntity]):
         return OrganizationEntity(
             id=model.pk,
             name=model.name,
-            tax_id=model.tax_id,
+            tax_id=OrganizationTaxId(model.tax_id) if model.tax_id else None,
             is_active=model.is_active,
             settings=OrganizationMapper._settings_to_entity(model.settings),
             created_at=model.created_at,
@@ -23,7 +26,7 @@ class OrganizationMapper(BaseMapper[OrganizationModel, OrganizationEntity]):
     def to_model(entity: OrganizationEntity) -> OrganizationModel:
         model = OrganizationModel(
             name=entity.name,
-            tax_id=entity.tax_id,
+            tax_id=None if entity.tax_id is None else entity.tax_id.value,
             is_active=entity.is_active,
             settings=OrganizationMapper._settings_to_model(entity.settings),
         )
@@ -40,23 +43,20 @@ class OrganizationMapper(BaseMapper[OrganizationModel, OrganizationEntity]):
     def _settings_to_entity(raw: Any) -> OrganizationSettings:
         if not raw:
             return OrganizationSettings(None, None, None)
-        # if not isinstance(raw, dict):
-        #     raise ValueError("Organization settings must be a JSON object.")
+        if not isinstance(raw, dict):
+            raise ValueError("Organization settings must be a JSON object.")
 
-        # TODO do przegadania i sprawdzenia
-        levels : tuple[str,str,str,str,str] | None = raw.get("priority_levels", None)
-        if not isinstance(levels, (None, tuple)):
-            raise ValueError("priority_levels are in incorrect format", levels)
-        if levels is not None and len(levels)!=5:
-            raise ValueError("priority_levels len is not equal 5", levels)
+        levels = raw.get("priority_levels")
+        if levels is not None and not isinstance(levels, (list, tuple)):
+            raise ValueError("priority_levels are in incorrect format")
 
-        timezone = raw.get("timezone", None)
-        currency = raw.get("currency", None)
+        timezone = raw.get("timezone")
+        currency = raw.get("currency")
         return OrganizationSettings(
             timezone=str(timezone) if timezone else None,
             currency=str(currency) if currency else None,
-            priority_levels=levels
-            )
+            priority_levels=levels,
+        )
 
     # TODO typowanie
     @staticmethod
