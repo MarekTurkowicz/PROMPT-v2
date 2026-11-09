@@ -28,7 +28,7 @@ BUILTIN_ROLE_CODES = [
     "project_director",
     "organization_director",
     "organization_admin",
-    "financial_controller",  # pending CORE-2 decision (#72)
+    "financial_controller",
 ]
 
 PERCENT = bson("int", minimum=0)
@@ -39,7 +39,6 @@ SETTINGS = obj(
         "currency": bson("string", pattern=CURRENCY_PATTERN),
         "priority_names": array_of(STRING, minItems=5, maxItems=5),
         "working_days": array_of(bson("int", minimum=1, maximum=7), max_items=7, uniqueItems=True),
-        # pending CORE-2 decision (#72)
         "health_thresholds": obj(
             {
                 "overdue_risk_pct": PERCENT,
