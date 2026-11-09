@@ -80,7 +80,6 @@ def document(properties: Schema) -> Schema:
 
 
 def varchar(max_length: int, *, null: bool = False) -> Schema:
-    """String that fits PostgreSQL ``varchar(max_length)`` of the relational model."""
     return (nullable if null else bson)("string", maxLength=max_length)
 
 
@@ -191,7 +190,6 @@ def at_most_one(array: str, alias: str, condition: Expr | str) -> Expr:
 
 
 def distinct(values: str | Expr, *, skip_null: bool = False) -> Expr:
-    """No value of an array expression such as ``$statuses.name`` occurs twice in the document."""
     array: Expr = {"$ifNull": [values, []]}
     if skip_null:
         array = {"$filter": {"input": array, "as": "v", "cond": {"$ne": ["$$v", None]}}}
@@ -199,5 +197,4 @@ def distinct(values: str | Expr, *, skip_null: bool = False) -> Expr:
 
 
 def distinct_role_grants(array: str) -> Expr:
-    """One grant per (role, project), like ``role_assignment_unique`` in PostgreSQL."""
     return distinct({"$map": {"input": array, "as": "g", "in": ["$$g.role_id", "$$g.project_id"]}})

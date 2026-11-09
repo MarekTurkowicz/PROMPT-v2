@@ -1,5 +1,9 @@
 # PROMT 2.0 – projekt bazy NoSQL (MongoDB)
 
+> Opis historycznej, pierwszej wersji modelu. Aktualny model do oddania znajduje się
+> w `nosql-mongodb-2.0.drawio` i odpowiada schematom w kodzie. Poniższe przykłady
+> (m.in. ObjectId, kolekcja users i kopia statusu) dotyczą wyłącznie starszego wariantu.
+
 Diagram: `nosql-mongodb.drawio` (kolekcje, pola osadzone `↳`, odwołania – linie przerywane).
 
 ## 1. Założenia

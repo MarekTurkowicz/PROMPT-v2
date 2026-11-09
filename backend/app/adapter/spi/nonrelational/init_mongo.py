@@ -1,12 +1,6 @@
-"""Create or update collection validators and indexes.
-
-Usage (from backend/): python -m app.adapter.spi.nonrelational.init_mongo
-"""
-
-import os
 from typing import Any
 
-from pymongo import IndexModel, MongoClient
+from pymongo import IndexModel
 from pymongo.collection import Collection
 from pymongo.database import Database
 from pymongo.errors import OperationFailure
@@ -45,15 +39,3 @@ def init_mongo(db: Database[dict[str, object]]) -> None:
         else:
             db.create_collection(spec.name, **options)
         sync_indexes(db[spec.name], spec.indexes)
-
-
-def main() -> None:
-    client: MongoClient[dict[str, object]] = MongoClient(
-        os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-    )
-    with client:
-        init_mongo(client[os.environ.get("MONGO_DB", "promt")])
-
-
-if __name__ == "__main__":
-    main()

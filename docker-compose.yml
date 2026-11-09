@@ -26,13 +26,29 @@ services:
   mongo:
     image: mongo:9.0
     container_name: promt_mongo
+    profiles:
+      - nonrelational
     restart: on-failure
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
     ports:
       - "27017:27017"
     networks:
       - my-network
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ping: 1})"]
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - >-
+          try { rs.status(); }
+          catch (e) {
+            if (e.code !== 94) throw e;
+            rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongo:27017'}]});
+          }
+          quit(db.hello().isWritablePrimary ? 0 : 1);
       interval: 5s
       timeout: 5s
       retries: 10
@@ -74,6 +90,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
+      MONGO_URL: mongodb://mongo:27017/?replicaSet=rs0
+      MONGO_DB: ${MONGO_DB:-promt}
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
       DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
       SECRET_KEY: ${SECRET_KEY}
@@ -114,3 +132,4 @@ services:
 
 volumes:
   postgres_data:
+  mongo_data:

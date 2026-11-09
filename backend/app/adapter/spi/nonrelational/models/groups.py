@@ -11,19 +11,20 @@ from app.adapter.spi.nonrelational.models._schema import (
     ROLE_GRANT,
     CollectionSpec,
     array_of,
+    distinct,
     distinct_role_grants,
     document,
     nullable_enum,
     varchar,
 )
 
-BUILTIN_GROUP_CODES = ["administrators", "financial_controllers"]  # pending CORE-2 decision (#72)
+BUILTIN_GROUP_CODES = ["administrators", "financial_controllers"]
 
 GROUPS = CollectionSpec(
     name="groups",
     schema=document(
         {
-            "organization_id": OPT_LONG,
+            "organization_id": LONG,
             "project_id": OPT_LONG,
             "code": nullable_enum(BUILTIN_GROUP_CODES),
             "parent_id": OPT_LONG,
@@ -35,13 +36,9 @@ GROUPS = CollectionSpec(
             "version": INT,
         }
     ),
-    rules=[distinct_role_grants("$role_grants")],
+    rules=[distinct("$role_grants._id"), distinct_role_grants("$role_grants")],
     indexes=[
-        IndexModel(
-            [("organization_id", 1), ("name", 1)],
-            unique=True,
-            partialFilterExpression={"organization_id": PRESENT_ID},
-        ),
+        IndexModel([("organization_id", 1), ("name", 1)], unique=True),
         IndexModel([("organization_id", 1), ("ancestor_ids", 1)]),
         IndexModel(
             [("organization_id", 1), ("project_id", 1)],

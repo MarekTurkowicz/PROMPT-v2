@@ -66,6 +66,8 @@ jobs:
 
   backend-integration:
     runs-on: ubuntu-latest
+    env:
+      MONGO_URL: mongodb://localhost:27017/?replicaSet=rs0&directConnection=true
     services:
       postgres: &postgres
         image: postgres:18.3-alpine
@@ -80,20 +82,13 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-      mongo:
-        image: mongo:9.0
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping: 1})'"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     defaults:
       run:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
+      - name: Start MongoDB replica set
+        run: docker compose -f ../docker-compose.yml up -d --wait --wait-timeout 120 mongo
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"

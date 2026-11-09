@@ -1,6 +1,7 @@
 from pymongo import IndexModel
 
 from app.adapter.spi.nonrelational.models._schema import (
+    BOOL,
     DATE,
     INT,
     LONG,
@@ -58,6 +59,7 @@ TASK_SCHEMA = document(
         "milestone_id": OPT_LONG,
         "parent_id": OPT_LONG,
         "template_id": OPT_LONG,
+        "from_template": BOOL,
         "status_id": LONG,
         "status_category": enum(STATUS_CATEGORIES),
         "group_id": OPT_LONG,
@@ -82,7 +84,10 @@ TASKS = CollectionSpec(
     schema=TASK_SCHEMA,
     rules=[
         not_before("$due_date", "$start_date"),
+        distinct("$assignments._id"),
         distinct("$assignments.member_id"),
+        distinct("$checklist._id"),
+        distinct("$attachments._id"),
         every("$assignments", "a", not_before("$$a.finished_at", "$$a.started_at")),
         every("$checklist", "c", both_or_neither("$$c.done_by", "$$c.done_at")),
     ],

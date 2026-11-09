@@ -45,6 +45,7 @@ MEMBERS = CollectionSpec(
     rules=[
         implies({"$eq": ["$status", "active"]}, is_set("$joined_at")),
         distinct("$groups.group_id"),
+        distinct("$role_grants._id"),
         distinct_role_grants("$role_grants"),
     ],
     indexes=[

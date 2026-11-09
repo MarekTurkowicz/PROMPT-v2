@@ -12,6 +12,7 @@ from app.adapter.spi.nonrelational.models._schema import (
     array_of,
     attachment,
     both_or_neither,
+    distinct,
     document,
     enum,
     varchar,
@@ -39,7 +40,10 @@ EXPENSES = CollectionSpec(
             "version": INT,
         }
     ),
-    rules=[both_or_neither("$funding_id", "$project_funding_id")],
+    rules=[
+        both_or_neither("$funding_id", "$project_funding_id"),
+        distinct("$attachments._id"),
+    ],
     indexes=[
         IndexModel([("organization_id", 1), ("project_id", 1), ("spent_on_date", -1)]),
         IndexModel(

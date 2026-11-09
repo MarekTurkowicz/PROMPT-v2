@@ -1,7 +1,6 @@
 from pymongo import IndexModel
 
 from app.adapter.spi.nonrelational.models._schema import (
-    BOOL,
     DATE,
     INT,
     LONG,
@@ -12,6 +11,7 @@ from app.adapter.spi.nonrelational.models._schema import (
     STRING,
     CollectionSpec,
     array_of,
+    distinct,
     document,
     enum,
     not_before,
@@ -32,7 +32,6 @@ TASK_TEMPLATE = obj(
         "default_priority": PRIORITY,
         "default_est_hours": numeric(6, 2, null=True),
         "default_due_days": nullable("int", minimum=0),
-        "mandatory": BOOL,
     }
 )
 
@@ -57,7 +56,7 @@ FUNDINGS = CollectionSpec(
             "version": INT,
         }
     ),
-    rules=[not_before("$end_date", "$start_date")],
+    rules=[not_before("$end_date", "$start_date"), distinct("$templates._id")],
     indexes=[
         IndexModel([("organization_id", 1), ("name", 1)]),
         IndexModel([("organization_id", 1), ("reporting_deadline", 1)]),

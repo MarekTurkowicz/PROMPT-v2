@@ -10,6 +10,7 @@ from app.adapter.spi.nonrelational.models._schema import (
     array_of,
     attachment,
     bson,
+    distinct,
     document,
 )
 
@@ -35,6 +36,7 @@ COMMENT_SCHEMA["oneOf"] = [
 COMMENTS = CollectionSpec(
     name="comments",
     schema=COMMENT_SCHEMA,
+    rules=[distinct("$attachments._id")],
     indexes=[
         IndexModel(
             [("organization_id", 1), ("task_id", 1), ("created_at", 1)],
