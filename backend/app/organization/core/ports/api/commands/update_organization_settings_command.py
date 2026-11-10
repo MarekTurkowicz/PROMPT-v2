@@ -1,12 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-
-class Unset:
-    """Pole nieprzysłane w żądaniu — use case zostawia dotychczasową wartość."""
-
-
-UNSET = Unset()
+from app.shared.core.ports.api.unset import UNSET, Unset
 
 
 @dataclass(frozen=True, slots=True)

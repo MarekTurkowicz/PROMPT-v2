@@ -26,6 +26,7 @@ class Organization:
         name = self.name.strip()
         if not name or len(name) > ORGANIZATION_NAME_MAX_LENGTH:
             raise InvalidOrganizationName(
-                f"Organization name must be between 1 and {ORGANIZATION_NAME_MAX_LENGTH} characters."
+                self.name,
+                f"Organization name must be between 1 and {ORGANIZATION_NAME_MAX_LENGTH} characters.",
             )
         object.__setattr__(self, "name", name)
