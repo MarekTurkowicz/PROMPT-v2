@@ -1,16 +1,16 @@
 from typing import Any
 
-from app.oganization.adapter.outbound.relational_db.organization import (
+from app.organization.adapter.outbound.relational_db.organization import (
     Organization as OrganizationModel,
 )
-from app.oganization.core.domain.entities.organization import (
+from app.organization.core.domain.entities.organization import (
     Organization as OrganizationEntity,
 )
-from app.oganization.core.domain.exceptions import InvalidOrganizationSettings
-from app.oganization.core.domain.value_objects.organization_settings import (
+from app.organization.core.domain.exceptions import InvalidOrganizationSettings
+from app.organization.core.domain.value_objects.organization_settings import (
     OrganizationSettings,
 )
-from app.oganization.core.domain.value_objects.organization_tax_id import (
+from app.organization.core.domain.value_objects.organization_tax_id import (
     OrganizationTaxId,
 )
 from app.shared.core.ports.spi.db.base_mapper import BaseMapper

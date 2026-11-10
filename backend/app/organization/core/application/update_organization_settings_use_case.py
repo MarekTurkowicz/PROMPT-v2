@@ -1,17 +1,17 @@
 from dataclasses import replace
 
-from app.oganization.core.ports.api.commands.update_organization_settings_command import (
+from app.organization.core.ports.api.commands.update_organization_settings_command import (
     UpdateOrganizationSettingsCommand,
 )
-from app.oganization.core.domain.entities.organization import Organization
-from app.oganization.core.domain.exceptions import OrganizationNotFound
-from app.oganization.core.domain.value_objects.organization_settings import (
+from app.organization.core.domain.entities.organization import Organization
+from app.organization.core.domain.exceptions import OrganizationNotFound
+from app.organization.core.domain.value_objects.organization_settings import (
     OrganizationSettings,
 )
-from app.oganization.core.ports.api.update_organization_settings_port import (
+from app.organization.core.ports.api.update_organization_settings_port import (
     UpdateOrganizationSettingsPort,
 )
-from app.oganization.core.ports.spi.db.repositories.organization_port import (
+from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
 from app.shared.core.utils import is_not_unset
@@ -30,8 +30,16 @@ class UpdateOrganizationSettingsUseCase(UpdateOrganizationSettingsPort):
         updated = replace(
             organization,
             settings=OrganizationSettings(
-                timezone=(command.timezone if is_not_unset(command.timezone) else current.timezone),
-                currency=(command.currency if is_not_unset(command.currency) else current.currency),
+                timezone=(
+                    command.timezone
+                    if is_not_unset(command.timezone)
+                    else current.timezone
+                ),
+                currency=(
+                    command.currency
+                    if is_not_unset(command.currency)
+                    else current.currency
+                ),
                 priority_levels=(
                     command.priority_levels
                     if is_not_unset(command.priority_levels)

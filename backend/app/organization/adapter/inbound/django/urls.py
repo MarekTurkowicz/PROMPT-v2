@@ -1,10 +1,10 @@
 from django.urls import path
 
-from app.oganization.adapter.inbound.django.container import get_container
-from app.oganization.adapter.inbound.django.organization_settings_view import (
+from app.organization.adapter.inbound.django.container import get_container
+from app.organization.adapter.inbound.django.organization_settings_view import (
     OrganizationSettingsView,
 )
-from app.oganization.adapter.inbound.django.organization_view import OrganizationView
+from app.organization.adapter.inbound.django.organization_view import OrganizationView
 
 container = get_container()
 

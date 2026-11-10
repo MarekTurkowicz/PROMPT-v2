@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from app.oganization.core.ports.api.commands.create_organization_command import (
+from app.organization.core.ports.api.commands.create_organization_command import (
     CreateOrganizationCommand,
 )
 
