@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence
 
-from app.oganization.core.domain.exceptions import InvalidOrganizationSettings
+from app.organization.core.domain.exceptions import InvalidOrganizationSettings
 
 
 @dataclass(frozen=True)

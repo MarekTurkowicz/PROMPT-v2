@@ -3,14 +3,14 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from app.oganization.adapter.inbound.django.serializers.update_organization_settings_serializer import (
+from app.organization.adapter.inbound.django.serializers.update_organization_settings_serializer import (
     UpdateOrganizationSettingsSerializer,
 )
-from app.oganization.core.domain.exceptions import (
+from app.organization.core.domain.exceptions import (
     InvalidOrganizationSettings,
     OrganizationNotFound,
 )
-from app.oganization.core.ports.api.update_organization_settings_port import (
+from app.organization.core.ports.api.update_organization_settings_port import (
     UpdateOrganizationSettingsPort,
 )
 

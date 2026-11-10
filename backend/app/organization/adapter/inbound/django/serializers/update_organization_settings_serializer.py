@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from app.oganization.core.ports.api.commands.update_organization_settings_command import (
+from app.organization.core.ports.api.commands.update_organization_settings_command import (
     UpdateOrganizationSettingsCommand,
 )
 
@@ -16,7 +16,9 @@ class UpdateOrganizationSettingsSerializer(serializers.Serializer):
 
     def validate(self, attrs: dict) -> dict:
         if not attrs:
-            raise serializers.ValidationError("At least one settings field is required.")
+            raise serializers.ValidationError(
+                "At least one settings field is required."
+            )
         return attrs
 
     def validate_timezone(self, value: str | None) -> str | None:

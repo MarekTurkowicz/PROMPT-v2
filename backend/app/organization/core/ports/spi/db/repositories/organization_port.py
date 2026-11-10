@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.oganization.core.domain.entities.organization import Organization
+from app.organization.core.domain.entities.organization import Organization
 
 
 class OrganizationPort(Protocol):

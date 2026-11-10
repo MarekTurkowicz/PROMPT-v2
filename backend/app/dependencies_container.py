@@ -1,16 +1,16 @@
-from app.oganization.adapter.outbound.relational_db.organization_repository import (
+from app.organization.adapter.outbound.relational_db.organization_repository import (
     OrganizationRepository,
 )
-from app.oganization.core.application.create_organization_use_case import (
+from app.organization.core.application.create_organization_use_case import (
     CreateOrganizationUseCase,
 )
-from app.oganization.core.application.update_organization_settings_use_case import (
+from app.organization.core.application.update_organization_settings_use_case import (
     UpdateOrganizationSettingsUseCase,
 )
-from app.oganization.core.ports.api.create_organization_port import (
+from app.organization.core.ports.api.create_organization_port import (
     CreateOrganizationPort,
 )
-from app.oganization.core.ports.api.update_organization_settings_port import (
+from app.organization.core.ports.api.update_organization_settings_port import (
     UpdateOrganizationSettingsPort,
 )
 

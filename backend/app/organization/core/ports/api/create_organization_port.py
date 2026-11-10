@@ -1,9 +1,9 @@
 from typing import Protocol
 
-from app.oganization.core.ports.api.commands.create_organization_command import (
+from app.organization.core.ports.api.commands.create_organization_command import (
     CreateOrganizationCommand,
 )
-from app.oganization.core.domain.entities.organization import Organization
+from app.organization.core.domain.entities.organization import Organization
 
 
 class CreateOrganizationPort(Protocol):

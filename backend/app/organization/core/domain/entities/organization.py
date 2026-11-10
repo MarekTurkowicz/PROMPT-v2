@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from app.oganization.core.domain.constants import ORGANIZATION_NAME_MAX_LENGTH
-from app.oganization.core.domain.exceptions import InvalidOrganizationName
-from app.oganization.core.domain.value_objects.organization_settings import (
+from app.organization.core.domain.constants import ORGANIZATION_NAME_MAX_LENGTH
+from app.organization.core.domain.exceptions import InvalidOrganizationName
+from app.organization.core.domain.value_objects.organization_settings import (
     OrganizationSettings,
 )
-from app.oganization.core.domain.value_objects.organization_tax_id import (
+from app.organization.core.domain.value_objects.organization_tax_id import (
     OrganizationTaxId,
 )
 

@@ -3,16 +3,16 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from app.oganization.adapter.inbound.django.serializers.create_organization_serializer import (
+from app.organization.adapter.inbound.django.serializers.create_organization_serializer import (
     CreateOrganizationSerializer,
 )
-from app.oganization.core.domain.exceptions import (
+from app.organization.core.domain.exceptions import (
     InvalidOrganizationName,
     InvalidOrganizationSettings,
     InvalidTaxId,
     TaxIdDuplicationException,
 )
-from app.oganization.core.ports.api.create_organization_port import (
+from app.organization.core.ports.api.create_organization_port import (
     CreateOrganizationPort,
 )
 
@@ -42,7 +42,9 @@ class OrganizationView(APIView):
             {
                 "id": None if organization.id is None else str(organization.id),
                 "name": organization.name,
-                "tax_id": (None if organization.tax_id is None else str(organization.tax_id)),
+                "tax_id": (
+                    None if organization.tax_id is None else str(organization.tax_id)
+                ),
             },
             status=status.HTTP_201_CREATED,
         )
