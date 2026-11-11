@@ -1,13 +1,15 @@
+from typing import ClassVar
+
 from app.organization.core.domain.value_objects.organization_settings import (
     OrganizationSettings,
 )
-
-
-class DomainException(Exception):
-    pass
+from app.shared.core.domain.error_kind import ErrorKind
+from app.shared.core.domain.exceptions import DomainException
 
 
 class InvalidOrganizationName(DomainException):
+    kind: ClassVar[ErrorKind] = ErrorKind.INVALID
+    code: ClassVar[str] = "organization.invalid_name"
     organization_name: str
     exception_message: str
 
@@ -20,6 +22,8 @@ class InvalidOrganizationName(DomainException):
 
 
 class InvalidTaxId(DomainException):
+    kind = ErrorKind.INVALID
+    code = "organization.invalid_tax_id"
     tax_id: str
 
     def __init__(self, tax_id: str, msg: str) -> None:
@@ -29,10 +33,12 @@ class InvalidTaxId(DomainException):
 
 
 class InvalidOrganizationSettings(DomainException):
-    pass
+    abstract = True
 
 
 class InvalidOrganizationSettingsState(InvalidOrganizationSettings):
+    kind = ErrorKind.INVALID
+    code = "organization.invalid_organization_settings_state"
     organization_settings: OrganizationSettings
 
     def __init__(self, organization_settings: OrganizationSettings, msg: str) -> None:
@@ -45,6 +51,8 @@ class InvalidOrganizationSettingsState(InvalidOrganizationSettings):
 
 
 class InvalidOrganizationSettingsData(InvalidOrganizationSettings):
+    kind = ErrorKind.INVALID
+    code = "organization.invalid_organization_settings_data"
     raw_data: dict
 
     def __init__(self, raw_data: dict, msg: str) -> None:
@@ -57,6 +65,8 @@ class InvalidOrganizationSettingsData(InvalidOrganizationSettings):
 
 
 class OrganizationNotFound(DomainException):
+    kind = ErrorKind.NOT_FOUND
+    code = "organization.organization_not_found"
     organization_id: int
 
     def __init__(self, organization_id: int) -> None:
@@ -65,6 +75,8 @@ class OrganizationNotFound(DomainException):
 
 
 class TaxIdDuplicationException(DomainException):
+    kind = ErrorKind.CONFLICT
+    code = "organization.tax_id_duplication"
     tax_id: str
 
     def __init__(self, tax_id: str) -> None:

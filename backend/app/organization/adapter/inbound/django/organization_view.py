@@ -6,12 +6,6 @@ from rest_framework.views import APIView
 from app.organization.adapter.inbound.django.serializers.create_organization_serializer import (
     CreateOrganizationSerializer,
 )
-from app.organization.core.domain.exceptions import (
-    InvalidOrganizationName,
-    InvalidOrganizationSettings,
-    InvalidTaxId,
-    TaxIdDuplicationException,
-)
 from app.organization.core.ports.api.create_organization_port import (
     CreateOrganizationPort,
 )
@@ -24,20 +18,8 @@ class OrganizationView(APIView):
         serializer = CreateOrganizationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command()
-
-        # TODO Poprawa resultów/strukturyzacja
-
-        try:
-            organization = self.create_organization.execute(command)
-        except (
-            InvalidOrganizationName,
-            InvalidTaxId,
-            InvalidOrganizationSettings,
-        ) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except TaxIdDuplicationException as e:
-            return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
-
+        organization = self.create_organization.execute(command)
+        # TODO Response można jeszcze jakoś uprościć
         return Response(
             {
                 "id": None if organization.id is None else str(organization.id),
