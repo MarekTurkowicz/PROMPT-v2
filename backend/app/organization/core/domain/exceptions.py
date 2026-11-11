@@ -1,3 +1,8 @@
+from app.organization.core.domain.value_objects.organization_settings import (
+    OrganizationSettings,
+)
+
+
 class DomainException(Exception):
     pass
 
@@ -9,7 +14,7 @@ class InvalidOrganizationName(DomainException):
     def __init__(self, organization_name: str, msg: str) -> None:
         self.organization_name = organization_name
         self.exception_message = (
-            f"Invalid organization name: {self.organization_name} Reason: {msg}"
+            f"Invalid organization name: {self.organization_name}\nReason: {msg}"
         )
         super().__init__(self.exception_message)
 
@@ -19,7 +24,7 @@ class InvalidTaxId(DomainException):
 
     def __init__(self, tax_id: str, msg: str) -> None:
         self.tax_id = tax_id
-        self.exception_message = f"Invalid tax_id: {self.tax_id} Reason: {msg}"
+        self.exception_message = f"Invalid tax_id: {self.tax_id}\n" f"Reason: {msg}"
         super().__init__(self.exception_message)
 
 
@@ -27,7 +32,33 @@ class InvalidOrganizationSettings(DomainException):
     pass
 
 
+class InvalidOrganizationSettingsState(InvalidOrganizationSettings):
+    organization_settings: OrganizationSettings
+
+    def __init__(self, organization_settings: OrganizationSettings, msg: str) -> None:
+        self.organization_settings = organization_settings
+        super().__init__(
+            f"Organization settings are invalid\n"
+            f"Reason: {msg}\n"
+            f"Organization_settings: {organization_settings}"
+        )
+
+
+class InvalidOrganizationSettingsData(InvalidOrganizationSettings):
+    raw_data: dict
+
+    def __init__(self, raw_data: dict, msg: str) -> None:
+        self.raw_data = raw_data
+        super().__init__(
+            f"Invalid data was passed, OrganizationSettings cannot be created\n"
+            f"Reason: {msg}\n"
+            f"raw_data: {raw_data}"
+        )
+
+
 class OrganizationNotFound(DomainException):
+    organization_id: int
+
     def __init__(self, organization_id: int) -> None:
         self.organization_id = organization_id
         super().__init__(f"Organization {organization_id} does not exist.")

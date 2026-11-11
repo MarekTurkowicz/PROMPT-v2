@@ -6,7 +6,10 @@ from app.organization.adapter.outbound.relational_db.organization import (
 from app.organization.core.domain.entities.organization import (
     Organization as OrganizationEntity,
 )
-from app.organization.core.domain.exceptions import InvalidOrganizationSettings
+from app.organization.core.domain.exceptions import (
+    InvalidOrganizationSettings,
+    InvalidOrganizationSettingsData,
+)
 from app.organization.core.domain.value_objects.organization_settings import (
     OrganizationSettings,
 )
@@ -51,13 +54,15 @@ class OrganizationMapper(BaseMapper[OrganizationModel, OrganizationEntity]):
         if not raw:
             return OrganizationSettings(None, None, None)
         if not isinstance(raw, dict):
-            raise InvalidOrganizationSettings(
-                "Organization settings must be a JSON object."
+            raise InvalidOrganizationSettingsData(
+                raw, "Organization settings must be a JSON object/dict."
             )
 
         levels = raw.get("priority_levels")
         if levels is not None and not isinstance(levels, (list, tuple)):
-            raise InvalidOrganizationSettings("priority_levels are in incorrect format")
+            raise InvalidOrganizationSettingsData(
+                raw, "priority_levels are in incorrect format"
+            )
 
         timezone = raw.get("timezone")
         currency = raw.get("currency")

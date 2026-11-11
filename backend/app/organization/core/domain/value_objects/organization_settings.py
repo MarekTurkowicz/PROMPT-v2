@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Sequence
 
-from app.organization.core.domain.exceptions import InvalidOrganizationSettings
+from app.organization.core.domain.exceptions import (
+    InvalidOrganizationSettingsState,
+)
 
 
 @dataclass(frozen=True)
@@ -14,7 +16,11 @@ class OrganizationSettings:
         levels = self.priority_levels
         if levels is None:
             return
-        if len(levels) != 5 or any(level.strip() == "" for level in levels):
-            raise InvalidOrganizationSettings(
-                "priority_levels must contain exactly 5 non-empty values."
+        if len(levels) < 3:
+            raise InvalidOrganizationSettingsState(
+                self, "priority_levels must contain more than/equal 3."
+            )
+        if any(level.strip() == "" for level in levels):
+            raise InvalidOrganizationSettingsState(
+                self, "priority_levels must contain non-empty values"
             )
