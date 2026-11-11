@@ -6,10 +6,6 @@ from rest_framework.views import APIView
 from app.organization.adapter.inbound.django.serializers.update_organization_settings_serializer import (
     UpdateOrganizationSettingsSerializer,
 )
-from app.organization.core.domain.exceptions import (
-    InvalidOrganizationSettings,
-    OrganizationNotFound,
-)
 from app.organization.core.ports.api.update_organization_settings_port import (
     UpdateOrganizationSettingsPort,
 )
@@ -24,14 +20,7 @@ class OrganizationSettingsView(APIView):
         serializer = UpdateOrganizationSettingsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command(organization_id)
-
-        try:
-            organization = self.update_organization_settings.execute(command)
-        except OrganizationNotFound as e:
-            return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
-        except InvalidOrganizationSettings as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+        organization = self.update_organization_settings.execute(command)
         levels = organization.settings.priority_levels
         return Response(
             {
