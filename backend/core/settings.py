@@ -67,7 +67,7 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    "EXCEPTION_HANDLER": "app.organization.adapter.inbound.django.exception_handler.exception_handler",
+    "EXCEPTION_HANDLER": "app.shared.adapter.inbound.django.exception_handler.exception_handler",
     # TODO Tymczasowo do testów
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
@@ -166,7 +166,8 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = "api.User"
+# TODO na czas testów
+# AUTH_USER_MODEL = "api.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
