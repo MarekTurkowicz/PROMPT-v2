@@ -1,10 +1,13 @@
-from typing import ClassVar
+from __future__ import annotations
+from typing import ClassVar, TYPE_CHECKING
 
-from app.organization.core.domain.value_objects.organization_settings import (
-    OrganizationSettings,
-)
 from app.shared.core.domain.error_kind import ErrorKind
 from app.shared.core.domain.exceptions import DomainException
+
+if TYPE_CHECKING:
+    from app.organization.core.domain.value_objects.organization_settings import (
+        OrganizationSettings,
+    )
 
 
 class InvalidOrganizationName(DomainException):
