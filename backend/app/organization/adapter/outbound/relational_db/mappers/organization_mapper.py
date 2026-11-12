@@ -1,13 +1,12 @@
 from typing import Any
 
-from app.organization.adapter.outbound.relational_db.organization import (
+from app.organization.adapter.outbound.relational_db.models.organization import (
     Organization as OrganizationModel,
 )
 from app.organization.core.domain.entities.organization import (
     Organization as OrganizationEntity,
 )
 from app.organization.core.domain.exceptions import (
-    InvalidOrganizationSettings,
     InvalidOrganizationSettingsData,
 )
 from app.organization.core.domain.value_objects.organization_settings import (

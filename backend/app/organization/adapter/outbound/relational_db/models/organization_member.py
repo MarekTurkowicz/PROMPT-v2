@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
@@ -17,13 +18,14 @@ class OrganizationMember(models.Model):
     Status = MemberStatus
 
     organization = models.ForeignKey(
-        "api.Organization",
+        "app.Organization",
         on_delete=models.PROTECT,
         related_name="members",
         db_index=False,
     )
+    # TODO do przekminki
     user = models.ForeignKey(
-        "api.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="memberships",
     )
@@ -32,10 +34,13 @@ class OrganizationMember(models.Model):
     phone = models.CharField(max_length=32, null=True, blank=True)
     job_title = models.CharField(max_length=120, null=True, blank=True)
     avatar_url = models.URLField(max_length=500, null=True, blank=True)
-    status = models.CharField(max_length=12, choices=Status.choices, default=Status.INVITED)
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.INVITED
+    )
     joined_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        app_label = "app"
         db_table = "organization_member"
         ordering = ["organization", "id"]
         constraints = [

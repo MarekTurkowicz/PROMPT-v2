@@ -1,11 +1,11 @@
-from app.organization.adapter.outbound.relational_db.organization import (
+from app.organization.adapter.outbound.relational_db.models.organization import (
     Organization as OrganizationModel,
 )
 from app.organization.core.domain.entities.organization import (
     Organization as OrganizationEntity,
 )
 
-from app.organization.adapter.outbound.relational_db.organization_mapper import (
+from app.organization.adapter.outbound.relational_db.mappers.organization_mapper import (
     OrganizationMapper,
 )
 from app.organization.core.ports.spi.db.repositories.organization_port import (

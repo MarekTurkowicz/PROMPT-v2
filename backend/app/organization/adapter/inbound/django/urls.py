@@ -1,6 +1,9 @@
 from django.urls import path
 
 from app.organization.adapter.inbound.django.container import get_container
+from app.organization.adapter.inbound.django.organization_members_view import (
+    OrganizationMembersView,
+)
 from app.organization.adapter.inbound.django.organization_settings_view import (
     OrganizationSettingsView,
 )
@@ -20,5 +23,12 @@ urlpatterns = [
             update_organization_settings=container.update_organization_settings,
         ),
         name="update-organization-settings",
+    ),
+    path(
+        "organizations/<int:organization_id>/members/",
+        OrganizationMembersView.as_view(
+            add_organization_member=container.add_organization_member,
+        ),
+        name="add-organization-member",
     ),
 ]

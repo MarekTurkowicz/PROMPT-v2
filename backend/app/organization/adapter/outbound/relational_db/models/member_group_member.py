@@ -8,13 +8,13 @@ class MemberGroupMember(models.Model):
 
     pk = models.CompositePrimaryKey("group_id", "member_id")
     group = models.ForeignKey(
-        "api.MemberGroup",
+        "app.MemberGroup",
         on_delete=models.CASCADE,
         related_name="group_members",
         db_index=False,
     )
     member = models.ForeignKey(
-        "api.OrganizationMember",
+        "app.OrganizationMember",
         on_delete=models.CASCADE,
         related_name="group_memberships",
     )
@@ -22,6 +22,7 @@ class MemberGroupMember(models.Model):
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        app_label = "app"
         db_table = "member_group_member"
 
     def __str__(self) -> str:
