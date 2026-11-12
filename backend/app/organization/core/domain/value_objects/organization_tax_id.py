@@ -15,7 +15,7 @@ class OrganizationTaxId:
         if self.country_code is None or self.country_code == "PL":
             self._validate_pl_tax_id()
 
-    def _validate_pl_tax_id(self):
+    def _validate_pl_tax_id(self) -> None:
         normalized = re.sub(r"[\s-]", "", self.value)
 
         if not re.fullmatch(r"\d{10}", normalized):

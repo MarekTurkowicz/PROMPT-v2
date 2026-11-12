@@ -11,6 +11,7 @@ from app.organization.core.ports.api.create_organization_port import (
 )
 
 
+# TODO Sprawdzenie uprawnień
 class OrganizationView(APIView):
     create_organization: CreateOrganizationPort = None  # type: ignore[assignment]  # set via as_view()
 

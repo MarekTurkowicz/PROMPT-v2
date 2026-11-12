@@ -11,6 +11,7 @@ from app.organization.core.ports.api.update_organization_settings_port import (
 )
 
 
+# TODO Sprawdzenie uprawnień
 class OrganizationSettingsView(APIView):
     update_organization_settings: UpdateOrganizationSettingsPort = None  # type: ignore[assignment]  # set via as_view()
 

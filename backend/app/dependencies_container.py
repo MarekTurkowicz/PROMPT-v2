@@ -51,7 +51,7 @@ class DependenciesContainer:
         self._create_repositories()
         self._build()
 
-    def _create_repositories(self):
+    def _create_repositories(self) -> None:
         self.repositories = {
             port: repository()
             for port, repository in RELATIONAL_DB_REPOSITORIES.items()
