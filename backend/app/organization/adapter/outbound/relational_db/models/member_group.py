@@ -7,7 +7,7 @@ class MemberGroup(models.Model):
     """
 
     organization = models.ForeignKey(
-        "api.Organization",
+        "app.Organization",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -28,6 +28,7 @@ class MemberGroup(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        app_label = "app"
         db_table = "member_group"
         ordering = ["name", "id"]
         constraints = [

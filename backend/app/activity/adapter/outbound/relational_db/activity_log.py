@@ -71,13 +71,13 @@ class ActivityLog(models.Model):
     Action = ActivityAction
 
     organization = models.ForeignKey(
-        "api.Organization",
+        "app.Organization",
         on_delete=models.PROTECT,
         related_name="activity_logs",
         db_index=False,
     )
     actor = models.ForeignKey(
-        "api.OrganizationMember",
+        "app.OrganizationMember",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -92,6 +92,7 @@ class ActivityLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        app_label = "app"
         db_table = "activity_log"
         ordering = ["-created_at", "-id"]
         constraints = [
@@ -106,9 +107,12 @@ class ActivityLog(models.Model):
         ]
         indexes = [
             models.Index(
-                fields=["entity_type", "entity_id", "created_at"], name="activity_log_entity_ix"
+                fields=["entity_type", "entity_id", "created_at"],
+                name="activity_log_entity_ix",
             ),
-            models.Index(fields=["organization", "created_at"], name="activity_log_org_ix"),
+            models.Index(
+                fields=["organization", "created_at"], name="activity_log_org_ix"
+            ),
         ]
 
     def __str__(self) -> str:

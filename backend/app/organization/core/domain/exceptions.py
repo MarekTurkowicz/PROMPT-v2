@@ -1,4 +1,3 @@
-from __future__ import annotations
 from typing import ClassVar, TYPE_CHECKING
 
 from app.shared.core.domain.error_kind import ErrorKind
@@ -85,3 +84,37 @@ class TaxIdDuplicationException(DomainException):
     def __init__(self, tax_id: str) -> None:
         self.tax_id = tax_id
         super().__init__(f"An organization with tax_id {tax_id} already exists")
+
+
+class InvalidMemberProfile(DomainException):
+    kind = ErrorKind.INVALID
+    code = "organization.invalid_member_profile"
+    field: str
+
+    def __init__(self, field: str, msg: str) -> None:
+        self.field = field
+        super().__init__(f"Invalid member profile field: {field}\nReason: {msg}")
+
+
+class UserNotFound(DomainException):
+    kind = ErrorKind.NOT_FOUND
+    code = "organization.user_not_found"
+    user_id: int
+
+    def __init__(self, user_id: int) -> None:
+        self.user_id = user_id
+        super().__init__(f"User {user_id} does not exist.")
+
+
+class MemberAlreadyExists(DomainException):
+    kind = ErrorKind.CONFLICT
+    code = "organization.member_already_exists"
+    organization_id: int
+    user_id: int
+
+    def __init__(self, organization_id: int, user_id: int) -> None:
+        self.organization_id = organization_id
+        self.user_id = user_id
+        super().__init__(
+            f"User {user_id} is already a member of organization {organization_id}."
+        )

@@ -22,11 +22,9 @@ class OrganizationView(APIView):
         # TODO Response można jeszcze jakoś uprościć
         return Response(
             {
-                "id": None if organization.id is None else str(organization.id),
+                "id": organization.id,
                 "name": organization.name,
-                "tax_id": (
-                    None if organization.tax_id is None else str(organization.tax_id)
-                ),
+                "tax_id": organization.tax_id,
             },
             status=status.HTTP_201_CREATED,
         )

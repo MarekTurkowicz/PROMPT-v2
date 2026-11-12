@@ -10,7 +10,7 @@ class Notification(models.Model):
     """
 
     activity_log_entry = models.ForeignKey(
-        "api.ActivityLog",
+        "app.ActivityLog",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -18,7 +18,7 @@ class Notification(models.Model):
         db_column="activity_id",
     )
     recipient = models.ForeignKey(
-        "api.User",
+        "app.User",
         on_delete=models.CASCADE,
         related_name="notifications",
     )
@@ -29,6 +29,7 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        app_label = "app"
         db_table = "notification"
         ordering = ["-created_at", "-id"]
         constraints = [
