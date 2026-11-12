@@ -1,6 +1,6 @@
 from django.urls import path
 
-from app.organization.adapter.inbound.django.container import get_container
+from app.shared.adapter.inbound.django.container import get_container
 from app.organization.adapter.inbound.django.organization_members_view import (
     OrganizationMembersView,
 )
