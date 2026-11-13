@@ -220,7 +220,7 @@ Mapa ekranów odpowiada szkieletowi frontendu (artifact). Nazwy tras są robocze
 - **Członkowie organizacji** – jedna lista wszystkich członków, bez dzielenia na sekcje. Wyszukiwarka po imieniu, nazwisku, e-mailu i stanowisku; filtr po grupie i statusie członkostwa.
 - **Gdzie jest osoba:** wybranie osoby z wyszukiwarki rozwija jej grupy, role i projekty.
 - **Grupy** (Administracja → Grupy) – drzewo. Kliknięcie grupy pokazuje jej podgrupy i osoby. Filtrowanie i wyszukiwanie jak na liście członków.
-- Statusy członkostwa, zaproszenia, blokady i ochrona ostatniego administratora – bez zmian względem FR-ORG-03…09.
+- Statusy członkostwa: zaproszony → aktywny (ustawia `joined_at`) → zawieszony albo odszedł; zawieszony może wrócić do aktywnego (`joined_at` bez zmian) albo odejść; odszedł to stan końcowy. Zaproszenia, blokady i ochrona ostatniego administratora – bez zmian względem FR-ORG-03…09.
 
 ### 4.2 Projekty
 
@@ -468,7 +468,7 @@ Backend ma architekturę heksagonalną (porty i adaptery): w środku jest domena
 | ORM nie obsłuży typów obiektowych i dziedziczenia PostgreSQL | adapter `object_relational` na psycopg i ręcznym SQL |
 | MongoDB nie ma kluczy obcych ani `on_delete` | spójność odwołań sprawdza serwis / adapter przy zapisie: `PROTECT` = `countDocuments` przed usunięciem, `CASCADE` / `SET_NULL` = `deleteMany` / `updateMany` w tej samej transakcji |
 | Unikalność wewnątrz tablicy jednego dokumentu (nazwa roli, jeden domyślny status, jedno główne finansowanie) | indeks tego nie zapewni → reguła domeny + warunek w filtrze `updateOne` |
-| Limit 16 MB dokumentu | osadzane są tylko tablice ograniczone w domenie; dane rosnące bez końca (czas, komentarze, wydatki, historia, powiadomienia) to osobne kolekcje |
+| Limit 16 MB dokumentu | osadzane są tylko tablice ograniczone w domenie (organizacja: najwyżej 50 statusów i 50 ról; członkostwo: najwyżej 50 grup i 100 nadań ról); dane rosnące bez końca (czas, komentarze, wydatki, historia, powiadomienia) to osobne kolekcje |
 | Kopie danych w MongoDB | tylko pola niezmienne lub rzadko zmieniane (`status_category`, `organization_id`, `display_name`, odwołania w `time_entries` i `expenses`), każda kopia ma wskazane źródło |
 | Typy | `Decimal` ↔ `Decimal128`, data jako 00:00 UTC, plik jako klucz w magazynie plików |
 
@@ -564,7 +564,7 @@ Procesy są przypadkami użycia z `ports/api`, implementowanymi raz, w `service/
 
 ## 9. Specyfikacja API
 
-REST, JSON, prefiks `/api/`, warstwa `adapter/api`. Identyfikatory są liczbami całkowitymi w każdym wariancie bazy (6.2). Dane organizacji zawsze pod `/api/orgs/{org}/…`, więc izolacja jest widoczna w adresie i sprawdzana w jednym miejscu. Zapis agregatu ze starą wartością `version` zwraca 409. Listy stronicowane, najwyżej 100 elementów (NFR-PERF-05). Dokumentacja OpenAPI pod `/api/docs` (FR-ADM-02).
+REST, JSON, prefiks `/api/`, warstwa `adapter/api`. Identyfikatory są liczbami całkowitymi w każdym wariancie bazy (6.2). Dane organizacji zawsze pod `/api/orgs/{org}/…`, więc izolacja jest widoczna w adresie i sprawdzana w jednym miejscu. Zapis agregatu ze starą wartością `version` zwraca 409. Naruszenie reguły domeny, w tym konflikt unikalności (nazwa statusu lub roli, kod roli, ponowne nadanie roli, ponowne dodanie do grupy), zwraca 400; odpowiedź zawiera `detail`, `extra` i stały kod błędu `err_code`. Listy stronicowane, najwyżej 100 elementów (NFR-PERF-05). Dokumentacja OpenAPI pod `/api/docs` (FR-ADM-02).
 
 | Metoda | Ścieżka | Cel |
 | --- | --- | --- |

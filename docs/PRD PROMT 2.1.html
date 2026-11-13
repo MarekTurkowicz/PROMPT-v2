@@ -527,7 +527,7 @@ blockquote { margin: 0 0 14px; padding: 8px 16px; border-left: 3px solid var(--a
 <li><strong>Członkowie organizacji</strong> – jedna lista wszystkich członków, bez dzielenia na sekcje. Wyszukiwarka po imieniu, nazwisku, e-mailu i stanowisku; filtr po grupie i statusie członkostwa.</li>
 <li><strong>Gdzie jest osoba:</strong> wybranie osoby z wyszukiwarki rozwija jej grupy, role i projekty.</li>
 <li><strong>Grupy</strong> (Administracja → Grupy) – drzewo. Kliknięcie grupy pokazuje jej podgrupy i osoby. Filtrowanie i wyszukiwanie jak na liście członków.</li>
-<li>Statusy członkostwa, zaproszenia, blokady i ochrona ostatniego administratora – bez zmian względem FR-ORG-03…09.</li>
+<li>Statusy członkostwa: zaproszony → aktywny (ustawia <code>joined_at</code>) → zawieszony albo odszedł; zawieszony może wrócić do aktywnego (<code>joined_at</code> bez zmian) albo odejść; odszedł to stan końcowy. Zaproszenia, blokady i ochrona ostatniego administratora – bez zmian względem FR-ORG-03…09.</li>
 </ul>
 <h3 id="42-projekty">4.2 Projekty</h3>
 <ul>
@@ -872,7 +872,7 @@ blockquote { margin: 0 0 14px; padding: 8px 16px; border-left: 3px solid var(--a
 </tr>
 <tr>
 <td>Limit 16 MB dokumentu</td>
-<td>osadzane są tylko tablice ograniczone w domenie; dane rosnące bez końca (czas, komentarze, wydatki, historia, powiadomienia) to osobne kolekcje</td>
+<td>osadzane są tylko tablice ograniczone w domenie (organizacja: najwyżej 50 statusów i 50 ról; członkostwo: najwyżej 50 grup i 100 nadań ról); dane rosnące bez końca (czas, komentarze, wydatki, historia, powiadomienia) to osobne kolekcje</td>
 </tr>
 <tr>
 <td>Kopie danych w MongoDB</td>
@@ -1162,7 +1162,7 @@ blockquote { margin: 0 0 14px; padding: 8px 16px; border-left: 3px solid var(--a
 </tbody></table></div>
 <hr>
 <h2 id="9-specyfikacja-api">9. Specyfikacja API</h2>
-<p>REST, JSON, prefiks <code>/api/</code>, warstwa <code>adapter/api</code>. Identyfikatory są liczbami całkowitymi w każdym wariancie bazy (6.2). Dane organizacji zawsze pod <code>/api/orgs/{org}/…</code>, więc izolacja jest widoczna w adresie i sprawdzana w jednym miejscu. Zapis agregatu ze starą wartością <code>version</code> zwraca 409. Listy stronicowane, najwyżej 100 elementów (NFR-PERF-05). Dokumentacja OpenAPI pod <code>/api/docs</code> (FR-ADM-02).</p>
+<p>REST, JSON, prefiks <code>/api/</code>, warstwa <code>adapter/api</code>. Identyfikatory są liczbami całkowitymi w każdym wariancie bazy (6.2). Dane organizacji zawsze pod <code>/api/orgs/{org}/…</code>, więc izolacja jest widoczna w adresie i sprawdzana w jednym miejscu. Zapis agregatu ze starą wartością <code>version</code> zwraca 409. Naruszenie reguły domeny, w tym konflikt unikalności (nazwa statusu lub roli, kod roli, ponowne nadanie roli, ponowne dodanie do grupy), zwraca 400; odpowiedź zawiera <code>detail</code>, <code>extra</code> i stały kod błędu <code>err_code</code>. Listy stronicowane, najwyżej 100 elementów (NFR-PERF-05). Dokumentacja OpenAPI pod <code>/api/docs</code> (FR-ADM-02).</p>
 <div class="tw"><table><thead><tr>
 <th>Metoda</th>
 <th>Ścieżka</th>
