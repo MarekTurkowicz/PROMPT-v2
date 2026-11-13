@@ -7,6 +7,9 @@ if TYPE_CHECKING:
     from app.organization.core.domain.value_objects.organization_settings import (
         OrganizationSettings,
     )
+    from app.organization.core.domain.entities.organization_member import (
+        OrganizationMember,
+    )
 
 
 class InvalidOrganizationName(DomainException):
@@ -55,9 +58,9 @@ class InvalidOrganizationSettingsState(InvalidOrganizationSettings):
 class InvalidOrganizationSettingsData(InvalidOrganizationSettings):
     kind = ErrorKind.INVALID
     code = "organization.invalid_organization_settings_data"
-    raw_data: dict
+    raw_data: object
 
-    def __init__(self, raw_data: dict, msg: str) -> None:
+    def __init__(self, raw_data: object, msg: str) -> None:
         self.raw_data = raw_data
         super().__init__(
             f"Invalid data was passed, OrganizationSettings cannot be created\n"
@@ -89,11 +92,13 @@ class TaxIdDuplicationException(DomainException):
 class InvalidMemberProfile(DomainException):
     kind = ErrorKind.INVALID
     code = "organization.invalid_member_profile"
-    field: str
+    organization_member: OrganizationMember
 
-    def __init__(self, field: str, msg: str) -> None:
-        self.field = field
-        super().__init__(f"Invalid member profile field: {field}\nReason: {msg}")
+    def __init__(self, organization_member: OrganizationMember, msg: str) -> None:
+        self.organization_member = organization_member
+        super().__init__(
+            f"Invalid member profile field: {organization_member}\nReason: {msg}"
+        )
 
 
 class UserNotFound(DomainException):
@@ -103,7 +108,7 @@ class UserNotFound(DomainException):
 
     def __init__(self, user_id: int) -> None:
         self.user_id = user_id
-        super().__init__(f"User {user_id} does not exist.")
+        super().__init__(f"User with user_id: {user_id} does not exist.")
 
 
 class MemberAlreadyExists(DomainException):

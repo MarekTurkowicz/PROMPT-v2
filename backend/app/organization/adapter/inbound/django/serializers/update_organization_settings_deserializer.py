@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from app.organization.core.ports.api.commands.update_organization_settings_command import (
@@ -5,7 +7,10 @@ from app.organization.core.ports.api.commands.update_organization_settings_comma
 )
 
 
-class UpdateOrganizationSettingsSerializer(serializers.Serializer):
+# TODO Nie wywala z typowaniem błędu mypy ale z tego co wiem jest źle ze względu na create()
+class UpdateOrganizationSettingsDeserializer(
+    serializers.Serializer[UpdateOrganizationSettingsCommand]
+):
     timezone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     currency = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     priority_levels = serializers.ListField(
@@ -14,7 +19,7 @@ class UpdateOrganizationSettingsSerializer(serializers.Serializer):
         allow_null=True,
     )
 
-    def validate(self, attrs: dict) -> dict:
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         if not attrs:
             raise serializers.ValidationError(
                 "At least one settings field is required."
@@ -28,10 +33,9 @@ class UpdateOrganizationSettingsSerializer(serializers.Serializer):
         return _blank_to_none(value)
 
     def create_command(self, organization_id: int) -> UpdateOrganizationSettingsCommand:
-        data = self.validated_data
         return UpdateOrganizationSettingsCommand(
             organization_id=organization_id,
-            **data,
+            **self.validated_data,
         )
 
 
