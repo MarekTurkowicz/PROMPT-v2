@@ -35,7 +35,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure")  # w DEV może mieć fallba
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # ALLOWED_HOSTS — w DEBUG akceptujemy wszystko (Docker hostnames etc.)
-ALLOWED_HOSTS = ["*"] if DEBUG else os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = (
+    ["*"] if DEBUG else os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+)
 
 
 # Application definition
@@ -48,9 +50,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "corsheaders",
-    "api.apps.ApiConfig",
     "django_extensions",
+    "corsheaders",
+    "app.apps.ApplicationConfig",
 ]
 
 MIDDLEWARE = [
@@ -65,16 +67,21 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
+    "EXCEPTION_HANDLER": "app.shared.adapter.inbound.django.exception_handler.exception_handler",
+    # TODO Tymczasowo do testów
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
     ],
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 20,
-    "DEFAULT_FILTER_BACKENDS": (
-        "rest_framework.filters.SearchFilter",
-        "rest_framework.filters.OrderingFilter",
-    ),
+    # "DEFAULT_AUTHENTICATION_CLASSES": [
+    #     "rest_framework.authentication.SessionAuthentication",
+    # ],
+    # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # "PAGE_SIZE": 20,
+    # "DEFAULT_FILTER_BACKENDS": (
+    #     "rest_framework.filters.SearchFilter",
+    #     "rest_framework.filters.OrderingFilter",
+    # ),
 }
 
 FRONTEND_PORT = os.getenv("FRONTEND_PORT", "5173")
@@ -143,9 +150,15 @@ DATABASES = {
         "USER": os.getenv("DB_USER", "promt_user"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": (
-            os.getenv("DB_HOST", "db") if IN_DOCKER else os.getenv("LOCAL_DB_HOST", "localhost")
+            os.getenv("DB_HOST", "db")
+            if IN_DOCKER
+            else os.getenv("LOCAL_DB_HOST", "localhost")
         ),
-        "PORT": (os.getenv("DB_PORT", "5432") if IN_DOCKER else os.getenv("LOCAL_DB_PORT", "5432")),
+        "PORT": (
+            os.getenv("DB_PORT", "5432")
+            if IN_DOCKER
+            else os.getenv("LOCAL_DB_PORT", "5432")
+        ),
     }
 }
 
@@ -153,7 +166,8 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = "api.User"
+# TODO na czas testów
+# AUTH_USER_MODEL = "api.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
