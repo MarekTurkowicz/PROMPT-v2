@@ -5,7 +5,7 @@ from app.organization.core.ports.api.commands.create_organization_command import
 )
 
 
-class CreateOrganizationSerializer(serializers.Serializer):
+class CreateOrganizationDeserializer(serializers.Serializer[CreateOrganizationCommand]):
     name = serializers.CharField()
     tax_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     timezone = serializers.CharField(required=False, allow_null=True, allow_blank=True)

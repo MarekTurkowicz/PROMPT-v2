@@ -14,7 +14,7 @@ from app.organization.core.domain.value_objects.organization_tax_id import (
 
 @dataclass(frozen=True, slots=True)
 class Organization:
-    id: UUID | None
+    id: int | None
     name: str
     tax_id: OrganizationTaxId | None
     is_active: bool
