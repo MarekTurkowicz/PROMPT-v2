@@ -1,5 +1,9 @@
 from typing import Any
 
+from app.access.adapter.outbound.relational_db.repositories.user_repository import (
+    UserRepository,
+)
+from app.access.core.ports.user_port import UserPort
 from app.activity.adapter.outbound.relational_db.repositories.notification_repository import (
     NotificationRepository,
 )
@@ -11,9 +15,6 @@ from app.organization.adapter.outbound.relational_db.repositories.organization_m
 )
 from app.organization.adapter.outbound.relational_db.repositories.organization_repository import (
     OrganizationRepository,
-)
-from app.access.adapter.outbound.relational_db.repositories.user_repository import (
-    UserRepository,
 )
 from app.organization.core.application.add_organization_member_use_case import (
     AddOrganizationMemberUseCase,
@@ -39,7 +40,6 @@ from app.organization.core.ports.spi.db.repositories.organization_member_port im
 from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
-from app.access.core.ports.user_port import UserPort
 
 RELATIONAL_DB_REPOSITORIES: dict[type, type] = {
     OrganizationPort: OrganizationRepository,
@@ -61,15 +61,10 @@ class DependenciesContainer:
         self._build()
 
     def _create_repositories(self) -> None:
-        self.repositories = {
-            port: repository()
-            for port, repository in RELATIONAL_DB_REPOSITORIES.items()
-        }
+        self.repositories = {port: repository() for port, repository in RELATIONAL_DB_REPOSITORIES.items()}
 
     def _build(self) -> None:
-        self.create_organization = CreateOrganizationUseCase(
-            repository=self.repositories[OrganizationPort]
-        )
+        self.create_organization = CreateOrganizationUseCase(repository=self.repositories[OrganizationPort])
         self.update_organization_settings = UpdateOrganizationSettingsUseCase(
             repository=self.repositories[OrganizationPort],
         )

@@ -82,9 +82,7 @@ class Task(models.Model):
             ),
             models.CheckConstraint(
                 condition=(
-                    Q(start_date__isnull=True)
-                    | Q(due_date__isnull=True)
-                    | Q(due_date__gte=F("start_date"))
+                    Q(start_date__isnull=True) | Q(due_date__isnull=True) | Q(due_date__gte=F("start_date"))
                 ),
                 name="task_dates_ok",
             ),

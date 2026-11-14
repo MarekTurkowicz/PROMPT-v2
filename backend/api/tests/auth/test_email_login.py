@@ -98,9 +98,7 @@ def test_create_user_when_email_taken_then_integrity_error(jan):
 def test_api_login_when_valid_email_and_password_then_session_is_started(jan):
     client = APIClient()
 
-    response = client.post(
-        "/api/auth/login/", {"email": EMAIL, "password": PASSWORD}, format="json"
-    )
+    response = client.post("/api/auth/login/", {"email": EMAIL, "password": PASSWORD}, format="json")
 
     assert response.status_code == 200
     assert response.data["email"] == EMAIL
@@ -131,9 +129,7 @@ def test_api_login_when_wrong_password_then_400(jan):
 
 
 def test_api_login_when_username_sent_instead_of_email_then_400(jan):
-    response = APIClient().post(
-        "/api/auth/login/", {"username": EMAIL, "password": PASSWORD}, format="json"
-    )
+    response = APIClient().post("/api/auth/login/", {"username": EMAIL, "password": PASSWORD}, format="json")
 
     assert response.status_code == 400
     assert response.data["detail"] == "Email and password required"

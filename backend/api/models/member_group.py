@@ -31,9 +31,7 @@ class MemberGroup(models.Model):
         db_table = "member_group"
         ordering = ["name", "id"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["organization", "name"], name="member_group_name_unique"
-            ),
+            models.UniqueConstraint(fields=["organization", "name"], name="member_group_name_unique"),
         ]
 
     def __str__(self) -> str:

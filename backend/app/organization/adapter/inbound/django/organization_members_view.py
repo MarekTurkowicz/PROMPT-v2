@@ -15,9 +15,7 @@ from app.organization.core.ports.api.add_organization_member_port import (
 class OrganizationMembersView(APIView):
     add_organization_member: AddOrganizationMemberPort = None  # type: ignore[assignment]  # set via as_view()
 
-    def post(
-        self, request: Request, organization_id: int, *args: object, **kwargs: object
-    ) -> Response:
+    def post(self, request: Request, organization_id: int, *args: object, **kwargs: object) -> Response:
         serializer = AddOrganizationMemberDeserializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command(organization_id)

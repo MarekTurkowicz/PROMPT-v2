@@ -1,18 +1,18 @@
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from app.shared.core.domain.error_kind import ErrorKind
-from app.shared.core.domain.exceptions import DomainException
+from app.shared.core.domain.exceptions import DomainError
 
 if TYPE_CHECKING:
-    from app.organization.core.domain.value_objects.organization_settings import (
-        OrganizationSettings,
-    )
     from app.organization.core.domain.entities.organization_member import (
         OrganizationMember,
     )
+    from app.organization.core.domain.value_objects.organization_settings import (
+        OrganizationSettings,
+    )
 
 
-class InvalidOrganizationName(DomainException):
+class InvalidOrganizationNameError(DomainError):
     kind: ClassVar[ErrorKind] = ErrorKind.INVALID
     code: ClassVar[str] = "organization.invalid_name"
     organization_name: str
@@ -20,28 +20,26 @@ class InvalidOrganizationName(DomainException):
 
     def __init__(self, organization_name: str, msg: str) -> None:
         self.organization_name = organization_name
-        self.exception_message = (
-            f"Invalid organization name: {self.organization_name}\nReason: {msg}"
-        )
+        self.exception_message = f"Invalid organization name: {self.organization_name}\nReason: {msg}"
         super().__init__(self.exception_message)
 
 
-class InvalidTaxId(DomainException):
+class InvalidTaxIdError(DomainError):
     kind = ErrorKind.INVALID
     code = "organization.invalid_tax_id"
     tax_id: str
 
     def __init__(self, tax_id: str, msg: str) -> None:
         self.tax_id = tax_id
-        self.exception_message = f"Invalid tax_id: {self.tax_id}\n" f"Reason: {msg}"
+        self.exception_message = f"Invalid tax_id: {self.tax_id}\nReason: {msg}"
         super().__init__(self.exception_message)
 
 
-class InvalidOrganizationSettings(DomainException):
+class InvalidOrganizationSettingsError(DomainError):
     abstract = True
 
 
-class InvalidOrganizationSettingsState(InvalidOrganizationSettings):
+class InvalidOrganizationSettingsStateError(InvalidOrganizationSettingsError):
     kind = ErrorKind.INVALID
     code = "organization.invalid_organization_settings_state"
     organization_settings: OrganizationSettings
@@ -55,7 +53,7 @@ class InvalidOrganizationSettingsState(InvalidOrganizationSettings):
         )
 
 
-class InvalidOrganizationSettingsData(InvalidOrganizationSettings):
+class InvalidOrganizationSettingsDataError(InvalidOrganizationSettingsError):
     kind = ErrorKind.INVALID
     code = "organization.invalid_organization_settings_data"
     raw_data: object
@@ -69,7 +67,7 @@ class InvalidOrganizationSettingsData(InvalidOrganizationSettings):
         )
 
 
-class OrganizationNotFound(DomainException):
+class OrganizationNotFoundError(DomainError):
     kind = ErrorKind.NOT_FOUND
     code = "organization.organization_not_found"
     organization_id: int
@@ -79,7 +77,7 @@ class OrganizationNotFound(DomainException):
         super().__init__(f"Organization {organization_id} does not exist.")
 
 
-class TaxIdDuplicationException(DomainException):
+class TaxIdDuplicationError(DomainError):
     kind = ErrorKind.CONFLICT
     code = "organization.tax_id_duplication"
     tax_id: str
@@ -89,19 +87,17 @@ class TaxIdDuplicationException(DomainException):
         super().__init__(f"An organization with tax_id {tax_id} already exists")
 
 
-class InvalidMemberProfile(DomainException):
+class InvalidMemberProfileError(DomainError):
     kind = ErrorKind.INVALID
     code = "organization.invalid_member_profile"
     organization_member: OrganizationMember
 
     def __init__(self, organization_member: OrganizationMember, msg: str) -> None:
         self.organization_member = organization_member
-        super().__init__(
-            f"Invalid member profile field: {organization_member}\nReason: {msg}"
-        )
+        super().__init__(f"Invalid member profile field: {organization_member}\nReason: {msg}")
 
 
-class UserNotFound(DomainException):
+class UserNotFoundError(DomainError):
     kind = ErrorKind.NOT_FOUND
     code = "organization.user_not_found"
     user_id: int
@@ -111,7 +107,7 @@ class UserNotFound(DomainException):
         super().__init__(f"User with user_id: {user_id} does not exist.")
 
 
-class MemberAlreadyExists(DomainException):
+class MemberAlreadyExistsError(DomainError):
     kind = ErrorKind.CONFLICT
     code = "organization.member_already_exists"
     organization_id: int
@@ -120,6 +116,4 @@ class MemberAlreadyExists(DomainException):
     def __init__(self, organization_id: int, user_id: int) -> None:
         self.organization_id = organization_id
         self.user_id = user_id
-        super().__init__(
-            f"User {user_id} is already a member of organization {organization_id}."
-        )
+        super().__init__(f"User {user_id} is already a member of organization {organization_id}.")

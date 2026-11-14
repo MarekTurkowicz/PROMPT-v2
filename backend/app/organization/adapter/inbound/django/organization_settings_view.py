@@ -15,9 +15,7 @@ from app.organization.core.ports.api.update_organization_settings_port import (
 class OrganizationSettingsView(APIView):
     update_organization_settings: UpdateOrganizationSettingsPort = None  # type: ignore[assignment]  # set via as_view()
 
-    def patch(
-        self, request: Request, organization_id: int, *args: object, **kwargs: object
-    ) -> Response:
+    def patch(self, request: Request, organization_id: int, *args: object, **kwargs: object) -> Response:
         serializer = UpdateOrganizationSettingsDeserializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command(organization_id)

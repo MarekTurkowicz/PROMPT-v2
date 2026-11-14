@@ -8,9 +8,7 @@ from app.organization.core.ports.api.commands.update_organization_settings_comma
 
 
 # TODO Nie wywala z typowaniem błędu mypy ale z tego co wiem jest źle ze względu na create()
-class UpdateOrganizationSettingsDeserializer(
-    serializers.Serializer[UpdateOrganizationSettingsCommand]
-):
+class UpdateOrganizationSettingsDeserializer(serializers.Serializer[UpdateOrganizationSettingsCommand]):
     timezone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     currency = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     priority_levels = serializers.ListField(
@@ -21,9 +19,7 @@ class UpdateOrganizationSettingsDeserializer(
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         if not attrs:
-            raise serializers.ValidationError(
-                "At least one settings field is required."
-            )
+            raise serializers.ValidationError("At least one settings field is required.")
         return attrs
 
     def validate_timezone(self, value: str | None) -> str | None:

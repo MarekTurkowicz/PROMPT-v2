@@ -40,18 +40,12 @@ class Funding(models.Model):
         db_table = "funding"
         ordering = ["name", "id"]
         constraints = [
-            models.CheckConstraint(
-                condition=Q(type__in=FundingType.values), name="funding_type_valid"
-            ),
+            models.CheckConstraint(condition=Q(type__in=FundingType.values), name="funding_type_valid"),
             models.CheckConstraint(condition=Q(amount_total__gt=0), name="funding_amount_positive"),
-            models.CheckConstraint(
-                condition=Q(currency__regex=CURRENCY_CODE), name="funding_currency_code"
-            ),
+            models.CheckConstraint(condition=Q(currency__regex=CURRENCY_CODE), name="funding_currency_code"),
             models.CheckConstraint(
                 condition=(
-                    Q(start_date__isnull=True)
-                    | Q(end_date__isnull=True)
-                    | Q(end_date__gte=F("start_date"))
+                    Q(start_date__isnull=True) | Q(end_date__isnull=True) | Q(end_date__gte=F("start_date"))
                 ),
                 name="funding_dates_ok",
             ),

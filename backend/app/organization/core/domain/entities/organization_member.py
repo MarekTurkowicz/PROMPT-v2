@@ -7,7 +7,7 @@ from app.organization.core.domain.constants import (
     MEMBER_JOB_TITLE_MAX_LENGTH,
     MEMBER_PHONE_MAX_LENGTH,
 )
-from app.organization.core.domain.exceptions import InvalidMemberProfile
+from app.organization.core.domain.exceptions import InvalidMemberProfileError
 from app.organization.core.domain.value_objects.member_status import MemberStatus
 
 
@@ -33,7 +33,7 @@ class OrganizationMember:
             value = getattr(self, field_name)
 
             if value is not None and len(value) > max_length:
-                raise InvalidMemberProfile(
+                raise InvalidMemberProfileError(
                     self,
                     f"{field_name} must be at most {max_length} characters.",
                 )

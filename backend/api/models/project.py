@@ -46,14 +46,10 @@ class Project(models.Model):
         db_table = "project"
         ordering = ["name", "id"]
         constraints = [
-            models.CheckConstraint(
-                condition=Q(status__in=ProjectStatus.values), name="project_status_valid"
-            ),
+            models.CheckConstraint(condition=Q(status__in=ProjectStatus.values), name="project_status_valid"),
             models.CheckConstraint(
                 condition=(
-                    Q(start_date__isnull=True)
-                    | Q(end_date__isnull=True)
-                    | Q(end_date__gte=F("start_date"))
+                    Q(start_date__isnull=True) | Q(end_date__isnull=True) | Q(end_date__gte=F("start_date"))
                 ),
                 name="project_dates_ok",
             ),

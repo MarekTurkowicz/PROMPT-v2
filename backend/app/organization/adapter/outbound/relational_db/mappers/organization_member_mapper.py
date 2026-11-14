@@ -8,9 +8,7 @@ from app.organization.core.domain.value_objects.member_status import MemberStatu
 from app.shared.core.ports.spi.db.base_mapper import BaseMapper
 
 
-class OrganizationMemberMapper(
-    BaseMapper[OrganizationMemberModel, OrganizationMemberEntity]
-):
+class OrganizationMemberMapper(BaseMapper[OrganizationMemberModel, OrganizationMemberEntity]):
     @staticmethod
     def to_entity(model: OrganizationMemberModel) -> OrganizationMemberEntity:
         return OrganizationMemberEntity(

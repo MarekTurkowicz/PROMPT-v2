@@ -105,9 +105,7 @@ class ActivityLog(models.Model):
             ),
         ]
         indexes = [
-            models.Index(
-                fields=["entity_type", "entity_id", "created_at"], name="activity_log_entity_ix"
-            ),
+            models.Index(fields=["entity_type", "entity_id", "created_at"], name="activity_log_entity_ix"),
             models.Index(fields=["organization", "created_at"], name="activity_log_org_ix"),
         ]
 

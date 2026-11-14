@@ -7,6 +7,7 @@ class ApplicationError(Exception):
     kind: ClassVar[ErrorKind]
     code: ClassVar[str]
 
+    # TODO Do weryfikacji
     def __init__(self, message: str, **params: object) -> None:
         self.message = message
         self.params = params
@@ -21,5 +22,5 @@ class ApplicationError(Exception):
                 raise TypeError(f"{cls.__name__} must define {name}")
 
 
-class DomainException(ApplicationError):
+class DomainError(ApplicationError):
     abstract = True

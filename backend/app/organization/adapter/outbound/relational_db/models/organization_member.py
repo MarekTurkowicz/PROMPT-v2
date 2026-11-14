@@ -34,9 +34,7 @@ class OrganizationMember(models.Model):
     phone = models.CharField(max_length=32, null=True, blank=True)
     job_title = models.CharField(max_length=120, null=True, blank=True)
     avatar_url = models.URLField(max_length=500, null=True, blank=True)
-    status = models.CharField(
-        max_length=12, choices=Status.choices, default=Status.INVITED
-    )
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.INVITED)
     joined_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -44,9 +42,7 @@ class OrganizationMember(models.Model):
         db_table = "organization_member"
         ordering = ["organization", "id"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["organization", "user"], name="organization_member_unique"
-            ),
+            models.UniqueConstraint(fields=["organization", "user"], name="organization_member_unique"),
             models.CheckConstraint(
                 condition=Q(status__in=MemberStatus.values),
                 name="organization_member_status_valid",

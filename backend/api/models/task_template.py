@@ -35,9 +35,7 @@ class TaskTemplate(models.Model):
         ordering = ["funding", "id"]
         constraints = [
             models.CheckConstraint(
-                condition=Q(
-                    default_priority__gte=Priority.LOWEST, default_priority__lte=Priority.HIGHEST
-                ),
+                condition=Q(default_priority__gte=Priority.LOWEST, default_priority__lte=Priority.HIGHEST),
                 name="task_template_priority_range",
             ),
             models.CheckConstraint(
