@@ -1,33 +1,38 @@
-import type { FormEvent } from "react";
-import { useCsrfQuery, useLoginMutation, useMeQuery } from "./authApi";
-import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
+import { useState, type FormEvent } from "react";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Navigate, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MOCK_API } from "@/mocks/enabled";
+import { useLoginMutation, useMeQuery } from "./authApi";
 
 const FAIL_KEY = "login_fail_count";
 const MAX_BACKOFF_MS = 5000;
 
-function getHttpStatus(e: unknown): number {
+function httpStatus(e: unknown): number {
   if (typeof e === "object" && e && "status" in e) {
     const s = (e as { status?: unknown }).status;
     return typeof s === "number" ? s : 0;
   }
   return 0;
 }
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function LoginPage() {
-  useCsrfQuery();
+  const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
-  const { data: me, isLoading: meLoading, isError: meError } = useMeQuery();
+  const { data: me, isLoading: meLoading } = useMeQuery();
   const [login, { isLoading }] = useLoginMutation();
   const [formError, setFormError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  if (meLoading) return <div style={{ padding: 24 }}>Ładowanie…</div>;
-  if (me && !meError) {
-    navigate("/dashboard", { replace: true });
-    return null;
-  }
+  if (meLoading) return null;
+  if (me) return <Navigate to="/overview" replace />;
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,124 +45,107 @@ export default function LoginPage() {
     const fails = Number(sessionStorage.getItem(FAIL_KEY) ?? 0);
     const delay = Math.min(MAX_BACKOFF_MS, fails * 500);
     if (delay > 0) {
-      toast("Zbyt wiele prób, chwilka…", { id: "backoff", duration: 1000 });
+      toast(t("backoff"), { id: "backoff", duration: 1000 });
       await sleep(delay);
     }
 
     try {
       await login({ email, password }).unwrap();
       sessionStorage.removeItem(FAIL_KEY);
-      toast.success("Zalogowano!");
-      navigate("/dashboard", { replace: true });
+      toast.success(t("success"));
+      navigate("/overview", { replace: true });
     } catch (err: unknown) {
-      const status = getHttpStatus(err);
-      const nextFails = fails + 1;
-      sessionStorage.setItem(FAIL_KEY, String(nextFails));
-
-      if (status === 429) {
-        setFormError("Zbyt wiele prób logowania. Spróbuj za chwilę.");
-        toast.error("Zbyt wiele prób. Spróbuj za chwilę.");
-      } else if (status === 400) {
-        setFormError("Nieprawidłowy e-mail lub hasło.");
-        toast.error("Nieprawidłowy e-mail lub hasło.");
-      } else {
-        setFormError("Logowanie nieudane. Spróbuj ponownie.");
-        toast.error("Logowanie nieudane.");
-      }
+      sessionStorage.setItem(FAIL_KEY, String(fails + 1));
+      const status = httpStatus(err);
+      const message =
+        status === 429
+          ? t("errors.tooManyAttempts")
+          : status === 400
+            ? t("errors.invalidCredentials")
+            : t("errors.failed");
+      setFormError(message);
+      toast.error(message);
     }
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          background: "white",
-          border: "1px solid #e5e7eb",
-          borderRadius: 12,
-          padding: 24,
-          boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
-        }}
-      >
-        <h1 style={{ margin: "0 0 8px", fontSize: 22 }}>Zaloguj się</h1>
-        <p style={{ margin: "0 0 16px", color: "#6b7280" }}>
-          Wprowadź dane dostępowe, aby przejść aplikacji.
-        </p>
-
-        <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-          <div>
-            <label
-              htmlFor="email"
-              style={{ display: "block", fontSize: 14, marginBottom: 6 }}
+    <div className="grid min-h-dvh place-items-center bg-background p-4">
+      <Card className="w-full max-w-[380px]">
+        <CardHeader>
+          <div className="mb-3 flex items-center gap-2.5">
+            <span
+              aria-hidden="true"
+              className="flex size-[34px] items-center justify-center rounded-[9px] bg-primary font-semibold text-primary-foreground"
             >
-              E-mail
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              style={inputStyle}
-              placeholder="np. pm@example.com"
-            />
+              {t("common:appName")[0]}
+            </span>
+            <span className="font-semibold">{t("common:appName")}</span>
           </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              style={{ display: "block", fontSize: 14, marginBottom: 6 }}
-            >
-              Hasło
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              style={inputStyle}
-              placeholder="Twoje hasło"
-            />
-          </div>
-
-          {formError && (
-            <div style={{ color: "crimson", fontSize: 14 }}>{formError}</div>
+          <h1 className="text-[22px] font-semibold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          {MOCK_API && (
+            <p className="mt-2 rounded-lg bg-brand-tint px-3 py-2 text-sm text-brand-ink">
+              {t("demoHint", { email: "pm@example.com" })}
+            </p>
           )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            style={{
-              height: 40,
-              borderRadius: 10,
-              border: "1px solid #111827",
-              background: isLoading ? "#f3f4f6" : "#111827",
-              color: isLoading ? "#111827" : "white",
-              fontWeight: 600,
-            }}
-          >
-            {isLoading ? "Logowanie…" : "Zaloguj"}
-          </button>
-        </form>
-      </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="grid gap-4" noValidate={false}>
+            <div className="grid gap-1.5">
+              <Label htmlFor="email">{t("email")}</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder={t("emailPlaceholder")}
+                className="h-10"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="password">{t("password")}</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  placeholder={t("passwordPlaceholder")}
+                  className="h-10 pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1 right-1"
+                  aria-label={
+                    showPassword ? t("hidePassword") : t("showPassword")
+                  }
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
+            </div>
+            {formError && (
+              <p role="alert" className="text-sm text-destructive">
+                {formError}
+              </p>
+            )}
+            <Button
+              type="submit"
+              size="lg"
+              className="h-10"
+              disabled={isLoading}
+            >
+              {isLoading ? t("submitting") : t("submit")}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  height: 40,
-  padding: "0 12px",
-  borderRadius: 10,
-  border: "1px solid #e5e7eb",
-  outline: "none",
-};

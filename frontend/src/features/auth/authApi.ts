@@ -1,31 +1,21 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import { axiosBaseQuery } from "../../app/axiosBaseQuery";
-import type { MeUser } from "../types/users";
+import type { LoginRequest, Me, TokenPair } from "@/api/types";
+import { api } from "@/app/api";
 
-type LoginBody = { email: string; password: string };
-
-export const authApi = createApi({
-  reducerPath: "authApi",
-  baseQuery: axiosBaseQuery(),
+// Tokens are not stored yet: JWT handling comes with #37 / #24.
+export const authApi = api.injectEndpoints({
   endpoints: (b) => ({
-    csrf: b.query<{ detail: string }, void>({
-      query: () => ({ url: "/api/auth/csrf/" }),
-    }),
-    login: b.mutation<MeUser, LoginBody>({
-      query: (body) => ({
-        url: "/api/auth/login/",
-        method: "post",
-        data: body,
-      }),
+    login: b.mutation<TokenPair, LoginRequest>({
+      query: (data) => ({ url: "/api/auth/login", method: "post", data }),
+      invalidatesTags: ["Me"],
     }),
     logout: b.mutation<void, void>({
-      query: () => ({ url: "/api/auth/logout/", method: "post" }),
+      query: () => ({ url: "/api/auth/logout", method: "post" }),
     }),
-    me: b.query<MeUser, void>({
-      query: () => ({ url: "/api/auth/me/" }),
+    me: b.query<Me, void>({
+      query: () => ({ url: "/api/me" }),
+      providesTags: ["Me"],
     }),
   }),
 });
 
-export const { useCsrfQuery, useLoginMutation, useLogoutMutation, useMeQuery } =
-  authApi;
+export const { useLoginMutation, useLogoutMutation, useMeQuery } = authApi;

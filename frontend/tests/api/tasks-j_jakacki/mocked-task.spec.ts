@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import {Task} from "../../../src/features/tasks/types";
 
 const pagedResponse = (results: object[]) => ({
   count: results.length,
@@ -8,7 +7,7 @@ const pagedResponse = (results: object[]) => ({
   results,
 });
 
-const mockedTask = (id: number, title: string): Task => ({
+const mockedTask = (id: number, title: string) => ({
   id,
   title,
   description: "",

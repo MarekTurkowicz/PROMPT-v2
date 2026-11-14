@@ -1,4 +1,18 @@
-# React + TypeScript + Vite
+# PROMT frontend
+
+## Mock mode (no backend)
+
+`npm run dev:mock` serves the API from [MSW](https://mswjs.io) handlers in `src/mocks/` (`.env.mock` sets `VITE_API_MOCK=true`).
+Log in with any demo account from `src/mocks/seed/users.ts` (e.g. `pm@example.com`) and any password.
+Data lives in memory and resets on reload; the login survives it.
+
+- Handlers follow the PRD 2.1 §9 paths; API types are in `src/api/types.ts` until #36 generates them.
+- When the backend implements an endpoint, delete its handler from `src/mocks/handlers/`: unhandled requests go to Django.
+- Vitest uses the same handlers (`vitest.setup.ts`).
+
+`npm run dev` talks to the backend through the Vite proxy (`VITE_API_PROXY_TARGET`, default `http://localhost:8000`).
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
