@@ -23,9 +23,7 @@ class Milestone(models.Model):
     )
 
     name = models.CharField(max_length=200)
-    status = models.CharField(
-        max_length=12, choices=MilestoneStatus.choices, default=Status.PLANNED
-    )
+    status = models.CharField(max_length=12, choices=MilestoneStatus.choices, default=Status.PLANNED)
     due_date = models.DateField(null=True, blank=True)
     position = models.PositiveSmallIntegerField(default=0)
 

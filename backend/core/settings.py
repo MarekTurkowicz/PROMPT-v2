@@ -35,9 +35,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure")  # w DEV może mieć fallba
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # ALLOWED_HOSTS — w DEBUG akceptujemy wszystko (Docker hostnames etc.)
-ALLOWED_HOSTS = (
-    ["*"] if DEBUG else os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
-)
+ALLOWED_HOSTS = ["*"] if DEBUG else os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 
 # Application definition
@@ -68,11 +66,11 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "app.shared.adapter.inbound.django.exception_handler.exception_handler",
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     # TODO Tymczasowo do testów
+    # "DEFAULT_AUTHENTICATION_CLASSES": [
+    #     "rest_framework.authentication.SessionAuthentication",
+    # ],
+    # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     # "PAGE_SIZE": 20,
     # "DEFAULT_FILTER_BACKENDS": (
@@ -146,16 +144,8 @@ DATABASES = {
         "NAME": os.getenv("DB_NAME", "promt_db"),
         "USER": os.getenv("DB_USER", "promt_user"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST": (
-            os.getenv("DB_HOST", "db")
-            if IN_DOCKER
-            else os.getenv("LOCAL_DB_HOST", "localhost")
-        ),
-        "PORT": (
-            os.getenv("DB_PORT", "5432")
-            if IN_DOCKER
-            else os.getenv("LOCAL_DB_PORT", "5432")
-        ),
+        "HOST": (os.getenv("DB_HOST", "db") if IN_DOCKER else os.getenv("LOCAL_DB_HOST", "localhost")),
+        "PORT": (os.getenv("DB_PORT", "5432") if IN_DOCKER else os.getenv("LOCAL_DB_PORT", "5432")),
     }
 }
 

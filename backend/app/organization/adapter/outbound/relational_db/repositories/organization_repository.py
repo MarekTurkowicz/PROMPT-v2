@@ -1,12 +1,11 @@
+from app.organization.adapter.outbound.relational_db.mappers.organization_mapper import (
+    OrganizationMapper,
+)
 from app.organization.adapter.outbound.relational_db.models.organization import (
     Organization as OrganizationModel,
 )
 from app.organization.core.domain.entities.organization import (
     Organization as OrganizationEntity,
-)
-
-from app.organization.adapter.outbound.relational_db.mappers.organization_mapper import (
-    OrganizationMapper,
 )
 from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
@@ -33,6 +32,7 @@ class OrganizationRepository(OrganizationPort):
     def create_obj(self, organization_entity: OrganizationEntity) -> OrganizationEntity:
         model = OrganizationMapper.to_model(organization_entity)
         model.pk = None
+        # TODO Rozważyć try-catch integrity error
         model.save(force_insert=True)
         return OrganizationMapper.to_entity(model)
 

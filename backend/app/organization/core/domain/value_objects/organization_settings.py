@@ -1,8 +1,8 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 from app.organization.core.domain.exceptions import (
-    InvalidOrganizationSettingsState,
+    InvalidOrganizationSettingsStateError,
 )
 
 
@@ -17,10 +17,8 @@ class OrganizationSettings:
         if levels is None:
             return
         if len(levels) < 3:
-            raise InvalidOrganizationSettingsState(
+            raise InvalidOrganizationSettingsStateError(
                 self, "priority_levels must contain more than/equal 3."
             )
         if any(level.strip() == "" for level in levels):
-            raise InvalidOrganizationSettingsState(
-                self, "priority_levels must contain non-empty values"
-            )
+            raise InvalidOrganizationSettingsStateError(self, "priority_levels must contain non-empty values")

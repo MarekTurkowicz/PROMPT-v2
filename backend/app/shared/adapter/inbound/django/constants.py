@@ -1,5 +1,6 @@
-from app.shared.core.domain.error_kind import ErrorKind
 from rest_framework import status
+
+from app.shared.core.domain.error_kind import ErrorKind
 
 ERROR_KIND_TO_HTTP_STATUS_MAP = {
     ErrorKind.INVALID: status.HTTP_400_BAD_REQUEST,

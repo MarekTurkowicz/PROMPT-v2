@@ -1,3 +1,4 @@
+from app.access.core.ports.user_port import UserPort
 from app.activity.core.ports.spi.db.repositories.notification_port import (
     NotificationPort,
 )
@@ -5,9 +6,9 @@ from app.organization.core.domain.entities.organization_member import (
     OrganizationMember,
 )
 from app.organization.core.domain.exceptions import (
-    MemberAlreadyExists,
-    OrganizationNotFound,
-    UserNotFound,
+    MemberAlreadyExistsError,
+    OrganizationNotFoundError,
+    UserNotFoundError,
 )
 from app.organization.core.domain.value_objects.member_status import MemberStatus
 from app.organization.core.ports.api.add_organization_member_port import (
@@ -22,7 +23,6 @@ from app.organization.core.ports.spi.db.repositories.organization_member_port im
 from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
-from app.access.core.ports.user_port import UserPort
 
 
 class AddOrganizationMemberUseCase(AddOrganizationMemberPort):
@@ -41,11 +41,11 @@ class AddOrganizationMemberUseCase(AddOrganizationMemberPort):
     def execute(self, command: AddOrganizationMemberCommand) -> OrganizationMember:
         # TODO Sprawdzanie uprawnień
         if self._organization_repository.get_by_id(command.organization_id) is None:
-            raise OrganizationNotFound(command.organization_id)
+            raise OrganizationNotFoundError(command.organization_id)
         if not self._user_repository.exists_by_id(command.user_id):
-            raise UserNotFound(command.user_id)
+            raise UserNotFoundError(command.user_id)
         if self._member_repository.exists(command.organization_id, command.user_id):
-            raise MemberAlreadyExists(command.organization_id, command.user_id)
+            raise MemberAlreadyExistsError(command.organization_id, command.user_id)
 
         new_member = OrganizationMember(
             id=None,

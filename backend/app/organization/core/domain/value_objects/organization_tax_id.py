@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 
 from app.organization.core.domain.constants import POLISH_TAX_ID_WEIGHTS
-from app.organization.core.domain.exceptions import InvalidTaxId
+from app.organization.core.domain.exceptions import InvalidTaxIdError
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,18 +19,18 @@ class OrganizationTaxId:
         normalized = re.sub(r"[\s-]", "", self.value)
 
         if not re.fullmatch(r"\d{10}", normalized):
-            raise InvalidTaxId(self.value, "Invalid tax_id format")
+            raise InvalidTaxIdError(self.value, "Invalid tax_id format")
 
         checksum = (
             sum(
                 int(digit) * weight
-                for digit, weight in zip(normalized[:9], POLISH_TAX_ID_WEIGHTS)
+                for digit, weight in zip(normalized[:9], POLISH_TAX_ID_WEIGHTS, strict=True)
             )
             % 11
         )
 
         if checksum == 10 or checksum != int(normalized[9]):
-            raise InvalidTaxId(self.value, "Invalid tax_id checksum")
+            raise InvalidTaxIdError(self.value, "Invalid tax_id checksum")
 
         object.__setattr__(self, "value", normalized)
 

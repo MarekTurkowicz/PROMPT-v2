@@ -1,12 +1,12 @@
 from dataclasses import replace
 
-from app.organization.core.ports.api.commands.update_organization_settings_command import (
-    UpdateOrganizationSettingsCommand,
-)
 from app.organization.core.domain.entities.organization import Organization
-from app.organization.core.domain.exceptions import OrganizationNotFound
+from app.organization.core.domain.exceptions import OrganizationNotFoundError
 from app.organization.core.domain.value_objects.organization_settings import (
     OrganizationSettings,
+)
+from app.organization.core.ports.api.commands.update_organization_settings_command import (
+    UpdateOrganizationSettingsCommand,
 )
 from app.organization.core.ports.api.update_organization_settings_port import (
     UpdateOrganizationSettingsPort,
@@ -24,22 +24,14 @@ class UpdateOrganizationSettingsUseCase(UpdateOrganizationSettingsPort):
     def execute(self, command: UpdateOrganizationSettingsCommand) -> Organization:
         organization = self._repository.get_by_id(command.organization_id)
         if organization is None:
-            raise OrganizationNotFound(command.organization_id)
+            raise OrganizationNotFoundError(command.organization_id)
 
         current = organization.settings
         updated = replace(
             organization,
             settings=OrganizationSettings(
-                timezone=(
-                    command.timezone
-                    if is_not_unset(command.timezone)
-                    else current.timezone
-                ),
-                currency=(
-                    command.currency
-                    if is_not_unset(command.currency)
-                    else current.currency
-                ),
+                timezone=(command.timezone if is_not_unset(command.timezone) else current.timezone),
+                currency=(command.currency if is_not_unset(command.currency) else current.currency),
                 priority_levels=(
                     command.priority_levels
                     if is_not_unset(command.priority_levels)

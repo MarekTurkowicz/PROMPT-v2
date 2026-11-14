@@ -44,8 +44,7 @@ class RoleAssignment(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    Q(member__isnull=False, group__isnull=True)
-                    | Q(member__isnull=True, group__isnull=False)
+                    Q(member__isnull=False, group__isnull=True) | Q(member__isnull=True, group__isnull=False)
                 ),
                 name="role_assignment_one_of_member_group",
             ),

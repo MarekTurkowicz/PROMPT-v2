@@ -48,8 +48,7 @@ class Comment(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    Q(task__isnull=False, project__isnull=True)
-                    | Q(task__isnull=True, project__isnull=False)
+                    Q(task__isnull=False, project__isnull=True) | Q(task__isnull=True, project__isnull=False)
                 ),
                 name="comment_one_of_task_project",
             ),

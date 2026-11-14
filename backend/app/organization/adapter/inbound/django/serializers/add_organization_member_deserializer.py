@@ -11,9 +11,7 @@ from app.organization.core.ports.api.commands.add_organization_member_command im
 )
 
 
-class AddOrganizationMemberDeserializer(
-    serializers.Serializer[AddOrganizationMemberCommand]
-):
+class AddOrganizationMemberDeserializer(serializers.Serializer[AddOrganizationMemberCommand]):
     # TODO typowanie UUID/int
     user_id = serializers.IntegerField(min_value=1)
     email = serializers.EmailField(

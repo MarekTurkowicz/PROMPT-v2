@@ -88,9 +88,7 @@ class Command(BaseCommand):
 
     def _entity(self, model: type[Model]) -> str:
         meta = model._meta
-        unique_together = {
-            name for group in meta.unique_together if len(group) == 1 for name in group
-        }
+        unique_together = {name for group in meta.unique_together if len(group) == 1 for name in group}
         lines = [f"    {meta.db_table} {{"]
         for field in meta.local_fields:
             keys = []
@@ -119,6 +117,4 @@ class Command(BaseCommand):
             parent = "|o" if field.null else "||"
             # child side: at most one for one-to-one / unique FK, otherwise many
             child = "o|" if field.unique else "o{"
-            yield (
-                f'    {target._meta.db_table} {parent}--{child} {meta.db_table} : "{field.name}"'
-            )
+            yield (f'    {target._meta.db_table} {parent}--{child} {meta.db_table} : "{field.name}"')

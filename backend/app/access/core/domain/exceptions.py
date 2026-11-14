@@ -1,8 +1,8 @@
 from app.shared.core.domain.error_kind import ErrorKind
-from app.shared.core.domain.exceptions import DomainException
+from app.shared.core.domain.exceptions import DomainError
 
 
-class InvalidCredentials(DomainException):
+class InvalidCredentialsError(DomainError):
     kind = ErrorKind.NOT_AUTHORIZED
     code = "access.invalid_credentials"
 
@@ -10,7 +10,7 @@ class InvalidCredentials(DomainException):
         super().__init__("Invalid email or password.")
 
 
-class AccessDenied(DomainException):
+class AccessDeniedError(DomainError):
     kind = ErrorKind.FORBIDDEN
     code = "access.access_denied"
 
