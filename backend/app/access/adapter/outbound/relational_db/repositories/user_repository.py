@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 
-from app.organization.core.ports.spi.db.repositories.user_port import UserPort
+from app.access.core.ports.user_port import UserPort
 
 
 class UserRepository(UserPort):

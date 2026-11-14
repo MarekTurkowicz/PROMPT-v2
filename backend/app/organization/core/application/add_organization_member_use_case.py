@@ -22,7 +22,7 @@ from app.organization.core.ports.spi.db.repositories.organization_member_port im
 from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
-from app.organization.core.ports.spi.db.repositories.user_port import UserPort
+from app.access.core.ports.user_port import UserPort
 
 
 class AddOrganizationMemberUseCase(AddOrganizationMemberPort):
