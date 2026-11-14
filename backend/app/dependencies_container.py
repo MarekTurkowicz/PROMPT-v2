@@ -12,7 +12,7 @@ from app.organization.adapter.outbound.relational_db.repositories.organization_m
 from app.organization.adapter.outbound.relational_db.repositories.organization_repository import (
     OrganizationRepository,
 )
-from app.organization.adapter.outbound.relational_db.repositories.user_repository import (
+from app.access.adapter.outbound.relational_db.repositories.user_repository import (
     UserRepository,
 )
 from app.organization.core.application.add_organization_member_use_case import (
@@ -39,7 +39,7 @@ from app.organization.core.ports.spi.db.repositories.organization_member_port im
 from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
-from app.organization.core.ports.spi.db.repositories.user_port import UserPort
+from app.access.core.ports.user_port import UserPort
 
 RELATIONAL_DB_REPOSITORIES: dict[type, type] = {
     OrganizationPort: OrganizationRepository,
