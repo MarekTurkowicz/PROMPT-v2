@@ -182,7 +182,7 @@ app/<module>/
   a successful call returns the status for that operation (for example, 201 for create);
   a domain error returns the status that matches the error `kind` (refer to section 9).
 
-### 5.5 Outbound adapter 
+### 5.5 Outbound adapter
 
 #### 5.5.1 Relational Database (`adapter/outbound/relational_db`)
 - A Django model describes one database table.
