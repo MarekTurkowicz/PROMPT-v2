@@ -43,9 +43,7 @@ class ChecklistItem(models.Model):
             ),
         ]
         indexes = [
-            models.Index(
-                fields=["task", "checklist_title", "order"], name="checklist_item_task_ix"
-            ),
+            models.Index(fields=["task", "checklist_title", "order"], name="checklist_item_task_ix"),
         ]
 
     def __str__(self) -> str:

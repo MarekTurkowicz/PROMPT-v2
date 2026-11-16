@@ -39,9 +39,7 @@ class OrganizationMember(models.Model):
         db_table = "organization_member"
         ordering = ["organization", "id"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["organization", "user"], name="organization_member_unique"
-            ),
+            models.UniqueConstraint(fields=["organization", "user"], name="organization_member_unique"),
             models.CheckConstraint(
                 condition=Q(status__in=MemberStatus.values),
                 name="organization_member_status_valid",

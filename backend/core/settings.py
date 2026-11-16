@@ -48,9 +48,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "corsheaders",
-    "api.apps.ApiConfig",
     "django_extensions",
+    "corsheaders",
+    "app.apps.ApplicationConfig",
 ]
 
 MIDDLEWARE = [
@@ -65,16 +65,18 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 20,
-    "DEFAULT_FILTER_BACKENDS": (
-        "rest_framework.filters.SearchFilter",
-        "rest_framework.filters.OrderingFilter",
-    ),
+    "EXCEPTION_HANDLER": "app.shared.adapter.inbound.django.exception_handler.exception_handler",
+    # TODO Tymczasowo do testów
+    # "DEFAULT_AUTHENTICATION_CLASSES": [
+    #     "rest_framework.authentication.SessionAuthentication",
+    # ],
+    # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # "PAGE_SIZE": 20,
+    # "DEFAULT_FILTER_BACKENDS": (
+    #     "rest_framework.filters.SearchFilter",
+    #     "rest_framework.filters.OrderingFilter",
+    # ),
 }
 
 FRONTEND_PORT = os.getenv("FRONTEND_PORT", "5173")
@@ -142,9 +144,7 @@ DATABASES = {
         "NAME": os.getenv("DB_NAME", "promt_db"),
         "USER": os.getenv("DB_USER", "promt_user"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST": (
-            os.getenv("DB_HOST", "db") if IN_DOCKER else os.getenv("LOCAL_DB_HOST", "localhost")
-        ),
+        "HOST": (os.getenv("DB_HOST", "db") if IN_DOCKER else os.getenv("LOCAL_DB_HOST", "localhost")),
         "PORT": (os.getenv("DB_PORT", "5432") if IN_DOCKER else os.getenv("LOCAL_DB_PORT", "5432")),
     }
 }
@@ -153,7 +153,8 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = "api.User"
+# TODO na czas testów
+# AUTH_USER_MODEL = "api.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {

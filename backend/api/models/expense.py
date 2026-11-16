@@ -68,13 +68,9 @@ class Expense(models.Model):
                 ),
                 name="expense_one_of_project_project_funding",
             ),
-            models.CheckConstraint(
-                condition=Q(type__in=ExpenseType.values), name="expense_type_valid"
-            ),
+            models.CheckConstraint(condition=Q(type__in=ExpenseType.values), name="expense_type_valid"),
             models.CheckConstraint(condition=Q(amount__gt=0), name="expense_amount_positive"),
-            models.CheckConstraint(
-                condition=Q(currency__regex=CURRENCY_CODE), name="expense_currency_code"
-            ),
+            models.CheckConstraint(condition=Q(currency__regex=CURRENCY_CODE), name="expense_currency_code"),
         ]
         indexes = [
             models.Index(fields=["project", "spent_on_date"], name="expense_project_ix"),

@@ -1,21 +1,23 @@
-# PRD – PROMT 2.0: warstwa danych (modele backendu)
+# PRD – PROMT 2.0: warstwa danych i architektura backendu
 
 | | |
 |---|---|
 | Produkt | PROMT – Plan • Run • Optimise Management Tool, wersja 2.0 |
-| Zakres dokumentu | **wyłącznie modele danych backendu** (Django 5.2, PostgreSQL) – bez API, bez frontendu |
-| Wersja dokumentu | 1.1 (robocza) |
+| Zakres dokumentu | **modele danych backendu** (Django 5.2, PostgreSQL) w architekturze heksagonalnej aplikacji `backend/app` – bez frontendu |
+| Wersja dokumentu | 1.2 (robocza) |
 | Właściciel | Marek Turkowicz |
 | Zespół | Jakub Jakacki, Jakub Kazimiruk, Marek Turkowicz |
 | Źródło prawdy | `docs/schemat/warianty/er-1-relacyjny.drawio` – wariant 1, 22 tabele, 53 relacje |
-| Powiązane | `docs/wymagania.md` (FR/NFR), `docs/przypadki-uzycia/` (przypadki użycia) |
+| Powiązane | `docs/wymagania.md` (FR/NFR), `docs/przypadki-uzycia/` (przypadki użycia), `docs/architektura-backendu.md` (architektura aplikacji, ASD-STE100) |
 
 ---
 
 ## 1. Cel i priorytet
 
 Priorytetem bieżącego etapu jest **implementacja modeli danych** – 22 modeli Django odpowiadających
-diagramowi wariantu 1, wraz z ograniczeniami bazy, walidacją i metodami domenowymi.
+diagramowi wariantu 1, wraz z ograniczeniami bazy, walidacją i regułami domenowymi – w nowej aplikacji
+`backend/app` o architekturze heksagonalnej (rozdział 2.4). Poprzednia implementacja (`backend/api`)
+jest źródłem, z którego modele są **sukcesywnie przenoszone** do `backend/app`.
 
 Implementacja modeli jest jednocześnie **weryfikacją projektu bazy**: przejście każdego przypadku użycia
 przez modele pokaże, czy schemat zawiera wszystkie potrzebne dane i reguły, czy czegoś nie pominięto
@@ -23,33 +25,43 @@ na etapie projektowania. Wykryte braki trafiają do rejestru (rozdział 10) i �
 diagramu.
 
 Kolejne etapy (poza tym dokumentem):
-1. **Modele (ten dokument)** – schemat, ograniczenia, walidacja, testy modeli.
-2. API REST – pełny backend testowalny bez interfejsu (np. `curl`, testy API).
-3. Warianty badawcze – odwzorowanie tych samych modeli w bazie obiektowo-relacyjnej i MongoDB.
+1. **Modele (ten dokument)** – przeniesienie modeli do `backend/app`, schemat, ograniczenia, encje
+   domenowe, mappery, repozytoria, testy.
+2. API REST – przypadki użycia i adaptery wejściowe (widoki DRF) dla wszystkich modułów; pełny backend
+   testowalny bez interfejsu (np. `curl`, testy API). Moduł `organization` ma już pierwsze endpointy.
+3. Warianty badawcze – odwzorowanie tych samych modeli w bazie obiektowo-relacyjnej i MongoDB. dla tych
+   samych portów; domena i przypadki użycia bez zmian.
 
 ## 2. Zakres
 
 ### 2.1 W zakresie
+- przeniesienie 22 modeli z `backend/api/models/` do modułów `backend/app` (rozdział 2.4),
 - 22 modele zgodne z diagramem: pola, typy, NULL, wartości domyślne, klucze obce i `on_delete`,
 - ograniczenia bazy: klucze główne, unikalności, CHECK, klucze złożone, indeksy,
-- walidacja na poziomie modelu (`clean()`) dla reguł, których nie da się wyrazić ograniczeniem,
-- metody domenowe modeli i menedżery (np. efektywne role, postęp, zaległość),
+- encje domenowe i obiekty wartości (value objects) z regułami, których nie da się wyrazić ograniczeniem bazy,
+- mappery (modele bazodanowe ↔ encja) i repozytoria implementujące porty wyjściowe,
+- reguły domenowe i zapytania – w encjach, przypadkach użycia i repozytoriach,
 - migracje od zera (pusta baza),
-- dane testowe (`seed`) i testy modeli.
+- dane testowe (`seed`) i testy.
 
 ### 2.2 Poza zakresem
-- endpointy API, serializery, uwierzytelnianie HTTP,
+- endpointy API, serializery i uwierzytelnianie HTTP dla modułów innych niż `organization`
+  (etap 2; istniejące endpointy `organization` są utrzymywane),
 - jakiekolwiek elementy interfejsu użytkownika,
 - katalog uprawnień jako tabela (rola przechowuje listę kodów `permissions`),
 - grupy projektowe, zatwierdzanie wydatków, preferencje powiadomień, osoby kontaktowe,
 - automatyczne usuwanie starych powiadomień.
 
-### 2.3 Zmiany względem obecnego kodu
+### 2.3 Zmiany względem poprzedniej implementacji
 
-Obecne modele w `backend/api/models/` są wersją pośrednią i nie odpowiadają diagramowi.
-Etap modeli obejmuje ich przepisanie:
+`backend/api` to poprzednia implementacja: jedna płaska aplikacja Django, w której są zaimplementowane modele. Aplikacja `api` nie jest już w `INSTALLED_APPS`;
+katalog pozostaje w repozytorium jako źródło do przeniesienia i zostanie usunięty po przeniesieniu
+wszystkich modeli i funkcji (w tym logowania z `api/views.py`).
 
-| Obecnie w kodzie | Wariant 1 (docelowo) |
+Modele w `backend/api/models/` są wersją finalną. Przy przenoszeniu
+do `backend/app` są przepisywane:
+
+| Poprzednio w `backend/api` | Wariant 1 w `backend/app` (docelowo) |
 |---|---|
 | `UserProfile` (rola globalna) | usunięty → `OrganizationMember` + role |
 | `TaskScope` | usunięty → kolumny kontekstu w `Task` |
@@ -60,6 +72,59 @@ Etap modeli obejmuje ich przepisanie:
 | `Comment`, `Attachment`, `Expense`, `ActivityLog` z relacją generyczną (`content_type`) | zwykłe klucze obce zgodnie z diagramem |
 | `Organization.slug`, `contact_email` | brak – pola zgodne z diagramem |
 | `User` (logowanie e-mailem) | zostaje, zgodny z diagramem |
+| reguły w `clean()` i metodach modeli | encje domenowe, obiekty wartości i przypadki użycia |
+| `api/services/`| przypadki użycia `app/<moduł>/core/application/` |
+
+### 2.4 Architektura aplikacji `backend/app`
+
+Szczegółowy opis (w standardzie ASD-STE100): `docs/architektura-backendu.md`.
+
+Aplikacja ma architekturę heksagonalną (porty i adaptery) i jest podzielona na moduły domenowe.
+Domena nie zależy od Django ani od bazy danych; zmiana bazy (warianty badawcze) oznacza nowy adapter
+wyjściowy, bez zmian w domenie i przypadkach użycia.
+
+```mermaid
+flowchart LR
+    Klient --> Widok["adapter/inbound/django: widok DRF"]
+    Widok --> PortApi["core/ports/api: port i komenda"]
+    PortApi --> PrzypadekUzycia["core/application: przypadek użycia"]
+    PrzypadekUzycia --> Domena["core/domain: encje, obiekty wartości"]
+    PrzypadekUzycia --> PortSpi["core/ports/spi: port repozytorium"]
+    PortSpi --> Repozytorium["adapter/outbound/relational_db: repozytorium"]
+    Repozytorium --> Mapper
+    Mapper --> ModelDjango["model Django"]
+    ModelDjango --> PostgreSQL
+```
+
+Warstwy modułu:
+
+| Warstwa | Katalog | Zawartość |
+|---|---|---|
+| Domena | `core/domain/` | encje (zamrożone `dataclass`), obiekty wartości, stałe, błędy domenowe (`DomainError` z `kind` i `code`) |
+| Porty wejściowe | `core/ports/api/` | `Protocol` z metodą `execute(command)`, komendy (zamrożone `dataclass`, `UNSET` dla aktualizacji częściowych) |
+| Porty wyjściowe | `core/ports/spi/` | `Protocol` repozytoriów operujących na encjach |
+| Aplikacja | `core/application/` | przypadki użycia – jeden na port wejściowy |
+| Adapter wejściowy | `adapter/inbound/django/` | widoki DRF, deserializery, `urls.py` |
+| Adapter wyjściowy | `adapter/outbound/relational_db/` | modele Django (`app_label = "app"`), mappery, repozytoria |
+| Warianty badawcze | `adapter/outbound/object_relational_db/`, `nonrelational_db/` | zarezerwowane (puste) |
+
+Wiązanie zależności: `app/dependencies_container.py` (`RELATIONAL_DB_REPOSITORIES` → repozytoria →
+przypadki użycia), tworzony w `ApplicationConfig.ready()`. Błędy domenowe zamienia na odpowiedzi HTTP
+`shared/adapter/inbound/django/exception_handler.py` (`ErrorKind` → 400 / 401 / 403 / 404 / 409).
+
+Przypisanie modeli do modułów i stan przeniesienia:
+
+| Moduł | Modele | Stan |
+|---|---|---|
+| `organization` | `Organization`, `OrganizationMember`, `MemberGroup`, `MemberGroupMember` | przeniesione; przypadki użycia: założenie organizacji, zmiana ustawień, dodanie członka; endpointy REST |
+| `access` | `User`, `Role`, `RoleAssignment` | modele przeniesione; port `UserPort`; brak przypadków użycia |
+| `activity` | `ActivityLog`, `Notification` | modele przeniesione; port `NotificationPort` pusty |
+| nowe moduły (np. `project`, `task`, `finance`, `collaboration`) | `TaskStatus`, `Project`, `Milestone`, `Funding`, `ProjectFunding`, `TaskTemplate`, `Task`, `TaskAssignment`, `TimeEntry`, `ChecklistItem`, `Comment`, `Attachment`, `Expense` | do przeniesienia z `backend/api` |
+
+Uwaga: migracja `0001_initial` obejmuje na razie tylko `Organization` i `OrganizationMember`
+(`app/models.py` nie eksportuje pozostałych przeniesionych modeli) – rejestr, pkt 13.
+
+Procedura przeniesienia modelu: `docs/architektura-backendu.md`, rozdział 10.
 
 ## 3. Zasady wspólne dla wszystkich modeli
 
@@ -73,6 +138,15 @@ Etap modeli obejmuje ich przepisanie:
 - Usuwanie: domyślnie `PROTECT` dla danych biznesowych (projekt, finansowanie, zadanie z historią),
   `CASCADE` tylko dla elementów zależnych (punkt checklisty, przypisanie, wpis czasu).
 - Typy pól podlegają mypy w trybie strict (django-stubs).
+- Modele Django leżą w `app/<moduł>/adapter/outbound/relational_db/models/`, mają `app_label = "app"`
+  i są eksportowane w `app/models.py` (inaczej nie trafią do migracji).
+- Podział reguł:
+  - **ograniczenia bazy** – w modelu Django (`CheckConstraint`, `UniqueConstraint`),
+  - **niezmienniki obiektu** – w encji lub obiekcie wartości (`__post_init__`), np. suma kontrolna NIP
+    w `OrganizationTaxId`, co najmniej 3 poziomy priorytetu w `OrganizationSettings`,
+  - **reguły wymagające danych z bazy** (unikalność sprawdzana przed zapisem, zgodność organizacji,
+    ostatni administrator) – w przypadku użycia, z użyciem portów repozytoriów.
+- Domena (`core/domain`) nie importuje Django; Django pojawia się tylko w adapterach.
 
 ## 4. Modele – specyfikacja i kryteria akceptacji
 
@@ -80,9 +154,16 @@ Kolumny w tabelach są zgodne 1:1 z diagramem `er-1-relacyjny.drawio` (nazwy i N
 z oznaczeniem ⚠ **może brakuje** to propozycje uzupełnień – nie ma ich na diagramie i nie są implementowane
 bez decyzji zespołu (zbiorczo w rejestrze, rozdział 10).
 
-Oznaczenia kryteriów akceptacji (AK): weryfikowane testem modelu (pytest-django) – próbą zapisu
-poprawnych i niepoprawnych danych. *IntegrityError* = odrzucenie przez bazę, *ValidationError* = przez
-`full_clean()`.
+Oznaczenia kryteriów akceptacji (AK): weryfikowane testem (pytest-django) – próbą zapisu
+poprawnych i niepoprawnych danych. *IntegrityError* = odrzucenie przez bazę, *ValidationError* =
+odrzucenie przez regułę aplikacji: w `backend/app` jest to **błąd domenowy** (podklasa `DomainError`
+z `kind` i `code`) zgłaszany przez encję, obiekt wartości albo przypadek użycia; `full_clean()` modelu
+Django nie jest miejscem reguł biznesowych.
+
+Metody wymienione przy modelach (np. `activate()`, `effective_roles()`, `progress()`) są wymaganiami
+funkcjonalnymi – w `backend/app` realizuje je encja domenowa, przypadek użycia albo metoda repozytorium
+(zapytania do bazy), a nie model Django. Menedżery modeli (np. `for_organization`, `for_member`)
+odpowiadają metodom portów repozytoriów.
 
 ### 4.1 Organizacja, ludzie i role
 
@@ -475,8 +556,13 @@ Dziennik zdarzeń; tylko dopisywanie.
 
 ## 5. Funkcjonalności (procesy obejmujące kilka modeli)
 
-Procesy realizowane jako metody serwisowe warstwy modeli (np. `api/services/`), każdy w jednej transakcji
-(`transaction.atomic`). Kryteria akceptacji sprawdzane testami na modelach, bez API.
+Procesy realizowane jako przypadki użycia w `app/<moduł>/core/application/`, każdy w jednej transakcji.
+Przypadek użycia korzysta wyłącznie z portów repozytoriów; procesy obejmujące kilka modułów używają
+portów innych modułów (np. `AddOrganizationMemberUseCase` używa `UserPort` z modułu `access`).
+Sposób otwierania transakcji bez wiązania domeny z Django (np. port „jednostki pracy” albo dekorator
+w adapterze) jest otwartą kwestią – rejestr, pkt 14. Kryteria akceptacji sprawdzane testami przypadków
+użycia, bez API. Proces P2 jest częściowo zrealizowany (`CreateOrganizationUseCase` – bez statusów,
+ról i członkostwa twórcy), P3 – częściowo (`AddOrganizationMemberUseCase` – zaproszenie bez powiadomienia).
 
 ### P1. Podpięcie finansowania do projektu tworzy zadania z szablonów
 Modele: `ProjectFunding`, `TaskTemplate`, `Task`, `TaskStatus`, `ActivityLog`.
@@ -633,8 +719,8 @@ z różnych organizacji.
 
 ## 7. Weryfikacja kompletności modelu (przypadki użycia → modele)
 
-Każdy przypadek użycia z `docs/przypadki-uzycia/` musi dać się zrealizować na modelach – w teście
-lub w powłoce Django (`manage.py shell`).
+Każdy przypadek użycia z `docs/przypadki-uzycia/` musi dać się zrealizować na modelach i repozytoriach
+`backend/app` – w teście lub w powłoce Django (`manage.py shell`).
 
 | Obszar przypadków użycia | Modele | Test kompletności |
 |---|---|---|
@@ -665,20 +751,23 @@ diagramu.
 | D-4 | Indeksy | indeksy pod operacje referencyjne: Kanban (project, status), „Moje zadania” (member), historia obiektu, nieprzeczytane powiadomienia; `EXPLAIN` bez skanu sekwencyjnego dla zbioru 100 000 zadań |
 | D-5 | Wydajność modeli | `effective_roles` – 1 zapytanie; lista zadań projektu z przypisaniami i statusem – stała liczba zapytań (`select_related` / `prefetch_related`), test `django_assert_num_queries` |
 | D-6 | Dane testowe | `manage.py seed --orgs N --tasks M --seed S` tworzy deterministyczny zbiór spełniający wszystkie ograniczenia |
-| D-7 | Jakość | mypy strict i ruff bez błędów dla `api/models`; pokrycie testami modeli ≥ 80% |
-| D-8 | Przenośność | lista miejsc zależnych od PostgreSQL (`ArrayField`, `JSONField`, indeksy częściowe, złożony FK) w docstringach modeli – wejście do wariantów obiektowo-relacyjnego i MongoDB |
+| D-7 | Jakość | mypy strict i ruff bez błędów dla `backend/app`; pokrycie testami (domena, przypadki użycia, repozytoria) ≥ 80% |
+| D-8 | Przenośność | lista miejsc zależnych od PostgreSQL (`ArrayField`, `JSONField`, indeksy częściowe, złożony FK) w docstringach modeli – wejście do adapterów `object_relational_db` i `nonrelational_db` |
+| D-9 | Granice warstw | `core/` żadnego modułu nie importuje `django`, `rest_framework` ani `adapter/`; sprawdzane testem lub regułą lintera (np. import-linter) |
+| D-10 | Wymienność adapterów | porty repozytoriów operują wyłącznie na encjach domenowych; repozytoria wiązane tylko w `dependencies_container.py` |
 
 ## 9. Plan etapu modeli
 
 | Krok | Zakres | Ukończone gdy |
 |---|---|---|
-| 1 | Usunięcie obecnych modeli pośrednich, przygotowanie pustej bazy | brak migracji poza `__init__.py`, serwer startuje |
-| 2 | Obszar 4.1 – organizacja, ludzie, role | AK z 4.1 zielone |
-| 3 | Obszar 4.2–4.3 – statusy, projekty, finansowanie | AK z 4.2–4.3 zielone |
-| 4 | Obszar 4.4 – zadania, przypisania, czas, checklisty | AK z 4.4 zielone |
-| 5 | Obszar 4.5 – współpraca, koszty, historia | AK z 4.5 zielone |
-| 6 | Procesy, reguły międzymodelowe i weryfikacja kompletności | rozdziały 5–7 zielone, rejestr braków uzupełniony |
+| 1 | Nowa aplikacja `backend/app` (architektura heksagonalna, moduł `shared`, kontener zależności), odłączenie `api` | **zrobione** – `app` w `INSTALLED_APPS`, serwer startuje |
+| 2 | Obszar 4.1 – organizacja, ludzie, role (moduły `organization`, `access`) | modele przeniesione **(zrobione)**, wszystkie eksportowane w `app/models.py` i w migracji, `AUTH_USER_MODEL = "app.User"`, AK z 4.1 zielone |
+| 3 | Obszar 4.2–4.3 – statusy, projekty, finansowanie | modele przeniesione z `api`, encje, mappery, repozytoria; AK z 4.2–4.3 zielone |
+| 4 | Obszar 4.4 – zadania, przypisania, czas, checklisty | jw.; AK z 4.4 zielone |
+| 5 | Obszar 4.5 – współpraca, koszty, historia (moduł `activity` i nowe) | jw.; AK z 4.5 zielone |
+| 6 | Procesy (przypadki użycia), reguły międzymodelowe i weryfikacja kompletności | rozdziały 5–7 zielone, rejestr braków uzupełniony |
 | 7 | Seed i indeksy | D-4, D-6 spełnione |
+| 8 | Usunięcie `backend/api` | wszystkie modele i funkcje (logowanie) przeniesione, katalog usunięty |
 
 Odpowiada kamieniowi milowemu **M1 – Data model** na GitHubie.
 
@@ -697,10 +786,19 @@ Odpowiada kamieniowi milowemu **M1 – Data model** na GitHubie.
 | 7 | złożony FK `task → project_funding` | nieobsługiwany przez ORM | ograniczenie przez `RunSQL` w migracji |
 | 8 | `project.hidden_status_ids` jako tablica | brak FK do statusów | walidacja w modelu |
 | 9 | `activity_log.entity_id` bez FK | wpis może wskazywać usunięty obiekt | akceptujemy – historia ma przetrwać usunięcie |
+| 12 | `AUTH_USER_MODEL` zakomentowane w `core/settings.py` | `OrganizationMember.user` wskazuje domyślny model użytkownika Django, nie `app.User` | ustawić `AUTH_USER_MODEL = "app.User"` przed kolejną migracją |
+| 13 | migracja `0001_initial` obejmuje tylko `Organization` i `OrganizationMember` | brak tabel `user`, `role`, `role_assignment`, `member_group`, `member_group_member`, `activity_log`, `notification` | wyeksportować modele w `app/models.py`, wygenerować migrację |
+| 14 | przypadki użycia bez transakcji | proces wieloetapowy może zostawić częściowe dane (D-3) | port „jednostki pracy” albo transakcja otwierana w adapterze wejściowym |
+| 15 | brak sprawdzania uprawnień w widokach i przypadkach użycia | każdy klient może wywołać każdy endpoint | sprawdzanie `has_permission` (P4) w przypadkach użycia |
+| 16 | `NotificationPort` bez metod | zaproszenie członka nie wysyła powiadomienia | zdefiniować port przy przenoszeniu `Notification` |
+| 17 | `DependenciesContainer.repositories` typu `dict[type, Any]` | mypy nie sprawdza typów repozytoriów | typowane pola kontenera albo fabryka per port |
+| 18 | logowanie (sesja, CSRF) tylko w `api/views.py` | `backend/app` nie ma endpointów uwierzytelniania | przenieść do adaptera wejściowego modułu `access` |
 
 ## 11. Definition of Done (model)
 
 Model jest ukończony, gdy:
+- jest przeniesiony z `backend/api` do właściwego modułu `backend/app` i wyeksportowany w `app/models.py`,
+- ma encję domenową, mapper, port repozytorium i repozytorium zarejestrowane w kontenerze zależności,
 - pola, typy, NULL i nazwy są zgodne z diagramem,
 - wszystkie jego kryteria akceptacji mają testy i przechodzą,
 - ograniczenia są w migracji (sprawdzone w bazie, nie tylko w `clean()`),
@@ -721,6 +819,9 @@ Model jest ukończony, gdy:
   obiektowo-relacyjny i dokumentowy wymagają osobnej warstwy dostępu (psycopg z ręcznym SQL, PyMongo).
 - Właściwym rozwiązaniem jest **warstwa repozytoriów** (jeden interfejs operacji, trzy implementacje),
   niezależna od frameworka. Django jest wtedy tylko jednym z miejsc wywołania.
+  **Stan: zrealizowane** w `backend/app` – porty wyjściowe (`core/ports/spi`) to interfejs, adapter
+  `relational_db` to pierwsza implementacja, katalogi `object_relational_db` i `nonrelational_db`
+  czekają na pozostałe dwie.
 - FastAPI warto rozważyć dopiero przy wariantach badawczych, jeśli okaże się, że cykl żądania Django
-  (middleware, ORM, sesje) zaburza pomiary – wtedy lekka aplikacja FastAPI może wywoływać te same
-  repozytoria. Decyzja przy przejściu do etapu 3 (rozdział 1).
+  (middleware, ORM, sesje) zaburza pomiary – wtedy lekka aplikacja FastAPI może być kolejnym adapterem
+  wejściowym wywołującym te same przypadki użycia. Decyzja przy przejściu do etapu 3 (rozdział 1).
