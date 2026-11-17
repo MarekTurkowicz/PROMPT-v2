@@ -43,6 +43,7 @@ python-dotenv==1.2.4
 sqlparse==0.6.0
 termcolor==3.3.0
 types-django-filter==25.2.0.20260508
+types-psycopg2==2.9.21.20261030
 types-PyYAML==6.0.12.20260906
 typing_extensions==4.16.0
 typing-inspection==0.4.4

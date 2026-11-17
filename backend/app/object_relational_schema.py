@@ -117,3 +117,6 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     ACTIVITY_LOG_NO_TRUNCATE,
     NOTIFICATION,
 )
+
+# Version -> objects created by it. A later change is a new version with ALTER statements.
+MIGRATIONS: dict[int, tuple[SchemaObject, ...]] = {1: SCHEMA_OBJECTS}
