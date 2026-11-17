@@ -4,6 +4,7 @@ from app.access.adapter.outbound.object_relational_db.schema.role import (
     PERMISSION_SET,
     ROLE,
 )
+from app.access.adapter.outbound.object_relational_db.schema.role_assignment import ROLE_ASSIGNMENT
 from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
 from app.organization.adapter.outbound.object_relational_db.schema.member_group import MEMBER_GROUP
 from app.organization.adapter.outbound.object_relational_db.schema.member_group_member import (
@@ -35,4 +36,5 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     ROLE,
     PROJECT_STATUS,
     PROJECT,
+    ROLE_ASSIGNMENT,
 )
