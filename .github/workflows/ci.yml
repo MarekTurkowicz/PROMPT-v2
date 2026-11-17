@@ -80,6 +80,19 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      ordb:
+        image: postgres:18.3-alpine
+        env:
+          POSTGRES_DB: promt_or
+          POSTGRES_USER: promt_user
+          POSTGRES_PASSWORD: promt_ci
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U promt_user -d promt_or"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
@@ -93,6 +106,13 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py migrate
+      - name: Object-relational schema (#52)
+        run: python manage.py migrate_or
+        env:
+          OR_DB_HOST: localhost
+          OR_DB_PORT: "5434"
+          OR_DB_USER: promt_user
+          OR_DB_PASSWORD: promt_ci
       - run: pytest
 
   e2e-playwright:
