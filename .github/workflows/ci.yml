@@ -87,7 +87,7 @@ jobs:
           POSTGRES_USER: promt_user
           POSTGRES_PASSWORD: promt_ci
         ports:
-          - 5434:5432
+          - 27016:5432
         options: >-
           --health-cmd "pg_isready -U promt_user -d promt_or"
           --health-interval 5s
@@ -106,14 +106,15 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py migrate
-      - name: Object-relational schema (#52)
-        run: python manage.py migrate_or
-        env:
+      # Object-relational database (#52): migrate_or and its tests use the ordb service.
+      - run: python manage.py migrate_or
+        env: &or_db_env
           OR_DB_HOST: localhost
-          OR_DB_PORT: "5434"
+          OR_DB_PORT: "27016"
           OR_DB_USER: promt_user
           OR_DB_PASSWORD: promt_ci
       - run: pytest
+        env: *or_db_env
 
   e2e-playwright:
     # Disabled until the PROMT 2.0 frontend exists (M4).

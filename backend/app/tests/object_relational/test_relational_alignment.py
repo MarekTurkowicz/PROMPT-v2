@@ -1,0 +1,73 @@
+import ast
+from pathlib import Path
+
+import pytest
+
+from app.object_relational_schema import SCHEMA_OBJECTS
+from app.organization.core.domain.value_objects.member_status import MemberStatus
+from app.shared.adapter.outbound.object_relational_db.schema.objects import (
+    EnumType,
+    Table,
+    missing_dependencies,
+)
+
+BACKEND = Path(__file__).resolve().parents[3]
+ENUMS = {obj.name: obj for obj in SCHEMA_OBJECTS if isinstance(obj, EnumType)}
+
+# ENUM -> (relational model file, TextChoices class). The api models are not installed,
+# so the values are read from the source instead of importing the module.
+RELATIONAL_CHOICES = {
+    "member_status_t": (
+        "app/organization/adapter/outbound/relational_db/models/organization_member.py",
+        "MemberStatus",
+    ),
+    "project_status_t": ("api/models/project.py", "ProjectStatus"),
+    "status_category_t": ("api/models/task_status.py", "StatusCategory"),
+    "milestone_status_t": ("api/models/milestone.py", "MilestoneStatus"),
+    "funding_type_t": ("api/models/funding.py", "FundingType"),
+    "expense_type_t": ("api/models/expense.py", "ExpenseType"),
+    "entity_type_t": ("app/activity/adapter/outbound/relational_db/models/activity_log.py", "EntityType"),
+    "activity_action_t": (
+        "app/activity/adapter/outbound/relational_db/models/activity_log.py",
+        "ActivityAction",
+    ),
+}
+
+
+def text_choices_values(path: str, class_name: str) -> tuple[str, ...]:
+    tree = ast.parse((BACKEND / path).read_text(encoding="utf-8"))
+    cls = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef) and n.name == class_name)
+    values = []
+    for node in cls.body:
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Tuple):
+            first = node.value.elts[0]
+            assert isinstance(first, ast.Constant)
+            values.append(str(first.value))
+    return tuple(values)
+
+
+def test_every_enum_is_checked() -> None:
+    assert set(ENUMS) == set(RELATIONAL_CHOICES)
+
+
+@pytest.mark.parametrize("enum_name", sorted(RELATIONAL_CHOICES))
+def test_enum_values_match_relational_choices(enum_name: str) -> None:
+    # Same order too: PostgreSQL compares ENUM values by their position.
+    assert ENUMS[enum_name].values == text_choices_values(*RELATIONAL_CHOICES[enum_name])
+
+
+def test_member_status_matches_domain_enum() -> None:
+    assert ENUMS["member_status_t"].values == tuple(MemberStatus)
+
+
+def test_schema_has_no_missing_dependencies() -> None:
+    assert missing_dependencies(SCHEMA_OBJECTS) == []
+
+
+def test_schema_has_twenty_tables() -> None:
+    assert len([obj for obj in SCHEMA_OBJECTS if isinstance(obj, Table)]) == 20
+
+
+def test_object_names_are_unique() -> None:
+    names = [obj.name for obj in SCHEMA_OBJECTS]
+    assert len(names) == len(set(names))

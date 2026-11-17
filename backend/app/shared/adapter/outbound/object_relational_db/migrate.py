@@ -18,11 +18,11 @@ CREATE TABLE IF NOT EXISTS schema_version (
 LOCK_KEY = 52_052
 
 
-def connect_from_env() -> connection:
+def connect_from_env(dbname: str | None = None) -> connection:
     """OR_DB_* variables; user, password, host and port default to the main database."""
     default = settings.DATABASES["default"]
     return psycopg2.connect(
-        dbname=os.getenv("OR_DB_NAME", "promt_or"),
+        dbname=dbname or os.getenv("OR_DB_NAME", "promt_or"),
         user=os.getenv("OR_DB_USER", default["USER"]),
         password=os.getenv("OR_DB_PASSWORD", default["PASSWORD"]),
         host=os.getenv("OR_DB_HOST", default["HOST"]),
