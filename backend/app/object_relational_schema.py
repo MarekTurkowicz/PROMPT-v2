@@ -55,6 +55,7 @@ from app.task.adapter.outbound.object_relational_db.schema.task import (
     TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
 )
 from app.task.adapter.outbound.object_relational_db.schema.task_assignment import TASK_ASSIGNMENT
+from app.task.adapter.outbound.object_relational_db.schema.time_entry import HOURS, TIME_ENTRY
 
 # All objects of the object-relational schema in creation order (like app/models.py).
 SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
@@ -103,4 +104,6 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     TASK,
     TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
     TASK_ASSIGNMENT,
+    HOURS,
+    TIME_ENTRY,
 )
