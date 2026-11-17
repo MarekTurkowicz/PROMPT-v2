@@ -6,6 +6,14 @@ from app.access.adapter.outbound.object_relational_db.schema.role import (
 )
 from app.access.adapter.outbound.object_relational_db.schema.role_assignment import ROLE_ASSIGNMENT
 from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
+from app.activity.adapter.outbound.object_relational_db.schema.activity_log import (
+    ACTIVITY_ACTION,
+    ACTIVITY_LOG,
+    ACTIVITY_LOG_APPEND_ONLY,
+    ACTIVITY_LOG_GUARD,
+    ACTIVITY_LOG_NO_TRUNCATE,
+    ENTITY_TYPE,
+)
 from app.finance.adapter.outbound.object_relational_db.schema.expense import EXPENSE, EXPENSE_TYPE
 from app.finance.adapter.outbound.object_relational_db.schema.funding import FUNDING, FUNDING_TYPE
 from app.finance.adapter.outbound.object_relational_db.schema.project_funding import (
@@ -112,4 +120,10 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     COMMENT,
     EXPENSE_TYPE,
     EXPENSE,
+    ENTITY_TYPE,
+    ACTIVITY_ACTION,
+    ACTIVITY_LOG,
+    ACTIVITY_LOG_GUARD,
+    ACTIVITY_LOG_APPEND_ONLY,
+    ACTIVITY_LOG_NO_TRUNCATE,
 )
