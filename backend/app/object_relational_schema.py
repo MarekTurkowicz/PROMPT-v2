@@ -7,6 +7,11 @@ from app.access.adapter.outbound.object_relational_db.schema.role import (
 from app.access.adapter.outbound.object_relational_db.schema.role_assignment import ROLE_ASSIGNMENT
 from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
 from app.finance.adapter.outbound.object_relational_db.schema.funding import FUNDING, FUNDING_TYPE
+from app.finance.adapter.outbound.object_relational_db.schema.project_funding import (
+    PROJECT_FUNDING,
+    PROJECT_FUNDING_ONE_PRIMARY,
+    PROJECT_FUNDING_UNIQUE,
+)
 from app.organization.adapter.outbound.object_relational_db.schema.member_group import MEMBER_GROUP
 from app.organization.adapter.outbound.object_relational_db.schema.member_group_member import (
     MEMBER_GROUP_MEMBER,
@@ -63,4 +68,7 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     MONEY,
     FUNDING_TYPE,
     FUNDING,
+    PROJECT_FUNDING,
+    PROJECT_FUNDING_UNIQUE,
+    PROJECT_FUNDING_ONE_PRIMARY,
 )
