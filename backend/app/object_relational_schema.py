@@ -47,6 +47,7 @@ from app.shared.adapter.outbound.object_relational_db.schema.domains import (
     PRIORITY,
 )
 from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
+from app.task.adapter.outbound.object_relational_db.schema.comment import COMMENT, NONEMPTY_TEXT
 from app.task.adapter.outbound.object_relational_db.schema.task import (
     CHECKLIST_IDS_UNIQUE,
     CHECKLIST_ITEM,
@@ -106,4 +107,6 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     TASK_ASSIGNMENT,
     HOURS,
     TIME_ENTRY,
+    NONEMPTY_TEXT,
+    COMMENT,
 )
