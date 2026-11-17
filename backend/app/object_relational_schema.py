@@ -1,4 +1,5 @@
 from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
+from app.organization.adapter.outbound.object_relational_db.schema.member_group import MEMBER_GROUP
 from app.organization.adapter.outbound.object_relational_db.schema.organization import ORGANIZATION
 from app.organization.adapter.outbound.object_relational_db.schema.organization_member import (
     MEMBER_STATUS,
@@ -16,4 +17,5 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     ORGANIZATION,
     MEMBER_STATUS,
     ORGANIZATION_MEMBER,
+    MEMBER_GROUP,
 )
