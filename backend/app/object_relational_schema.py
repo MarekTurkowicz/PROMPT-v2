@@ -14,6 +14,7 @@ from app.activity.adapter.outbound.object_relational_db.schema.activity_log impo
     ACTIVITY_LOG_NO_TRUNCATE,
     ENTITY_TYPE,
 )
+from app.activity.adapter.outbound.object_relational_db.schema.notification import NOTIFICATION
 from app.finance.adapter.outbound.object_relational_db.schema.expense import EXPENSE, EXPENSE_TYPE
 from app.finance.adapter.outbound.object_relational_db.schema.funding import FUNDING, FUNDING_TYPE
 from app.finance.adapter.outbound.object_relational_db.schema.project_funding import (
@@ -126,4 +127,5 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     ACTIVITY_LOG_GUARD,
     ACTIVITY_LOG_APPEND_ONLY,
     ACTIVITY_LOG_NO_TRUNCATE,
+    NOTIFICATION,
 )
