@@ -47,12 +47,8 @@ INSERT INTO notification (id, activity_id, recipient_id, content, created_at)
 
 @pytest.fixture(scope="module")
 def db() -> Iterator[connection]:
-    try:
-        admin = connect_from_env("postgres")
-    except psycopg2.OperationalError:
-        if os.getenv("CI"):
-            raise
-        pytest.skip("no PostgreSQL for the object-relational schema (OR_DB_*)")
+    # Needs the prompt_ordb container (or OR_DB_*); like the MongoDB tests, no skip without a database.
+    admin = connect_from_env("postgres")
     admin.autocommit = True
     with admin.cursor() as cur:
         cur.execute(f"DROP DATABASE IF EXISTS {TEST_DB} WITH (FORCE)")

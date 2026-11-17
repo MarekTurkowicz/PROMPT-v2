@@ -189,7 +189,7 @@ OR_DB_PASSWORD=mt123 pytest app/tests/object_relational
 ```
 
 Testy tworzą własną bazę `<OR_DB_NAME>_test` i usuwają ją na końcu – danych w `promt_or` nie ruszają.
-Bez dostępnej bazy testy na żywej bazie są pomijane; w CI (`CI=true`) brak bazy to błąd.
+Testy na żywej bazie wymagają działającego kontenera `prompt_ordb` (jak testy MongoDB – bez pomijania).
 Nowa zmiana schematu = nowa wersja w `MIGRATIONS` z poleceniami `ALTER`.
 
 ## 8. Bilans
