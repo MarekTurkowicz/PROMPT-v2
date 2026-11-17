@@ -18,6 +18,7 @@ Końce linii: `||` dokładnie jeden · `|o` zero lub jeden · `|<` jeden lub wie
 |---|---|
 | `nosql-mongodb.drawio`, `nosql-mongodb.md` | dokumentowy (MongoDB): kolekcje, dokumenty osadzone, odwołania, indeksy, zapytania |
 | `obiektowo-relacyjny.drawio`, `obiektowo-relacyjny.md` | obiektowo-relacyjny (PostgreSQL): typy złożone, ENUM, domeny, dziedziczenie, tablice, zakresy |
+| `obiektowo-relacyjny-2.0.drawio`, `obiektowo-relacyjny-2.0.md` | aktualny model obiektowo-relacyjny (PostgreSQL 18), zaimplementowany: 20 tabel, 8 ENUM, 13 DOMAIN, 3 typy złożone, trigger append-only; uruchomienie i testy w sekcji 7 pliku `.md` |
 
 Diagramy przypadków użycia: `docs/przypadki-uzycia/`.
 Pliki `.drawio` otwiera rozszerzenie Draw.io Integration w VS Code albo https://app.diagrams.net.
