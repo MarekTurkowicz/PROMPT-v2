@@ -37,7 +37,7 @@ services:
     volumes:
       - ordb_data:/var/lib/postgresql
     ports:
-      - "5434:5432"
+      - "${OR_DB_PORT:-27016}:5432"
     networks:
       - my-network
     healthcheck:
