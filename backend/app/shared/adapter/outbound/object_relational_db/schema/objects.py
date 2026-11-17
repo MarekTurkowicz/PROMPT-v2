@@ -43,7 +43,19 @@ class Table:
         return self.sql.strip().rstrip(";") + ";"
 
 
-SchemaObject = EnumType | Domain | Table
+@dataclass(frozen=True, slots=True)
+class Statement:
+    """Any other object: composite type, function, trigger, partial unique index."""
+
+    name: str
+    sql: str
+    depends_on: tuple[str, ...] = ()
+
+    def create_sql(self) -> str:
+        return self.sql.strip().rstrip(";") + ";"
+
+
+SchemaObject = EnumType | Domain | Table | Statement
 
 
 def render(objects: Iterable[SchemaObject]) -> str:

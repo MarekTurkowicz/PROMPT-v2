@@ -1,3 +1,9 @@
+from app.access.adapter.outbound.object_relational_db.schema.role import (
+    PERMISSION_CODE,
+    PERMISSION_CODES_DISTINCT,
+    PERMISSION_SET,
+    ROLE,
+)
 from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
 from app.organization.adapter.outbound.object_relational_db.schema.member_group import MEMBER_GROUP
 from app.organization.adapter.outbound.object_relational_db.schema.member_group_member import (
@@ -22,4 +28,8 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     ORGANIZATION_MEMBER,
     MEMBER_GROUP,
     MEMBER_GROUP_MEMBER,
+    PERMISSION_CODE,
+    PERMISSION_CODES_DISTINCT,
+    PERMISSION_SET,
+    ROLE,
 )
