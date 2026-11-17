@@ -14,6 +14,7 @@ from app.organization.adapter.outbound.object_relational_db.schema.organization_
     MEMBER_STATUS,
     ORGANIZATION_MEMBER,
 )
+from app.project.adapter.outbound.object_relational_db.schema.project import PROJECT, PROJECT_STATUS
 from app.shared.adapter.outbound.object_relational_db.schema.domains import EMAIL, JSON_OBJECT
 from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
 
@@ -32,4 +33,6 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     PERMISSION_CODES_DISTINCT,
     PERMISSION_SET,
     ROLE,
+    PROJECT_STATUS,
+    PROJECT,
 )
