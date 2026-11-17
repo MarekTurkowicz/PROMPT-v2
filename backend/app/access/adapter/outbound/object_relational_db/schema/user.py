@@ -3,9 +3,8 @@ from app.shared.adapter.outbound.object_relational_db.schema.objects import Doma
 # Replaces the relational CHECK user_email_lowercase: Jan@x.pl and jan@x.pl are the same login.
 LOGIN_EMAIL = Domain(
     name="login_email_d",
-    base="email_d",
+    base="varchar(254)",
     check="VALUE = lower(VALUE)",
-    depends_on=("email_d",),
 )
 
 USER = Table(

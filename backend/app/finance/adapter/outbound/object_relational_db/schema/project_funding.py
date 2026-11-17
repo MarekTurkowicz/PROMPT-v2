@@ -1,6 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import Statement, Table
 
-# UNIQUE (id, project_id) is the target of the composite FK from task (same project on both sides).
 PROJECT_FUNDING = Table(
     name="project_funding",
     depends_on=("project", "funding"),

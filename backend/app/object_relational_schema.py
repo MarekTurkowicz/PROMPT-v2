@@ -1,9 +1,4 @@
-from app.access.adapter.outbound.object_relational_db.schema.role import (
-    PERMISSION_CODE,
-    PERMISSION_CODES_DISTINCT,
-    PERMISSION_SET,
-    ROLE,
-)
+from app.access.adapter.outbound.object_relational_db.schema.role import ROLE
 from app.access.adapter.outbound.object_relational_db.schema.role_assignment import ROLE_ASSIGNMENT
 from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
 from app.activity.adapter.outbound.object_relational_db.schema.activity_log import (
@@ -49,10 +44,8 @@ from app.shared.adapter.outbound.object_relational_db.schema.composite_types imp
 )
 from app.shared.adapter.outbound.object_relational_db.schema.domains import (
     CURRENCY,
-    EMAIL,
     EST_HOURS,
     FILE_SIZE,
-    JSON_OBJECT,
     POSITION,
     PRIORITY,
 )
@@ -70,18 +63,13 @@ from app.task.adapter.outbound.object_relational_db.schema.time_entry import HOU
 
 # All objects of the object-relational schema in creation order (like app/models.py).
 SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
-    EMAIL,
     LOGIN_EMAIL,
     USER,
-    JSON_OBJECT,
     ORGANIZATION,
     MEMBER_STATUS,
     ORGANIZATION_MEMBER,
     MEMBER_GROUP,
     MEMBER_GROUP_MEMBER,
-    PERMISSION_CODE,
-    PERMISSION_CODES_DISTINCT,
-    PERMISSION_SET,
     ROLE,
     PROJECT_STATUS,
     PROJECT,
