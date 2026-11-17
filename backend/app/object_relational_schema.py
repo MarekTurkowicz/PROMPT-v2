@@ -12,6 +12,7 @@ from app.finance.adapter.outbound.object_relational_db.schema.project_funding im
     PROJECT_FUNDING_ONE_PRIMARY,
     PROJECT_FUNDING_UNIQUE,
 )
+from app.finance.adapter.outbound.object_relational_db.schema.task_template import DUE_DAYS, TASK_TEMPLATE
 from app.organization.adapter.outbound.object_relational_db.schema.member_group import MEMBER_GROUP
 from app.organization.adapter.outbound.object_relational_db.schema.member_group_member import (
     MEMBER_GROUP_MEMBER,
@@ -33,8 +34,10 @@ from app.shared.adapter.outbound.object_relational_db.schema.composite_types imp
 from app.shared.adapter.outbound.object_relational_db.schema.domains import (
     CURRENCY,
     EMAIL,
+    EST_HOURS,
     JSON_OBJECT,
     POSITION,
+    PRIORITY,
 )
 from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
 
@@ -71,4 +74,8 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     PROJECT_FUNDING,
     PROJECT_FUNDING_UNIQUE,
     PROJECT_FUNDING_ONE_PRIMARY,
+    PRIORITY,
+    EST_HOURS,
+    DUE_DAYS,
+    TASK_TEMPLATE,
 )
