@@ -6,6 +6,7 @@ from app.access.adapter.outbound.object_relational_db.schema.role import (
 )
 from app.access.adapter.outbound.object_relational_db.schema.role_assignment import ROLE_ASSIGNMENT
 from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
+from app.finance.adapter.outbound.object_relational_db.schema.expense import EXPENSE, EXPENSE_TYPE
 from app.finance.adapter.outbound.object_relational_db.schema.funding import FUNDING, FUNDING_TYPE
 from app.finance.adapter.outbound.object_relational_db.schema.project_funding import (
     PROJECT_FUNDING,
@@ -109,4 +110,6 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     TIME_ENTRY,
     NONEMPTY_TEXT,
     COMMENT,
+    EXPENSE_TYPE,
+    EXPENSE,
 )
