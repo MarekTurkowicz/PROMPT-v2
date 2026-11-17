@@ -2,3 +2,6 @@ from app.shared.adapter.outbound.object_relational_db.schema.objects import Doma
 
 # Loose on purpose: Django also accepts addresses like admin@localhost.
 EMAIL = Domain(name="email_d", base="varchar(254)", check=r"VALUE ~ '^[^@\s]+@[^@\s]+$'")
+
+# Key-value documents (organization.settings, notification.content); arrays and scalars are rejected.
+JSON_OBJECT = Domain(name="json_object_d", base="jsonb", check="jsonb_typeof(VALUE) = 'object'")
