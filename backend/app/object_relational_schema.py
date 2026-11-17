@@ -54,6 +54,7 @@ from app.task.adapter.outbound.object_relational_db.schema.task import (
     TASK,
     TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
 )
+from app.task.adapter.outbound.object_relational_db.schema.task_assignment import TASK_ASSIGNMENT
 
 # All objects of the object-relational schema in creation order (like app/models.py).
 SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
@@ -101,4 +102,5 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     CHECKLIST_IDS_UNIQUE,
     TASK,
     TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
+    TASK_ASSIGNMENT,
 )
