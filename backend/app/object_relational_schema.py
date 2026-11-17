@@ -16,7 +16,13 @@ from app.organization.adapter.outbound.object_relational_db.schema.organization_
     ORGANIZATION_MEMBER,
 )
 from app.project.adapter.outbound.object_relational_db.schema.project import PROJECT, PROJECT_STATUS
-from app.shared.adapter.outbound.object_relational_db.schema.domains import EMAIL, JSON_OBJECT
+from app.project.adapter.outbound.object_relational_db.schema.task_status import (
+    COLOR,
+    STATUS_CATEGORY,
+    TASK_STATUS,
+    TASK_STATUS_ONE_DEFAULT_IN_ORG,
+)
+from app.shared.adapter.outbound.object_relational_db.schema.domains import EMAIL, JSON_OBJECT, POSITION
 from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
 
 # All objects of the object-relational schema in creation order (like app/models.py).
@@ -37,4 +43,9 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     PROJECT_STATUS,
     PROJECT,
     ROLE_ASSIGNMENT,
+    POSITION,
+    STATUS_CATEGORY,
+    COLOR,
+    TASK_STATUS,
+    TASK_STATUS_ONE_DEFAULT_IN_ORG,
 )
