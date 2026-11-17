@@ -15,6 +15,7 @@ from app.organization.adapter.outbound.object_relational_db.schema.organization_
     MEMBER_STATUS,
     ORGANIZATION_MEMBER,
 )
+from app.project.adapter.outbound.object_relational_db.schema.milestone import MILESTONE, MILESTONE_STATUS
 from app.project.adapter.outbound.object_relational_db.schema.project import PROJECT, PROJECT_STATUS
 from app.project.adapter.outbound.object_relational_db.schema.task_status import (
     COLOR,
@@ -48,4 +49,6 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     COLOR,
     TASK_STATUS,
     TASK_STATUS_ONE_DEFAULT_IN_ORG,
+    MILESTONE_STATUS,
+    MILESTONE,
 )
