@@ -15,5 +15,8 @@ EST_HOURS = Domain(name="est_hours_d", base="numeric(6,2)", check="VALUE > 0")
 # ISO 4217 code, the same regex as CURRENCY_CODE of the relational model.
 CURRENCY = Domain(name="currency_d", base="char(3)", check="VALUE ~ '^[A-Z]{3}$'")
 
+# Attachment size in bytes, 1 B .. 50 MiB (MAX_ATTACHMENT_SIZE of the relational model).
+FILE_SIZE = Domain(name="file_size_d", base="bigint", check="VALUE > 0 AND VALUE <= 52428800")
+
 # Key-value documents (organization.settings, notification.content); arrays and scalars are rejected.
 JSON_OBJECT = Domain(name="json_object_d", base="jsonb", check="jsonb_typeof(VALUE) = 'object'")

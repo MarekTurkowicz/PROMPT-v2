@@ -30,16 +30,30 @@ from app.project.adapter.outbound.object_relational_db.schema.task_status import
     TASK_STATUS,
     TASK_STATUS_ONE_DEFAULT_IN_ORG,
 )
-from app.shared.adapter.outbound.object_relational_db.schema.composite_types import MONEY, MONEY_TYPE
+from app.shared.adapter.outbound.object_relational_db.schema.composite_types import (
+    ATTACHMENT,
+    ATTACHMENT_IDS_UNIQUE,
+    ATTACHMENT_TYPE,
+    MONEY,
+    MONEY_TYPE,
+)
 from app.shared.adapter.outbound.object_relational_db.schema.domains import (
     CURRENCY,
     EMAIL,
     EST_HOURS,
+    FILE_SIZE,
     JSON_OBJECT,
     POSITION,
     PRIORITY,
 )
 from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
+from app.task.adapter.outbound.object_relational_db.schema.task import (
+    CHECKLIST_IDS_UNIQUE,
+    CHECKLIST_ITEM,
+    CHECKLIST_ITEM_TYPE,
+    TASK,
+    TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
+)
 
 # All objects of the object-relational schema in creation order (like app/models.py).
 SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
@@ -78,4 +92,13 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     EST_HOURS,
     DUE_DAYS,
     TASK_TEMPLATE,
+    FILE_SIZE,
+    ATTACHMENT_TYPE,
+    ATTACHMENT,
+    ATTACHMENT_IDS_UNIQUE,
+    CHECKLIST_ITEM_TYPE,
+    CHECKLIST_ITEM,
+    CHECKLIST_IDS_UNIQUE,
+    TASK,
+    TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
 )
