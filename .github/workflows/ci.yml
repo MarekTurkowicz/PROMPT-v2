@@ -86,8 +86,9 @@ jobs:
           POSTGRES_DB: promt_or
           POSTGRES_USER: promt_user
           POSTGRES_PASSWORD: promt_ci
+          PGPORT: 27016
         ports:
-          - 27016:5432
+          - 27016:27016
         options: >-
           --health-cmd "pg_isready -U promt_user -d promt_or"
           --health-interval 5s

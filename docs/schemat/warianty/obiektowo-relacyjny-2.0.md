@@ -178,7 +178,7 @@ docker logs prompt_ordb_migrate          # Applied versions: [1]  (kolejne uruch
 | Zmienna | Domyślnie | Znaczenie |
 |---|---|---|
 | `OR_DB_NAME` | `promt_or` | nazwa bazy |
-| `OR_DB_HOST` / `OR_DB_PORT` | `localhost` / `27016` | z hosta; w Dockerze compose ustawia `ordb:5432` |
+| `OR_DB_HOST` / `OR_DB_PORT` | `localhost` / `27016` | z hosta; w Dockerze compose ustawia `ordb:27016` |
 | `OR_DB_USER` / `OR_DB_PASSWORD` | jak `DB_USER` / `DB_PASSWORD` | |
 
 Lokalnie (z `backend/`, kontener `prompt_ordb` działa):

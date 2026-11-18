@@ -34,10 +34,11 @@ services:
       POSTGRES_DB: ${OR_DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGPORT: ${OR_DB_PORT:-27016}
     volumes:
       - ordb_data:/var/lib/postgresql
     ports:
-      - "${OR_DB_PORT:-27016}:5432"
+      - "${OR_DB_PORT:-27016}:${OR_DB_PORT:-27016}"
     networks:
       - my-network
     healthcheck:
@@ -63,7 +64,7 @@ services:
       OR_DB_USER: ${DB_USER}
       OR_DB_PASSWORD: ${DB_PASSWORD}
       OR_DB_HOST: ordb
-      OR_DB_PORT: "5432"
+      OR_DB_PORT: ${OR_DB_PORT:-27016}
       SECRET_KEY: ${SECRET_KEY}
       DEBUG: ${DEBUG}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
