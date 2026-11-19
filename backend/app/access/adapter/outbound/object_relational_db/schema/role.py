@@ -1,6 +1,6 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import Table
 
-# Permission codes are checked by the application (PRD §3.4), as in the relational model.
+# The application checks the permission codes.
 ROLE = Table(
     name="role",
     depends_on=("organization",),

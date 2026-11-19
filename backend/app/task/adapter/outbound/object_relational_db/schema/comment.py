@@ -1,6 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import Domain, Table
 
-# Replaces the relational CHECK comment_content_not_empty.
 NONEMPTY_TEXT = Domain(name="nonempty_text_d", base="text", check="VALUE <> ''")
 
 COMMENT = Table(

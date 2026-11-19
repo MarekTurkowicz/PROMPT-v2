@@ -1,6 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import Domain, EnumType, Statement, Table
 
-# The four categories are fixed (FR-STAT-01); the statuses themselves are rows of task_status.
 STATUS_CATEGORY = EnumType(name="status_category_t", values=("todo", "in_progress", "done", "cancelled"))
 
 COLOR = Domain(name="color_d", base="varchar(7)", check="VALUE ~ '^#[0-9A-Fa-f]{6}$'")

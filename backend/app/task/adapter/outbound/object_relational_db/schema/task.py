@@ -1,6 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import Domain, Statement, Table
 
-# Replaces the relational checklist_item table; checklist_title groups the items into checklists.
 # done_by_id has no FK: an element of an array cannot reference a table.
 CHECKLIST_ITEM_TYPE = Statement(
     name="checklist_item_t",

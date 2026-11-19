@@ -1,7 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import EnumType, Statement, Table
 
-# Same values as EntityType and ActivityAction of the relational model. History is append-only,
-# so a value is never removed and an ENUM fits.
 ENTITY_TYPE = EnumType(
     name="entity_type_t",
     values=(
@@ -73,8 +71,8 @@ CREATE TABLE activity_log (
 """,
 )
 
-# History is append-only. Only the retention job may delete, inside
-# BEGIN; SET LOCAL promt.retention = 'on'; DELETE ...; COMMIT;
+# Stops an accidental UPDATE or DELETE from the application, not a person with the database account:
+# anyone can SET promt.retention. The retention job deletes inside SET LOCAL promt.retention = 'on'.
 ACTIVITY_LOG_GUARD = Statement(
     name="activity_log_guard",
     sql="""

@@ -64,7 +64,6 @@ def db() -> Iterator[connection]:
 
 @pytest.fixture
 def cur(db: connection) -> Iterator[cursor]:
-    """Every test runs in its own transaction with the seed data, rolled back at the end."""
     with db.cursor() as c:
         c.execute(SEED)
         yield c
@@ -158,8 +157,7 @@ def test_array_element_ids_must_be_unique(cur: cursor) -> None:
     assert rejects(cur, sql.format(a=file.format(id=7), b=file.format(id=7)))
 
 
-def test_partial_uniques(cur: cursor) -> None:
-    # A second active primary funding of a project is rejected, a detached link can be attached again.
+def test_project_funding_unique_only_among_active_links(cur: cursor) -> None:
     assert rejects(
         cur,
         "INSERT INTO project_funding (project_id, funding_id, is_primary, note, created_at) "
@@ -176,15 +174,21 @@ def test_partial_uniques(cur: cursor) -> None:
         "INSERT INTO project_funding (project_id, funding_id, is_primary, note, created_at) "
         "VALUES (1, 1, true, '', now())",
     )
-    # One default status per organization; a default status of a project is allowed.
-    status = (
-        "INSERT INTO task_status (organization_id, project_id, category, name, color, position, "
-        "is_default, is_active) VALUES (1, {project}, 'todo', '{name}', '#000000', 0, true, true)"
-    )
-    assert rejects(cur, status.format(project="NULL", name="Second"))
-    assert not rejects(cur, status.format(project="1", name="Project default"))
-    # The same name twice for the whole organization (project NULL) is a duplicate.
-    assert rejects(cur, status.format(project="NULL", name="To do").replace("true, true", "false, true"))
+
+
+STATUS = (
+    "INSERT INTO task_status (organization_id, project_id, category, name, color, position, "
+    "is_default, is_active) VALUES (1, {project}, 'todo', '{name}', '#000000', 0, true, true)"
+)
+
+
+def test_one_default_status_per_organization_but_projects_may_have_their_own(cur: cursor) -> None:
+    assert rejects(cur, STATUS.format(project="NULL", name="Second"))
+    assert not rejects(cur, STATUS.format(project="1", name="Project default"))
+
+
+def test_status_name_unique_for_the_whole_organization(cur: cursor) -> None:
+    assert rejects(cur, STATUS.format(project="NULL", name="To do").replace("true, true", "false, true"))
 
 
 @pytest.mark.parametrize(

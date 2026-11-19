@@ -4,6 +4,7 @@ from enum import StrEnum
 
 
 def quote_literal(value: str) -> str:
+    """CREATE TYPE ... AS ENUM takes no query parameters, so the values are quoted here."""
     return "'" + value.replace("'", "''") + "'"
 
 
@@ -14,7 +15,6 @@ class EnumType:
 
     @classmethod
     def from_enum(cls, name: str, enum: type[StrEnum]) -> EnumType:
-        """Values come from the domain enum, so the list is not typed twice."""
         return cls(name=name, values=tuple(member.value for member in enum))
 
     def create_sql(self) -> str:

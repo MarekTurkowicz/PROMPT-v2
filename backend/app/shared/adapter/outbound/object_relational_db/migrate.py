@@ -31,7 +31,6 @@ def connect_from_env(dbname: str | None = None) -> connection:
 
 
 def apply_migrations(conn: connection, migrations: Mapping[int, Sequence[SchemaObject]]) -> list[int]:
-    """Applies each missing version in its own transaction; returns the applied versions."""
     applied: list[int] = []
     for version in sorted(migrations):
         with conn, conn.cursor() as cursor:

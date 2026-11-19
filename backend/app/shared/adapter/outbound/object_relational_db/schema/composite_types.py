@@ -9,7 +9,6 @@ MONEY_TYPE = Statement(
     sql="CREATE TYPE money_t AS (amount numeric(14,2), currency currency_d)",
 )
 
-# Amount and currency always go together (funding.amount_total, expense.amount).
 MONEY = Domain(
     name="money_d",
     base="money_t",
@@ -19,7 +18,6 @@ MONEY = Domain(
     AND (VALUE).amount > 0 AND (VALUE).currency ~ '^[A-Z]{3}$'""",
 )
 
-# Replaces the relational attachment table (task, comment, expense keep their files in an array).
 # uploaded_by_id has no FK: an element of an array cannot reference a table.
 ATTACHMENT_TYPE = Statement(
     name="attachment_t",

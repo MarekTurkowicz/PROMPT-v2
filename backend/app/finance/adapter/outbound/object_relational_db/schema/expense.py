@@ -1,12 +1,10 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import EnumType, Table
 
-# Fixed list (PRD §4.9). If organizations get their own categories, this becomes a table in all variants.
 EXPENSE_TYPE = EnumType(
     name="expense_type_t",
     values=("travel", "courses", "external_services", "equipment", "other"),
 )
 
-# amount money_d replaces the relational columns amount and currency.
 EXPENSE = Table(
     name="expense",
     depends_on=(

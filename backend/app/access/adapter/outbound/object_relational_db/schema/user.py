@@ -1,6 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import Domain, Table
 
-# Replaces the relational CHECK user_email_lowercase: Jan@x.pl and jan@x.pl are the same login.
 LOGIN_EMAIL = Domain(
     name="login_email_d",
     base="varchar(254)",

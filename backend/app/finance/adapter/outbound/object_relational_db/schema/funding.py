@@ -2,7 +2,6 @@ from app.shared.adapter.outbound.object_relational_db.schema.objects import Enum
 
 FUNDING_TYPE = EnumType(name="funding_type_t", values=("grant", "sponsorship", "donation", "internal"))
 
-# amount_total money_d replaces the relational columns amount_total and currency.
 FUNDING = Table(
     name="funding",
     depends_on=("organization", "funding_type_t", "money_d"),

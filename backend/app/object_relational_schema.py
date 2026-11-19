@@ -61,7 +61,7 @@ from app.task.adapter.outbound.object_relational_db.schema.task import (
 from app.task.adapter.outbound.object_relational_db.schema.task_assignment import TASK_ASSIGNMENT
 from app.task.adapter.outbound.object_relational_db.schema.time_entry import HOURS, TIME_ENTRY
 
-# All objects of the object-relational schema in creation order (like app/models.py).
+# In creation order: every object comes after its dependencies.
 SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     LOGIN_EMAIL,
     USER,
