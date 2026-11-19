@@ -25,7 +25,7 @@ CREATE TABLE expense (
     type                expense_type_t NOT NULL,
     amount              money_d NOT NULL,
     spent_on_date       date NOT NULL,
-    document_number     varchar(100),
+    document_number     text,
     description         text NOT NULL,
     attachments         attachment_d[] NOT NULL,
     created_by_id       bigint NOT NULL REFERENCES organization_member (id) ON DELETE RESTRICT,

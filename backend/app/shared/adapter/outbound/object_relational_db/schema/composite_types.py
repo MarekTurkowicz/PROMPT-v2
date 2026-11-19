@@ -24,7 +24,7 @@ ATTACHMENT_TYPE = Statement(
     depends_on=("file_size_d",),
     sql="""
 CREATE TYPE attachment_t AS (
-    id bigint, file varchar(500), original_name varchar(255), mime_type varchar(100),
+    id bigint, file text, original_name text, mime_type text,
     size_bytes file_size_d, uploaded_by_id bigint, created_at timestamptz)
 """,
 )
@@ -37,7 +37,7 @@ ATTACHMENT = Domain(
     (VALUE).id IS NOT NULL AND (VALUE).file IS NOT NULL AND (VALUE).original_name IS NOT NULL
     AND (VALUE).mime_type IS NOT NULL AND (VALUE).uploaded_by_id IS NOT NULL
     AND (VALUE).created_at IS NOT NULL
-    AND (VALUE).size_bytes IS NOT NULL AND (VALUE).size_bytes > 0 AND (VALUE).size_bytes <= 52428800""",
+    AND (VALUE).size_bytes IS NOT NULL AND (VALUE).size_bytes > 0""",
 )
 
 # UNIQUE does not work inside an array, so the ids are checked by an IMMUTABLE function.

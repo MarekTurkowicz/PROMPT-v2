@@ -2,7 +2,7 @@ from app.shared.adapter.outbound.object_relational_db.schema.objects import Doma
 
 STATUS_CATEGORY = EnumType(name="status_category_t", values=("todo", "in_progress", "done", "cancelled"))
 
-COLOR = Domain(name="color_d", base="varchar(7)", check="VALUE ~ '^#[0-9A-Fa-f]{6}$'")
+COLOR = Domain(name="color_d", base="text", check="VALUE ~ '^#[0-9A-Fa-f]{6}$'")
 
 TASK_STATUS = Table(
     name="task_status",
@@ -13,7 +13,7 @@ CREATE TABLE task_status (
     organization_id  bigint NOT NULL REFERENCES organization (id) ON DELETE CASCADE,
     project_id       bigint REFERENCES project (id) ON DELETE CASCADE,
     category         status_category_t NOT NULL,
-    name             varchar(60) NOT NULL,
+    name             text NOT NULL,
     color            color_d NOT NULL,
     position         position_d NOT NULL,
     is_default       boolean NOT NULL,

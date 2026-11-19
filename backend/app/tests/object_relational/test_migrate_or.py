@@ -105,7 +105,7 @@ DOMAIN_CASES = [
     ("due_days_d", "0", "(-1)"),
     ("color_d", "'#94a3B8'", "'red'"),
     ("currency_d", "'PLN'", "'pln'"),
-    ("file_size_d", "52428800", "52428801"),
+    ("file_size_d", "52428801", "0"),
     ("nonempty_text_d", "'x'", "''"),
 ]
 
@@ -123,6 +123,19 @@ def test_numeric_domains_reject_nan(cur: cursor, value: str) -> None:
 
 def test_currency_is_not_truncated_by_a_cast(cur: cursor) -> None:
     assert rejects(cur, "SELECT 'PLNX'::currency_d")
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "UPDATE role SET name = repeat('a', 1000) WHERE id = 1",
+        "UPDATE organization_member SET phone = repeat('1', 100) WHERE id = 1",
+        "UPDATE task SET attachments = ARRAY[ROW(1, 'f', 'a.pdf', 'application/pdf', 52428801, 1, now())]"
+        "::attachment_d[] WHERE id = 1",
+    ],
+)
+def test_length_and_size_limits_are_left_to_the_domain(cur: cursor, sql: str) -> None:
+    assert not rejects(cur, sql)
 
 
 CHECKLIST_ITEM = "ROW(1, NULL, 'Item', 0, {done_by}, {done_at}, now(), now())::checklist_item_d"

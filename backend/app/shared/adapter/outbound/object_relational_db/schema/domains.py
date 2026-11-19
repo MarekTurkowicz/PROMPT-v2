@@ -8,4 +8,4 @@ EST_HOURS = Domain(name="est_hours_d", base="numeric(6,2)", check="VALUE > 0 AND
 
 CURRENCY = Domain(name="currency_d", base="text", check="VALUE ~ '^[A-Z]{3}$'")
 
-FILE_SIZE = Domain(name="file_size_d", base="bigint", check="VALUE > 0 AND VALUE <= 52428800")
+FILE_SIZE = Domain(name="file_size_d", base="bigint", check="VALUE > 0")

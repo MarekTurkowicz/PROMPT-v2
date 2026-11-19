@@ -6,7 +6,7 @@ CHECKLIST_ITEM_TYPE = Statement(
     depends_on=("position_d",),
     sql="""
 CREATE TYPE checklist_item_t AS (
-    id bigint, checklist_title varchar(120), element varchar(300), "order" position_d,
+    id bigint, checklist_title text, element text, "order" position_d,
     done_by_id bigint, done_at timestamptz, created_at timestamptz, updated_at timestamptz)
 """,
 )
@@ -56,7 +56,7 @@ CREATE TABLE task (
     template_id         bigint REFERENCES task_template (id) ON DELETE SET NULL,
     status_id           bigint NOT NULL REFERENCES task_status (id) ON DELETE RESTRICT,
     group_id            bigint REFERENCES member_group (id) ON DELETE SET NULL,
-    title               varchar(200) NOT NULL,
+    title               text NOT NULL,
     description         text NOT NULL,
     priority            priority_d NOT NULL,
     start_date          date,
