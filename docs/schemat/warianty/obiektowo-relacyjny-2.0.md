@@ -78,16 +78,21 @@ z `TextChoices` (wartości i kolejność) i z `pg_enum` na żywej bazie.
 
 | Domena | Definicja | Zastępuje | Kolumny |
 |---|---|---|---|
-| `login_email_d` | `varchar(254) CHECK (VALUE = lower(VALUE))` | `user_email_lowercase` | `user.email` |
+| `login_email_d` | `text CHECK (VALUE = lower(VALUE))` | `user_email_lowercase` | `user.email` |
 | `position_d` | `smallint CHECK (VALUE >= 0)` | `PositiveSmallIntegerField` | `task_status`, `milestone`, pole checklisty |
 | `priority_d` | `smallint CHECK (VALUE BETWEEN 1 AND 5)` | `*_priority_range` | `task`, `task_template` |
-| `est_hours_d` | `numeric(6,2) CHECK (VALUE > 0)` | `*_est_hours_positive` | `task`, `task_template` |
-| `hours_d` | `numeric(5,2) CHECK (VALUE > 0)` | `time_entry_hours_positive` | `time_entry` |
+| `est_hours_d` | `numeric(6,2) CHECK (VALUE > 0 AND VALUE <> 'NaN')` | `*_est_hours_positive` | `task`, `task_template` |
+| `hours_d` | `numeric(5,2) CHECK (VALUE > 0 AND VALUE <> 'NaN')` | `time_entry_hours_positive` | `time_entry` |
 | `due_days_d` | `integer CHECK (VALUE >= 0)` | `task_template_due_days_not_negative` | `task_template` |
-| `color_d` | `varchar(7) CHECK (VALUE ~ '^#[0-9A-Fa-f]{6}$')` | `task_status_color_hex` | `task_status` |
-| `currency_d` | `char(3) CHECK (VALUE ~ '^[A-Z]{3}$')` | `*_currency_code` | pole `money_t` |
-| `file_size_d` | `bigint CHECK (VALUE > 0 AND VALUE <= 52428800)` | `attachment_size_in_range` | pole `attachment_t` |
+| `color_d` | `text CHECK (VALUE ~ '^#[0-9A-Fa-f]{6}$')` | `task_status_color_hex` | `task_status` |
+| `currency_d` | `text CHECK (VALUE ~ '^[A-Z]{3}$')` | `*_currency_code` | pole `money_t` |
+| `file_size_d` | `bigint CHECK (VALUE > 0)` | `attachment_size_in_range` (bez górnej granicy) | pole `attachment_t` |
 | `nonempty_text_d` | `text CHECK (VALUE <> '')` | `comment_content_not_empty` | `comment.content` |
+
+Limity długości i rozmiaru (`max_length`, 50 MiB na załącznik) trzyma domena, nie baza: zmiana limitu nie wymaga
+zmian w trzech bazach. Dlatego wszystkie teksty to `text`. W bazie zostają reguły, które nie są limitami: format
+(regex), wartości > 0, zakresy, ENUM. `numeric` przyjmuje `NaN`, a w PostgreSQL `NaN > 0` jest prawdą, więc domeny
+liczbowe odrzucają go osobno. Waluta to `text` z regexem, bo jawne rzutowanie na `char(3)` obcina wartość przed CHECK.
 
 ### 4.3 Typy złożone (3), każdy opakowany domeną
 
@@ -100,8 +105,8 @@ Domena opakowująca powtarza więc wszystkie reguły.
 | `checklist_item_t` → `checklist_item_d` | id, checklist_title, element, "order", done_by_id, done_at, created_at, updated_at | tabelę `checklist_item` → `task.checklist checklist_item_d[]` |
 | `attachment_t` → `attachment_d` | id, file, original_name, mime_type, size_bytes, uploaded_by_id, created_at | tabelę `attachment` → `attachments attachment_d[]` w `task`, `comment`, `expense` |
 
-Reguły w domenach są dokładnie te z relacyjnego: kwota > 0 i waluta, `done_by` i `done_at` razem albo wcale,
-rozmiar 1 B – 50 MiB, wymagane pola. Kolumny zachowują nazwy z relacyjnego (`amount_total`, `amount`).
+Reguły w domenach są te z relacyjnego, bez limitów: kwota > 0 (i nie `NaN`) i waluta, `done_by` i `done_at`
+razem albo wcale, rozmiar > 0, wymagane pola. Kolumny zachowują nazwy z relacyjnego (`amount_total`, `amount`).
 
 ### 4.4 Funkcje i trigger
 
@@ -109,10 +114,10 @@ rozmiar 1 B – 50 MiB, wymagane pola. Kolumny zachowują nazwy z relacyjnego (`
 |---|---|
 | `checklist_ids_unique(checklist_item_d[])` | `CHECK` w `task`: id punktów bez powtórzeń (w relacyjnym to były PK) |
 | `attachment_ids_unique(attachment_d[])` | `CHECK` w `task`, `comment`, `expense` |
-| `activity_log_guard()` + 2 triggery | historia tylko do dopisywania (FR-HIST-03) |
+| `activity_log_guard()` + 2 triggery | historia tylko do dopisywania |
 
 ```sql
--- retencja (#115): jedyny sposób na usunięcie historii
+-- retencja: jedyny sposób na usunięcie historii
 BEGIN;
 SET LOCAL promt.retention = 'on';
 DELETE FROM activity_log WHERE organization_id = $1 AND created_at < $2;
@@ -121,6 +126,9 @@ COMMIT;
 
 `TRUNCATE` nie odpala triggerów wierszowych, dlatego jest drugi trigger `BEFORE TRUNCATE`.
 `SET LOCAL` wygasa z końcem transakcji, więc furtka nie zostaje otwarta na połączeniu z puli.
+Sam trigger nie wystarcza: `promt.retention` może ustawić każdy, a właściciel tabeli może wyłączyć trigger.
+Dlatego aplikacja loguje się jako członek roli `promt_or_app` (`app_role.py`), która na `activity_log` ma tylko
+`SELECT, INSERT`. Retencję i migracje robi właściciel schematu.
 
 ### 4.5 Partial uniques
 
@@ -132,7 +140,8 @@ W relacyjnym to `UniqueConstraint` z warunkiem; w PostgreSQL może to być tylko
 ## 5. Zmiany tabela po tabeli (main → OR)
 
 Wszystkie kolumny, klucze, nazwy constraintów i reguły `ON DELETE` z `main` zostają (`PROTECT` = `ON DELETE RESTRICT`).
-Bez `DEFAULT` – wartości domyślne ustawia domena. Indeksy to osobny etap.
+Bez `DEFAULT` – wartości domyślne ustawia aplikacja, jak w relacyjnym (Django ustawia je w Pythonie, nie w bazie).
+Indeksy to osobny etap.
 
 | Tabela | Zmiana w OR |
 |---|---|
@@ -206,15 +215,15 @@ Nowa zmiana schematu = nowa wersja w `MIGRATIONS` z poleceniami `ALTER`.
 
 ## 9. Do decyzji zespołu
 
-1. Zmiany PRD Z1–Z14 (#85): do OR razem z relacyjnym.
+1. Nowe pola z PRD 2.1 (m.in. `task.from_template`, `project_funding.allocated_amount`, `version`): do OR razem z relacyjnym.
 2. `organization.settings`: wymagane klucze – reguła domeny we wszystkich bazach?
 3. `modified_at` vs `updated_at` w `organization`.
 4. Katalog uprawnień: dziś sprawdza tylko aplikacja. Jeśli kiedyś w bazie, to we wszystkich 3 wariantach.
 5. `project.hidden_status_ids` bez powtórzeń – reguła domeny czy bazy.
-6. `notification`: `kind`, `dedup_key`, `organization_id` (#72, D7).
+6. `notification`: `kind`, `dedup_key`, `organization_id`.
 7. Aktywny członek ⇒ `joined_at` – reguła domeny.
-8. Limity tablic (maxItems z MongoDB) – reguła domeny czy tylko Mongo.
-9. `expense`: XOR projekt / podpięcie (main) vs Z14.
+8. Limity tablic (maxItems z MongoDB): w domenie, jak pozostałe limity.
+9. `expense`: XOR projekt / podpięcie (main) vs nowa reguła z PRD 2.1.
 10. Psycopg 3 przy repozytoriach OR – przełącza też sterownik Django.
 11. `task.project_funding` z tego samego projektu – reguła aplikacji we wszystkich bazach.
 12. Port repozytorium `activity_log`: tylko dopisywanie + retencja (trigger jest tylko w OR).
