@@ -1,6 +1,6 @@
 from app.shared.adapter.outbound.object_relational_db.schema.objects import Domain, Table
 
-HOURS = Domain(name="hours_d", base="numeric(5,2)", check="VALUE > 0")
+HOURS = Domain(name="hours_d", base="numeric(5,2)", check="VALUE > 0 AND VALUE <> 'NaN'")
 
 # Strict ">" (unlike task_assignment): a time entry of zero length is not work.
 TIME_ENTRY = Table(

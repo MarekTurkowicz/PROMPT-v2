@@ -15,7 +15,7 @@ MONEY = Domain(
     depends_on=("money_t",),
     check="""
     (VALUE).amount IS NOT NULL AND (VALUE).currency IS NOT NULL
-    AND (VALUE).amount > 0 AND (VALUE).currency ~ '^[A-Z]{3}$'""",
+    AND (VALUE).amount > 0 AND (VALUE).amount <> 'NaN' AND (VALUE).currency ~ '^[A-Z]{3}$'""",
 )
 
 # uploaded_by_id has no FK: an element of an array cannot reference a table.

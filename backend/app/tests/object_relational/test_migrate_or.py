@@ -116,6 +116,15 @@ def test_domain_accepts_valid_and_rejects_invalid(cur: cursor, domain: str, vali
     assert rejects(cur, f"SELECT {invalid}::{domain}")
 
 
+@pytest.mark.parametrize("value", ["'NaN'::est_hours_d", "'NaN'::hours_d", "ROW('NaN', 'PLN')::money_d"])
+def test_numeric_domains_reject_nan(cur: cursor, value: str) -> None:
+    assert rejects(cur, f"SELECT {value}")
+
+
+def test_currency_is_not_truncated_by_a_cast(cur: cursor) -> None:
+    assert rejects(cur, "SELECT 'PLNX'::currency_d")
+
+
 CHECKLIST_ITEM = "ROW(1, NULL, 'Item', 0, {done_by}, {done_at}, now(), now())::checklist_item_d"
 ATTACHMENT = "ROW(1, 'f/a.pdf', 'a.pdf', 'application/pdf', {size}, 1, now())::attachment_d"
 
