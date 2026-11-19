@@ -68,19 +68,12 @@ def obj(properties: Schema, *, null: bool = False) -> Schema:
     return schema
 
 
-def array_of(items: Schema, max_items: int | None = None, **constraints: Any) -> Schema:
-    schema: Schema = {"bsonType": "array", "items": items, **constraints}
-    if max_items is not None:
-        schema["maxItems"] = max_items
-    return schema
+def array_of(items: Schema) -> Schema:
+    return {"bsonType": "array", "items": items}
 
 
 def document(properties: Schema) -> Schema:
     return obj({"_id": LONG, **properties})
-
-
-def varchar(max_length: int, *, null: bool = False) -> Schema:
-    return (nullable if null else bson)("string", maxLength=max_length)
 
 
 def numeric(digits: int, places: int, *, null: bool = False) -> Schema:
@@ -113,7 +106,7 @@ STATUS = obj(
     {
         "_id": LONG,
         "category": enum(STATUS_CATEGORIES),
-        "name": varchar(60),
+        "name": STRING,
         "color": bson("string", pattern=COLOR_PATTERN),
         "position": POSITION,
         "is_default": BOOL,
@@ -132,27 +125,17 @@ ROLE_GRANT = obj(
 )
 
 
-MAX_ATTACHMENT_SIZE_BYTES = 50 * 1024 * 1024
-
-
-def attachment(max_size_bytes: int = MAX_ATTACHMENT_SIZE_BYTES) -> Schema:
-    size = bson(
-        ["int", "long"],
-        minimum=0,
-        exclusiveMinimum=True,
-        maximum=max_size_bytes,
-    )
-    return obj(
-        {
-            "_id": LONG,
-            "uploaded_by": LONG,
-            "file": varchar(500),
-            "original_name": varchar(255),
-            "mime_type": varchar(100),
-            "size_bytes": size,
-            "created_at": DATE,
-        }
-    )
+ATTACHMENT = obj(
+    {
+        "_id": LONG,
+        "uploaded_by_id": LONG,
+        "file": STRING,
+        "original_name": STRING,
+        "mime_type": STRING,
+        "size_bytes": bson(["int", "long"], minimum=0, exclusiveMinimum=True),
+        "created_at": DATE,
+    }
+)
 
 
 def is_set(path: str) -> Expr:
@@ -161,10 +144,6 @@ def is_set(path: str) -> Expr:
 
 def is_unset(path: str) -> Expr:
     return {"$eq": [{"$ifNull": [path, None]}, None]}
-
-
-def implies(condition: Expr, consequence: Expr) -> Expr:
-    return {"$or": [{"$not": [condition]}, consequence]}
 
 
 def both_or_neither(a: str, b: str) -> Expr:

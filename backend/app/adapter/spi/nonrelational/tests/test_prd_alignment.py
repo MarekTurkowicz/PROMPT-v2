@@ -1,6 +1,8 @@
+from collections.abc import Iterator
+
 from bson import Decimal128
 
-from api.models.activity_log import ActivityAction, EntityType
+from app.activity.adapter.outbound.relational_db.models.activity_log import ActivityAction, EntityType
 from app.adapter.spi.nonrelational.models import COLLECTIONS
 from app.adapter.spi.nonrelational.models._schema import CollectionSpec, distinct
 from app.adapter.spi.nonrelational.models.activity_logs import ACTIVITY_LOGS
@@ -117,14 +119,12 @@ def test_z10_member_has_created_at() -> None:
 
 
 def test_z11_task_has_created_by() -> None:
-    assert TASKS.schema["properties"]["created_by"] == REQUIRED_ID
-    assert "created_by" in TASKS.schema["required"]
+    assert TASKS.schema["properties"]["created_by_id"] == REQUIRED_ID
+    assert "created_by_id" in TASKS.schema["required"]
 
 
-def test_z12_organization_settings_have_health_thresholds() -> None:
-    settings = ORGANIZATIONS.schema["properties"]["settings"]["properties"]
-
-    assert settings["health_thresholds"]["bsonType"] == ["object", "null"]
+def test_z12_organization_settings_are_an_object_whose_keys_belong_to_the_domain() -> None:
+    assert ORGANIZATIONS.schema["properties"]["settings"] == {"bsonType": "object"}
 
 
 def test_z13_every_root_with_embedded_documents_has_a_version() -> None:
@@ -175,7 +175,6 @@ def test_project_funding_preserves_detached_records() -> None:
 
     assert fundings_schema["items"]["properties"]["detached_at"] == {"bsonType": ["date", "null"]}
     assert "start_date" not in milestone_properties
-    assert fundings_schema["maxItems"] == 500
 
 
 def test_funding_can_be_shared_without_an_organization() -> None:
@@ -255,7 +254,7 @@ def test_indexes_on_optional_fields_skip_missing_values_with_range_filters() -> 
     }
 
 
-def test_all_attachments_are_limited_to_prd_size_range() -> None:
+def test_attachment_size_is_positive_and_its_limit_belongs_to_the_domain() -> None:
     attachment_schemas = [
         TASKS.schema["properties"]["attachments"]["items"],
         COMMENTS.schema["properties"]["attachments"]["items"],
@@ -268,7 +267,6 @@ def test_all_attachments_are_limited_to_prd_size_range() -> None:
             "bsonType": ["int", "long"],
             "minimum": 0,
             "exclusiveMinimum": True,
-            "maximum": 50 * 1024 * 1024,
         }
 
 
@@ -288,6 +286,37 @@ def test_unique_notification_indexes_start_with_recipient_shard_key() -> None:
     ]
 
     assert all(next(iter(index["key"])) == "recipient_user_id" for index in unique_indexes)
+
+
+def walk(schema: object) -> Iterator[dict[str, object]]:
+    if isinstance(schema, dict):
+        yield schema
+        for value in schema.values():
+            yield from walk(value)
+    elif isinstance(schema, list):
+        for value in schema:
+            yield from walk(value)
+
+
+def test_length_count_and_uniqueness_limits_are_left_to_the_domain_as_in_postgresql() -> None:
+    limits = {"maxLength", "maxItems", "minItems", "uniqueItems"}
+
+    for collection in COLLECTIONS:
+        for node in walk(collection.schema):
+            assert not limits & node.keys(), (collection.name, node)
+
+
+def test_references_use_relational_column_names() -> None:
+    task = TASKS.schema["properties"]
+    assignment = task["assignments"]["items"]["properties"]
+    checklist_item = task["checklist"]["items"]["properties"]
+    attachment = task["attachments"]["items"]["properties"]
+
+    assert {"assigned_to_id", "assigned_by_id"} <= assignment.keys()
+    assert "done_by_id" in checklist_item
+    assert "uploaded_by_id" in attachment
+    assert "created_by_id" in EXPENSES.schema["properties"]
+    assert "modified_at" in ORGANIZATIONS.schema["properties"]
 
 
 def test_time_entry_hours_fit_relational_column() -> None:

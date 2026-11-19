@@ -64,18 +64,11 @@ def organization(statuses: list[dict[str, Any]], roles: list[dict[str, Any]]) ->
         "name": "Org",
         "tax_id": None,
         "is_active": True,
-        "settings": {
-            "timezone": "Europe/Warsaw",
-            "currency": "PLN",
-            "priority_names": ["1", "2", "3", "4", "5"],
-            "working_days": [1, 2, 3, 4, 5],
-            "health_thresholds": None,
-            "history_retention_days": None,
-        },
+        "settings": {},
         "statuses": statuses,
         "roles": roles,
         "created_at": now,
-        "updated_at": now,
+        "modified_at": now,
         "version": 1,
     }
 
@@ -176,6 +169,10 @@ def funding(
     }
 
 
+def assignment(_id: int, member_id: int) -> dict[str, Any]:
+    return {"_id": _id, "assigned_to_id": member_id}
+
+
 @pytest.mark.parametrize(
     ("spec", "document", "valid"),
     [
@@ -184,8 +181,8 @@ def funding(
         (MEMBERS, {"role_grants": [grant(1, None), grant(1, 5, grant_id=2)]}, True),
         (MEMBERS, {"role_grants": [grant(1, None), grant(1, None, grant_id=2)]}, False),
         (GROUPS, {"role_grants": [grant(1, 5), grant(1, 5, grant_id=2)]}, False),
-        (TASKS, {"assignments": [{"_id": 1, "member_id": 1}, {"_id": 2, "member_id": 2}]}, True),
-        (TASKS, {"assignments": [{"_id": 1, "member_id": 1}, {"_id": 2, "member_id": 1}]}, False),
+        (TASKS, {"assignments": [assignment(1, 1), assignment(2, 2)]}, True),
+        (TASKS, {"assignments": [assignment(1, 1), assignment(2, 1)]}, False),
         (PROJECTS, {"fundings": [funding(1, detached=True, link_id=2), funding(1)]}, True),
         (PROJECTS, {"fundings": [funding(1), funding(1, link_id=2)]}, False),
         (
@@ -218,7 +215,7 @@ def test_embedded_uniqueness_rules_match_relational_constraints(
         (PROJECTS, "milestones", {"_id": 1}, {"_id": 2}),
         (PROJECTS, "fundings", funding(1, detached=True), funding(2)),
         (FUNDINGS, "templates", {"_id": 1}, {"_id": 2}),
-        (TASKS, "assignments", {"_id": 1, "member_id": 1}, {"_id": 2, "member_id": 2}),
+        (TASKS, "assignments", assignment(1, 1), assignment(2, 2)),
         (TASKS, "checklist", {"_id": 1}, {"_id": 2}),
         (TASKS, "attachments", {"_id": 1}, {"_id": 2}),
         (COMMENTS, "attachments", {"_id": 1}, {"_id": 2}),
@@ -255,63 +252,72 @@ def test_embedded_ids_are_unique_even_when_other_fields_differ(
         assert bool(list(db.aggregate(pipeline))) is expected
 
 
-@pytest.mark.parametrize(("count", "valid"), [(100, True), (500, True), (501, False)])
-def test_project_funding_limit_includes_detached_history(
-    db: Database[dict[str, Any]], count: int, valid: bool
-) -> None:
-    now = datetime(2026, 1, 1, tzinfo=UTC)
-    links = [
-        {
-            **funding(1, detached=True, link_id=i),
-            "note": "",
-            "created_at": now,
-        }
-        for i in range(count)
-    ]
-    pipeline: list[dict[str, Any]] = [
-        {"$documents": [{"fundings": links}]},
-        {
-            "$match": {
-                "$jsonSchema": {
-                    "properties": {
-                        "fundings": PROJECTS.schema["properties"]["fundings"],
-                    }
-                }
-            }
-        },
-    ]
-    assert bool(list(db.aggregate(pipeline))) is valid
+def test_notification_content_is_optional_like_jsonb(db: Database[dict[str, Any]]) -> None:
+    init_mongo(db)
+    base: dict[str, Any] = {
+        "recipient_user_id": 1,
+        "kind": "due_soon",
+        "created_at": datetime(2026, 1, 1, tzinfo=UTC),
+    }
+
+    db.notifications.insert_many(
+        [
+            {**base, "_id": 1},
+            {**base, "_id": 2, "content": None},
+            {**base, "_id": 3, "content": {"title": "Task changed"}},
+        ]
+    )
 
 
-@pytest.mark.parametrize("kind", ["event", "due_soon"])
-@pytest.mark.parametrize("content_state", ["missing", "null", "snapshot"])
-def test_notifications_require_content_independent_of_activity_retention(
-    db: Database[dict[str, Any]], kind: str, content_state: str
+@pytest.mark.parametrize(
+    ("kind", "activity_id", "valid"),
+    [("event", 42, True), ("event", None, False), ("due_soon", 42, False)],
+)
+def test_notification_kind_event_goes_with_activity(
+    db: Database[dict[str, Any]], kind: str, activity_id: int | None, valid: bool
 ) -> None:
     init_mongo(db)
-    notification: dict[str, Any] = {
+    notification = {
         "_id": 1,
         "recipient_user_id": 1,
+        "activity_id": activity_id,
         "kind": kind,
         "created_at": datetime(2026, 1, 1, tzinfo=UTC),
     }
-    if kind == "event":
-        notification["activity_id"] = 42
-    if content_state != "missing":
-        notification["content"] = (
-            {"title": "Task changed", "body": "Status: done", "link": None}
-            if content_state == "snapshot"
-            else None
-        )
-    if content_state == "snapshot":
+
+    if valid:
         db.notifications.insert_one(notification)
-        saved = db.notifications.find_one({"_id": 1})
-        assert saved is not None
-        assert saved["content"] == notification["content"]
     else:
         with pytest.raises(WriteError) as error:
             db.notifications.insert_one(notification)
         assert error.value.code == 121
+
+
+def test_accepts_values_the_relational_model_accepts(db: Database[dict[str, Any]]) -> None:
+    init_mongo(db)
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    long_name = "ż" * 1000
+    org = organization([], [{**role(1, long_name, None), "permissions": ["a", "a"]}])
+    org["settings"] = {"anything": [1, "two"]}
+    member = {
+        "_id": 1,
+        "organization_id": 1,
+        "user_id": 1,
+        "display_name": "Jan",
+        "email": None,
+        "phone": None,
+        "job_title": long_name,
+        "avatar_url": None,
+        "status": "active",
+        "created_at": now,
+        "joined_at": None,
+        "groups": [{"group_id": i, "added_at": now} for i in range(60)],
+        "role_grants": [],
+        "version": 1,
+    }
+
+    db.organizations.insert_one(org)
+    db.members.insert_one(member)
 
 
 def test_multi_collection_transaction_rolls_back_on_invalid_notification(
@@ -412,7 +418,6 @@ def test_equality_queries_use_partial_indexes(db: Database[dict[str, Any]]) -> N
     assert "parent_id_1" in str(plan["winningPlan"])
 
 
-ORGANIZATION_NAME = ORGANIZATIONS.schema["properties"]["name"]
 HOURS = TIME_ENTRIES.schema["properties"]["hours"]
 AMOUNT = MONEY["properties"]["value"]
 STATUS_POSITION = STATUS["properties"]["position"]
@@ -421,19 +426,19 @@ STATUS_POSITION = STATUS["properties"]["position"]
 @pytest.mark.parametrize(
     ("schema", "value", "valid"),
     [
-        (ORGANIZATION_NAME, "ż" * 200, True),
-        (ORGANIZATION_NAME, "ż" * 201, False),
         (HOURS, Decimal128("999.99"), True),
         (HOURS, Decimal128("1000.00"), False),
         (HOURS, Decimal128("1.005"), False),
         (HOURS, Decimal128("0"), False),
+        (HOURS, Decimal128("NaN"), False),
         (AMOUNT, Decimal128("999999999999.99"), True),
         (AMOUNT, Decimal128("1000000000000.00"), False),
+        (AMOUNT, Decimal128("NaN"), False),
         (STATUS_POSITION, 32767, True),
         (STATUS_POSITION, -1, False),
     ],
 )
-def test_values_fit_relational_column_limits(
+def test_values_fit_relational_numeric_types(
     db: Database[dict[str, Any]], schema: dict[str, Any], value: object, valid: bool
 ) -> None:
     pipeline: list[dict[str, Any]] = [

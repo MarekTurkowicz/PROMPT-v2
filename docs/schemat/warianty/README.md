@@ -24,7 +24,7 @@ Końce linii: `||` dokładnie jeden · `|o` zero lub jeden · `|<` jeden lub wie
 Diagramy przypadków użycia: `docs/przypadki-uzycia/`.
 Pliki `.drawio` otwiera rozszerzenie Draw.io Integration w VS Code albo https://app.diagrams.net.
 
-W aktualnym modelu pola, typy, limity tablic i indeksy odpowiadają definicjom z
+W aktualnym modelu pola, typy i indeksy odpowiadają definicjom z
 `backend/app/adapter/spi/nonrelational/models`. Jasne tło i jednolite oznaczenia ułatwiają
 wydruk oraz eksport. Reguły aplikacji i architektura docelowa są oznaczone jako projekt;
 zaimplementowano schematy, walidatory, indeksy i inicjalizację bazy. Starsze pliki NoSQL
@@ -67,13 +67,35 @@ z konfiguracji replica setu. Backend wewnątrz Compose otrzymuje adres
 `mongodb://mongo:27017/?replicaSet=rs0`. Inny serwer lub bazę wybierają `MONGO_URL` i `MONGO_DB`.
 
 `init_mongo` aktualizuje walidatory i indeksy, ale nie migruje istniejących dokumentów.
-Przed zastosowaniem zaostrzonego schematu do bazy z danymi trzeba usunąć powtórzone `_id`
-wewnątrz osadzonych tablic, uzupełnić `notifications.content` (wymagane `title` i `body`,
-opcjonalny `link`) oraz wprowadzić zmiany z PRD 2.1 §7.3: usunąć `fundings.templates[].mandatory`,
-dodać `tasks.from_template`, `time_entries.work_date` i `groups.organization_id`.
+Przed zastosowaniem schematu do bazy z danymi trzeba usunąć powtórzone `_id`
+wewnątrz osadzonych tablic, zmienić nazwy pól na nazwy kolumn PostgreSQL
+(`organizations.updated_at` → `modified_at`; `created_by`, `assigned_by`, `done_by`,
+`uploaded_by` → z sufiksem `_id`; `tasks.assignments[].member_id` → `assigned_to_id`),
+usunąć `fundings.updated_at` i `expenses.updated_at` oraz wprowadzić zmiany z PRD 2.1 §7.3:
+usunąć `fundings.templates[].mandatory`, dodać `tasks.from_template`, `time_entries.work_date`
+i `groups.organization_id`.
 Powiadomienia wygasają po 180 dniach od `created_at` (indeks TTL). Treść powiadomienia jest
 samodzielną kopią i pozostaje po wygaśnięciu logu historii; `activity_id` może wtedy wskazywać
 nieistniejący historyczny wpis.
 
-Limit `projects.fundings` wynosi **500 elementów łącznie z rekordami odpiętymi**.
+## Zgodność z wariantami PostgreSQL
+
+Walidator przyjmuje te same dane co modele relacyjny i obiektowo-relacyjny: nazwy pól to nazwy
+kolumn, typy liczbowe odpowiadają `numeric(p,s)` i `smallint` (bez NaN), a reguły w bazie to
+odpowiedniki `UNIQUE` i `CHECK` z PostgreSQL. Limity długości tekstów, liczby elementów tablic
+i rozmiaru pliku, unikalność wartości w `permissions` i `hidden_status_ids`, struktura
+`organizations.settings` (jak `jsonb`) oraz reguła „aktywny członek ma `joined_at`” należą do
+domeny, tak samo jak w wariancie obiektowo-relacyjnym.
+
+Celowe różnice:
+
+- zmiany Z1–Z14 z PRD 2.1 §7.3 są już w MongoDB, a w PostgreSQL czekają na #85;
+- pola z #72 (`notifications.kind`, `dedup_key`, `organization_id`, `projects.health`,
+  `groups.code`) czekają na decyzję zespołu (#132);
+- MongoDB nie ma kluczy obcych ani reguł usuwania (pilnuje ich serwis), osadza tabele zależne
+  w dokumentach i trzyma kopie (`organization_id`, `status_category`, `display_name`,
+  odwołania w `time_entries` i `expenses`, `ancestor_ids`);
+- kwota to `{value, currency}`, a odbiorca powiadomienia to `recipient_user_id` (PRD 2.1 §6.2, §7.2);
+- TTL usuwa powiadomienia po 180 dniach i wpisy historii z `expires_at`; w PostgreSQL retencję
+  wykonuje osobne polecenie.
 Inicjalizacja schematu nie wdraża serwisów, repozytoriów, UoW ani przełączania `DATA_BACKEND`.

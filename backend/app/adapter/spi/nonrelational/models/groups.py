@@ -9,13 +9,13 @@ from app.adapter.spi.nonrelational.models._schema import (
     PRESENT_ID,
     PRESENT_STRING,
     ROLE_GRANT,
+    STRING,
     CollectionSpec,
     array_of,
     distinct,
     distinct_role_grants,
     document,
     nullable_enum,
-    varchar,
 )
 
 BUILTIN_GROUP_CODES = ["administrators", "financial_controllers"]
@@ -29,9 +29,9 @@ GROUPS = CollectionSpec(
             "code": nullable_enum(BUILTIN_GROUP_CODES),
             "parent_id": OPT_LONG,
             "ancestor_ids": array_of(LONG),
-            "name": varchar(120),
+            "name": STRING,
             "description": OPT_STRING,
-            "role_grants": array_of(ROLE_GRANT, max_items=100),
+            "role_grants": array_of(ROLE_GRANT),
             "created_at": DATE,
             "version": INT,
         }

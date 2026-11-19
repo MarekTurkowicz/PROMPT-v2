@@ -1,21 +1,21 @@
 from pymongo import IndexModel
 
 from app.adapter.spi.nonrelational.models._schema import (
+    ATTACHMENT,
     DATE,
     INT,
     LONG,
     MONEY,
     OPT_LONG,
+    OPT_STRING,
     PRESENT_ID,
     STRING,
     CollectionSpec,
     array_of,
-    attachment,
     both_or_neither,
     distinct,
     document,
     enum,
-    varchar,
 )
 
 EXPENSE_TYPES = ["travel", "courses", "external_services", "equipment", "other"]
@@ -31,12 +31,11 @@ EXPENSES = CollectionSpec(
             "type": enum(EXPENSE_TYPES),
             "amount": MONEY,
             "spent_on_date": DATE,
-            "document_number": varchar(100, null=True),
+            "document_number": OPT_STRING,
             "description": STRING,
-            "created_by": LONG,
-            "attachments": array_of(attachment(), max_items=20),
+            "created_by_id": LONG,
+            "attachments": array_of(ATTACHMENT),
             "created_at": DATE,
-            "updated_at": DATE,
             "version": INT,
         }
     ),
