@@ -71,8 +71,8 @@ CREATE TABLE activity_log (
 """,
 )
 
-# Stops an accidental UPDATE or DELETE from the application, not a person with the database account:
-# anyone can SET promt.retention. The retention job deletes inside SET LOCAL promt.retention = 'on'.
+# Retention runs as the schema owner inside SET LOCAL promt.retention = 'on'; the application role
+# has no UPDATE or DELETE here at all (app_role.py).
 ACTIVITY_LOG_GUARD = Statement(
     name="activity_log_guard",
     sql="""

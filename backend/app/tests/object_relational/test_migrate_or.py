@@ -262,6 +262,21 @@ def test_activity_log_is_append_only_except_retention(cur: cursor) -> None:
     assert cur.fetchone() == (0,)
 
 
+def test_application_role_cannot_change_history_even_with_the_retention_flag(cur: cursor) -> None:
+    cur.execute("SET LOCAL ROLE promt_or_app")
+    cur.execute("SET LOCAL promt.retention = 'on'")
+    assert rejects(cur, "DELETE FROM activity_log")
+    assert rejects(cur, "UPDATE activity_log SET changes = '{}'")
+    assert rejects(cur, "TRUNCATE activity_log")
+    assert not rejects(
+        cur,
+        "INSERT INTO activity_log (id, organization_id, entity_type, entity_id, action, changes, created_at) "
+        "VALUES (2, 1, 'task', 1, 'updated', '{}', now())",
+    )
+    assert not rejects(cur, "UPDATE task SET title = 'Renamed' WHERE id = 1")
+    assert not rejects(cur, "DELETE FROM notification")
+
+
 def test_retention_deletes_notifications_like_relational(cur: cursor) -> None:
     cur.execute("SET LOCAL promt.retention = 'on'")
     cur.execute("DELETE FROM activity_log")
