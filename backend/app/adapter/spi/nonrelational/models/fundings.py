@@ -18,7 +18,6 @@ from app.adapter.spi.nonrelational.models._schema import (
     nullable,
     numeric,
     obj,
-    varchar,
 )
 
 FUNDING_TYPES = ["grant", "sponsorship", "donation", "internal"]
@@ -26,7 +25,7 @@ FUNDING_TYPES = ["grant", "sponsorship", "donation", "internal"]
 TASK_TEMPLATE = obj(
     {
         "_id": LONG,
-        "title": varchar(200),
+        "title": STRING,
         "description": STRING,
         "default_status_id": OPT_LONG,
         "default_priority": PRIORITY,
@@ -41,18 +40,17 @@ FUNDINGS = CollectionSpec(
         {
             "organization_id": OPT_LONG,
             "type": enum(FUNDING_TYPES),
-            "name": varchar(200),
-            "funder": varchar(200),
-            "program": varchar(200),
-            "agreement_number": varchar(100),
+            "name": STRING,
+            "funder": STRING,
+            "program": STRING,
+            "agreement_number": STRING,
             "amount": MONEY,
             "start_date": OPT_DATE,
             "end_date": OPT_DATE,
             "reporting_deadline": OPT_DATE,
             "description": STRING,
-            "templates": array_of(TASK_TEMPLATE, max_items=100),
+            "templates": array_of(TASK_TEMPLATE),
             "created_at": DATE,
-            "updated_at": DATE,
             "version": INT,
         }
     ),

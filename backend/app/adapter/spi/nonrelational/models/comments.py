@@ -1,6 +1,7 @@
 from pymongo import IndexModel
 
 from app.adapter.spi.nonrelational.models._schema import (
+    ATTACHMENT,
     DATE,
     INT,
     LONG,
@@ -8,7 +9,6 @@ from app.adapter.spi.nonrelational.models._schema import (
     PRESENT_ID,
     CollectionSpec,
     array_of,
-    attachment,
     bson,
     distinct,
     document,
@@ -22,7 +22,7 @@ COMMENT_SCHEMA = document(
         "parent_id": OPT_LONG,
         "author_id": LONG,
         "content": bson("string", minLength=1),
-        "attachments": array_of(attachment(), max_items=20),
+        "attachments": array_of(ATTACHMENT),
         "created_at": DATE,
         "updated_at": DATE,
         "version": INT,

@@ -20,7 +20,6 @@ from app.adapter.spi.nonrelational.models._schema import (
     not_before,
     numeric,
     obj,
-    varchar,
 )
 
 PROJECT_STATUSES = ["planned", "active", "closed", "cancelled", "archived"]
@@ -30,7 +29,7 @@ HEALTH_STATES = ["ok", "attention", "at_risk"]
 MILESTONE = obj(
     {
         "_id": LONG,
-        "name": varchar(200),
+        "name": STRING,
         "status": enum(MILESTONE_STATUSES),
         "due_date": OPT_DATE,
         "position": POSITION,
@@ -73,15 +72,15 @@ PROJECTS = CollectionSpec(
         {
             "organization_id": LONG,
             "owner_id": LONG,
-            "name": varchar(200),
+            "name": STRING,
             "description": STRING,
             "status": enum(PROJECT_STATUSES),
             "start_date": OPT_DATE,
             "end_date": OPT_DATE,
-            "hidden_status_ids": array_of(LONG, uniqueItems=True),
-            "statuses": array_of(STATUS, max_items=30),
-            "milestones": array_of(MILESTONE, max_items=100),
-            "fundings": array_of(PROJECT_FUNDING, max_items=500),
+            "hidden_status_ids": array_of(LONG),
+            "statuses": array_of(STATUS),
+            "milestones": array_of(MILESTONE),
+            "fundings": array_of(PROJECT_FUNDING),
             "health": HEALTH,
             "created_at": DATE,
             "updated_at": DATE,
