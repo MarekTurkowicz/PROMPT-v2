@@ -23,7 +23,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Object-relational variant (#52), started with: docker compose --profile object_relational up
+  # Object-relational variant, started with: docker compose --profile object_relational up
   ordb:
     image: postgres:18.3-alpine
     container_name: prompt_ordb
