@@ -42,7 +42,7 @@ Jedyny wyjątek to trigger append-only na `activity_log`. Nie odrzuca żadnego w
 
 | Miejsce | Zawartość |
 |---|---|
-| `app/shared/adapter/outbound/object_relational_db/schema/objects.py` | bloki `EnumType`, `Domain`, `Table`, `Statement`; `render`, `missing_dependencies` |
+| `app/shared/adapter/outbound/object_relational_db/schema/objects.py` | bloki `EnumType`, `Domain`, `Statement`, `Table` (podklasa `Statement`); `missing_dependencies` |
 | `app/shared/.../schema/domains.py`, `composite_types.py` | domeny i typy używane przez kilka modułów |
 | `app/shared/.../object_relational_db/migrate.py` | `connect_from_env`, `apply_migrations` (tabela `schema_version`, blokada) |
 | `app/<moduł>/adapter/outbound/object_relational_db/schema/<tabela>.py` | tabela modułu i obiekty używane tylko przez nią |

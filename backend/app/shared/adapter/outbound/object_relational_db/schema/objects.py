@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -34,16 +34,6 @@ class Domain:
 
 
 @dataclass(frozen=True, slots=True)
-class Table:
-    name: str
-    sql: str
-    depends_on: tuple[str, ...] = ()
-
-    def create_sql(self) -> str:
-        return self.sql.strip().rstrip(";") + ";"
-
-
-@dataclass(frozen=True, slots=True)
 class Statement:
     """Any other object: composite type, function, trigger, partial unique index."""
 
@@ -55,11 +45,12 @@ class Statement:
         return self.sql.strip().rstrip(";") + ";"
 
 
-SchemaObject = EnumType | Domain | Table | Statement
+@dataclass(frozen=True, slots=True)
+class Table(Statement):
+    pass
 
 
-def render(objects: Iterable[SchemaObject]) -> str:
-    return "\n\n".join(obj.create_sql() for obj in objects)
+SchemaObject = EnumType | Domain | Statement
 
 
 def missing_dependencies(objects: Sequence[SchemaObject]) -> list[tuple[str, str]]:

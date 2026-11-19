@@ -5,7 +5,7 @@ import psycopg2
 from django.conf import settings
 from psycopg2.extensions import connection
 
-from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject, render
+from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
 
 CREATE_SCHEMA_VERSION = """
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -39,7 +39,7 @@ def apply_migrations(conn: connection, migrations: Mapping[int, Sequence[SchemaO
             cursor.execute("SELECT 1 FROM schema_version WHERE version = %s", (version,))
             if cursor.fetchone() is not None:
                 continue
-            cursor.execute(render(migrations[version]))
+            cursor.execute("\n\n".join(obj.create_sql() for obj in migrations[version]))
             cursor.execute("INSERT INTO schema_version VALUES (%s, now())", (version,))
         applied.append(version)
     return applied
