@@ -24,3 +24,11 @@ class ApplicationError(Exception):
 
 class DomainError(ApplicationError):
     abstract = True
+
+
+class InvalidValueError(DomainError):
+    kind = ErrorKind.INVALID
+    code = "shared.invalid_value"
+
+    def __init__(self, field: str, value: object, msg: str) -> None:
+        super().__init__(f"Invalid {field}: {value!r}\nReason: {msg}", field=field, value=value, msg=msg)

@@ -4,7 +4,7 @@ import psycopg2
 from django.conf import settings
 from psycopg2.extensions import connection
 
-from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
+from app.shared.adapter.outbound.object_relational_db.objects import SchemaObject
 
 CREATE_SCHEMA_VERSION = """
 CREATE TABLE IF NOT EXISTS schema_version (

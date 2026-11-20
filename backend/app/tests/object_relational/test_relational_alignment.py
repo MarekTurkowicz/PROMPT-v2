@@ -4,8 +4,7 @@ from pathlib import Path
 import pytest
 
 from app.object_relational_schema import SCHEMA_OBJECTS
-from app.organization.core.domain.value_objects.member_status import MemberStatus
-from app.shared.adapter.outbound.object_relational_db.schema.objects import (
+from app.shared.adapter.outbound.object_relational_db.objects import (
     EnumType,
     Table,
     missing_dependencies,
@@ -54,10 +53,6 @@ def test_every_enum_is_checked() -> None:
 def test_enum_values_match_relational_choices(enum_name: str) -> None:
     # Same order too: PostgreSQL compares ENUM values by their position.
     assert ENUMS[enum_name].values == text_choices_values(*RELATIONAL_CHOICES[enum_name])
-
-
-def test_member_status_matches_domain_enum() -> None:
-    assert ENUMS["member_status_t"].values == tuple(MemberStatus)
 
 
 def test_schema_has_no_missing_dependencies() -> None:

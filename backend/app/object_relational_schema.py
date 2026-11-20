@@ -1,7 +1,7 @@
-from app.access.adapter.outbound.object_relational_db.schema.role import ROLE
-from app.access.adapter.outbound.object_relational_db.schema.role_assignment import ROLE_ASSIGNMENT
-from app.access.adapter.outbound.object_relational_db.schema.user import LOGIN_EMAIL, USER
-from app.activity.adapter.outbound.object_relational_db.schema.activity_log import (
+from app.access.adapter.outbound.object_relational_db.models.role import ROLE
+from app.access.adapter.outbound.object_relational_db.models.role_assignment import ROLE_ASSIGNMENT
+from app.access.adapter.outbound.object_relational_db.models.user import LOGIN_EMAIL, USER
+from app.activity.adapter.outbound.object_relational_db.models.activity_log import (
     ACTIVITY_ACTION,
     ACTIVITY_LOG,
     ACTIVITY_LOG_APPEND_ONLY,
@@ -9,59 +9,56 @@ from app.activity.adapter.outbound.object_relational_db.schema.activity_log impo
     ACTIVITY_LOG_NO_TRUNCATE,
     ENTITY_TYPE,
 )
-from app.activity.adapter.outbound.object_relational_db.schema.notification import NOTIFICATION
-from app.finance.adapter.outbound.object_relational_db.schema.expense import EXPENSE, EXPENSE_TYPE
-from app.finance.adapter.outbound.object_relational_db.schema.funding import FUNDING, FUNDING_TYPE
-from app.finance.adapter.outbound.object_relational_db.schema.project_funding import (
+from app.activity.adapter.outbound.object_relational_db.models.notification import NOTIFICATION
+from app.finance.adapter.outbound.object_relational_db.models.expense import EXPENSE, EXPENSE_TYPE
+from app.finance.adapter.outbound.object_relational_db.models.funding import FUNDING, FUNDING_TYPE
+from app.finance.adapter.outbound.object_relational_db.models.project_funding import (
     PROJECT_FUNDING,
     PROJECT_FUNDING_ONE_PRIMARY,
     PROJECT_FUNDING_UNIQUE,
 )
-from app.finance.adapter.outbound.object_relational_db.schema.task_template import DUE_DAYS, TASK_TEMPLATE
-from app.organization.adapter.outbound.object_relational_db.schema.member_group import MEMBER_GROUP
-from app.organization.adapter.outbound.object_relational_db.schema.member_group_member import (
+from app.finance.adapter.outbound.object_relational_db.models.task_template import DUE_DAYS, TASK_TEMPLATE
+from app.organization.adapter.outbound.object_relational_db.models.member_group import MEMBER_GROUP
+from app.organization.adapter.outbound.object_relational_db.models.member_group_member import (
     MEMBER_GROUP_MEMBER,
 )
-from app.organization.adapter.outbound.object_relational_db.schema.organization import ORGANIZATION
-from app.organization.adapter.outbound.object_relational_db.schema.organization_member import (
+from app.organization.adapter.outbound.object_relational_db.models.organization import ORGANIZATION
+from app.organization.adapter.outbound.object_relational_db.models.organization_member import (
     MEMBER_STATUS,
     ORGANIZATION_MEMBER,
 )
-from app.project.adapter.outbound.object_relational_db.schema.milestone import MILESTONE, MILESTONE_STATUS
-from app.project.adapter.outbound.object_relational_db.schema.project import PROJECT, PROJECT_STATUS
-from app.project.adapter.outbound.object_relational_db.schema.task_status import (
+from app.project.adapter.outbound.object_relational_db.models.milestone import MILESTONE, MILESTONE_STATUS
+from app.project.adapter.outbound.object_relational_db.models.project import PROJECT, PROJECT_STATUS
+from app.project.adapter.outbound.object_relational_db.models.task_status import (
     COLOR,
     STATUS_CATEGORY,
     TASK_STATUS,
     TASK_STATUS_ONE_DEFAULT_IN_ORG,
 )
-from app.shared.adapter.outbound.object_relational_db.schema.composite_types import (
+from app.shared.adapter.outbound.object_relational_db.models.money import CURRENCY, MONEY, MONEY_TYPE
+from app.shared.adapter.outbound.object_relational_db.models.position import POSITION
+from app.shared.adapter.outbound.object_relational_db.objects import SchemaObject
+from app.task.adapter.outbound.object_relational_db.models.attachment import (
     ATTACHMENT,
     ATTACHMENT_IDS_UNIQUE,
     ATTACHMENT_TYPE,
-    MONEY,
-    MONEY_TYPE,
-)
-from app.shared.adapter.outbound.object_relational_db.schema.domains import (
-    CURRENCY,
-    EST_HOURS,
     FILE_SIZE,
-    POSITION,
-    PRIORITY,
 )
-from app.shared.adapter.outbound.object_relational_db.schema.objects import SchemaObject
-from app.task.adapter.outbound.object_relational_db.schema.comment import COMMENT, NONEMPTY_TEXT
-from app.task.adapter.outbound.object_relational_db.schema.task import (
+from app.task.adapter.outbound.object_relational_db.models.checklist_item import (
     CHECKLIST_IDS_UNIQUE,
     CHECKLIST_ITEM,
     CHECKLIST_ITEM_TYPE,
+)
+from app.task.adapter.outbound.object_relational_db.models.comment import COMMENT, NONEMPTY_TEXT
+from app.task.adapter.outbound.object_relational_db.models.task import (
+    EST_HOURS,
+    PRIORITY,
     TASK,
     TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
 )
-from app.task.adapter.outbound.object_relational_db.schema.task_assignment import TASK_ASSIGNMENT
-from app.task.adapter.outbound.object_relational_db.schema.time_entry import HOURS, TIME_ENTRY
+from app.task.adapter.outbound.object_relational_db.models.task_assignment import TASK_ASSIGNMENT
+from app.task.adapter.outbound.object_relational_db.models.time_entry import HOURS, TIME_ENTRY
 
-# In creation order: every object comes after its dependencies.
 SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     LOGIN_EMAIL,
     USER,

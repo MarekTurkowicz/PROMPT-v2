@@ -1,13 +1,25 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from decimal import Decimal
 
 import psycopg2
 import pytest
 from django.conf import settings
 from psycopg2.extensions import connection, cursor
 
+from app.access.core.domain.constraints.email import Email
+from app.finance.core.domain.constraints.due_days import DueDays
 from app.object_relational_schema import MIGRATIONS, SCHEMA_OBJECTS
+from app.project.core.domain.constraints.color import Color
 from app.shared.adapter.outbound.object_relational_db.migrate import apply_migrations, connect
-from app.shared.adapter.outbound.object_relational_db.schema.objects import EnumType
+from app.shared.adapter.outbound.object_relational_db.objects import EnumType
+from app.shared.core.domain.constraints.money import Currency
+from app.shared.core.domain.constraints.position import Position
+from app.shared.core.domain.exceptions import InvalidValueError
+from app.task.core.domain.constraints.comment_content import CommentContent
+from app.task.core.domain.constraints.estimated_hours import EstimatedHours
+from app.task.core.domain.constraints.file_size import FileSize
+from app.task.core.domain.constraints.hours import Hours
+from app.task.core.domain.constraints.priority import Priority
 
 # The tests use their own database, so the data in the configured one is never touched.
 TEST_DB = settings.OBJECT_RELATIONAL_DB["NAME"] + "_test"
@@ -70,15 +82,45 @@ def cur(db: connection) -> Iterator[cursor]:
     db.rollback()
 
 
-def rejects(cur: cursor, sql: str) -> bool:
+def rejects(cur: cursor, sql: str, params: tuple[object, ...] | None = None) -> bool:
     cur.execute("SAVEPOINT s")
     try:
-        cur.execute(sql)
+        cur.execute(sql, params)
     except psycopg2.Error:
         cur.execute("ROLLBACK TO SAVEPOINT s")
         return True
     cur.execute("RELEASE SAVEPOINT s")
     return False
+
+
+@pytest.mark.parametrize(
+    ("factory", "pg_domain", "value"),
+    [
+        *((Priority, "priority_d", v) for v in (0, 1, 5, 6)),
+        *((Position, "position_d", v) for v in (-1, 0)),
+        *((DueDays, "due_days_d", v) for v in (-1, 0)),
+        *((EstimatedHours, "est_hours_d", Decimal(v)) for v in ("0", "0.01", "-1", "NaN")),
+        *((Hours, "hours_d", Decimal(v)) for v in ("0", "0.01", "-1", "NaN")),
+        *((FileSize, "file_size_d", v) for v in (0, 1)),
+        *((Currency, "currency_d", v) for v in ("PLN", "pln", "PL", "PLNX")),
+        *((Color, "color_d", v) for v in ("#a1B2c3", "#12345", "#1234567", "red")),
+        *((CommentContent, "nonempty_text_d", v) for v in ("", "x")),
+    ],
+)
+def test_domain_value_object_and_pg_domain_agree(
+    cur: cursor, factory: Callable[[object], object], pg_domain: str, value: object
+) -> None:
+    try:
+        factory(value)
+        domain_accepts = True
+    except InvalidValueError:
+        domain_accepts = False
+    # CAST, not ::, because -1::position_d is parsed as -(1::position_d).
+    assert domain_accepts == (not rejects(cur, f"SELECT CAST(%s AS {pg_domain})", (value,)))
+
+
+def test_email_value_object_writes_what_login_email_accepts(cur: cursor) -> None:
+    assert not rejects(cur, "SELECT CAST(%s AS login_email_d)", (Email("Jan@X.pl").value,))
 
 
 def test_second_run_applies_nothing(db: connection) -> None:
