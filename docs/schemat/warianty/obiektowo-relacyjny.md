@@ -1,5 +1,8 @@
 # PROMT 2.0 – projekt bazy obiektowo-relacyjnej (PostgreSQL)
 
+> **Wersja historyczna** (pierwszy szkic, przed PRD 2.1). Aktualny model i jego implementacja:
+> `obiektowo-relacyjny-2.0.md` i `obiektowo-relacyjny-2.0.drawio`.
+
 Diagram: `obiektowo-relacyjny.drawio` – tabele, typy użytkownika (`«type»`, `«enum»`, `«domain»`),
 dziedziczenie (trójkąt) i użycie typów (linia kropkowana).
 

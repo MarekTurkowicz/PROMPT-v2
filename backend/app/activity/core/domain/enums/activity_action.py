@@ -1,0 +1,28 @@
+from enum import StrEnum
+
+
+class ActivityAction(StrEnum):
+    CREATED = "created"
+    UPDATED = "updated"
+    DELETED = "deleted"
+    STATUS_CHANGED = "status_changed"
+    RESCHEDULED = "rescheduled"
+    ASSIGNED = "assigned"
+    UNASSIGNED = "unassigned"
+    GRANTED = "granted"
+    REVOKED = "revoked"
+    ATTACHED = "attached"
+    DETACHED = "detached"
+    CHECKED = "checked"
+    UNCHECKED = "unchecked"
+    ADDED_TO_GROUP = "added_to_group"
+    REMOVED_FROM_GROUP = "removed_from_group"
+    INVITED = "invited"
+    REMINDER_SENT = "reminder_sent"
+    MOVED = "moved"
+    HIDDEN = "hidden"
+    SHOWN = "shown"
+    ARCHIVED = "archived"
+    RESTORED = "restored"
+    ALERT_RAISED = "alert_raised"
+    ALERT_RESOLVED = "alert_resolved"

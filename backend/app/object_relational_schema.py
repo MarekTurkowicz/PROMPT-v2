@@ -1,0 +1,119 @@
+from app.access.adapter.outbound.object_relational_db.models.role import ROLE
+from app.access.adapter.outbound.object_relational_db.models.role_assignment import ROLE_ASSIGNMENT
+from app.access.adapter.outbound.object_relational_db.models.user import LOGIN_EMAIL, USER
+from app.activity.adapter.outbound.object_relational_db.models.activity_log import (
+    ACTIVITY_ACTION,
+    ACTIVITY_LOG,
+    ACTIVITY_LOG_APPEND_ONLY,
+    ACTIVITY_LOG_GUARD,
+    ACTIVITY_LOG_NO_TRUNCATE,
+    ENTITY_TYPE,
+)
+from app.activity.adapter.outbound.object_relational_db.models.notification import NOTIFICATION
+from app.finance.adapter.outbound.object_relational_db.models.expense import EXPENSE, EXPENSE_TYPE
+from app.finance.adapter.outbound.object_relational_db.models.funding import FUNDING, FUNDING_TYPE
+from app.finance.adapter.outbound.object_relational_db.models.project_funding import (
+    PROJECT_FUNDING,
+    PROJECT_FUNDING_ONE_PRIMARY,
+    PROJECT_FUNDING_UNIQUE,
+)
+from app.finance.adapter.outbound.object_relational_db.models.task_template import DUE_DAYS, TASK_TEMPLATE
+from app.organization.adapter.outbound.object_relational_db.models.member_group import MEMBER_GROUP
+from app.organization.adapter.outbound.object_relational_db.models.member_group_member import (
+    MEMBER_GROUP_MEMBER,
+)
+from app.organization.adapter.outbound.object_relational_db.models.organization import ORGANIZATION
+from app.organization.adapter.outbound.object_relational_db.models.organization_member import (
+    MEMBER_STATUS,
+    ORGANIZATION_MEMBER,
+)
+from app.project.adapter.outbound.object_relational_db.models.milestone import MILESTONE, MILESTONE_STATUS
+from app.project.adapter.outbound.object_relational_db.models.project import PROJECT, PROJECT_STATUS
+from app.project.adapter.outbound.object_relational_db.models.task_status import (
+    COLOR,
+    STATUS_CATEGORY,
+    TASK_STATUS,
+    TASK_STATUS_ONE_DEFAULT_IN_ORG,
+)
+from app.shared.adapter.outbound.object_relational_db.models.money import CURRENCY, MONEY, MONEY_TYPE
+from app.shared.adapter.outbound.object_relational_db.models.position import POSITION
+from app.shared.adapter.outbound.object_relational_db.objects import SchemaObject
+from app.task.adapter.outbound.object_relational_db.models.attachment import (
+    ATTACHMENT,
+    ATTACHMENT_IDS_UNIQUE,
+    ATTACHMENT_TYPE,
+    FILE_SIZE,
+)
+from app.task.adapter.outbound.object_relational_db.models.checklist_item import (
+    CHECKLIST_IDS_UNIQUE,
+    CHECKLIST_ITEM,
+    CHECKLIST_ITEM_TYPE,
+)
+from app.task.adapter.outbound.object_relational_db.models.comment import COMMENT, NONEMPTY_TEXT
+from app.task.adapter.outbound.object_relational_db.models.task import (
+    EST_HOURS,
+    PRIORITY,
+    TASK,
+    TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
+)
+from app.task.adapter.outbound.object_relational_db.models.task_assignment import TASK_ASSIGNMENT
+from app.task.adapter.outbound.object_relational_db.models.time_entry import HOURS, TIME_ENTRY
+
+SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
+    LOGIN_EMAIL,
+    USER,
+    ORGANIZATION,
+    MEMBER_STATUS,
+    ORGANIZATION_MEMBER,
+    MEMBER_GROUP,
+    MEMBER_GROUP_MEMBER,
+    ROLE,
+    PROJECT_STATUS,
+    PROJECT,
+    ROLE_ASSIGNMENT,
+    POSITION,
+    STATUS_CATEGORY,
+    COLOR,
+    TASK_STATUS,
+    TASK_STATUS_ONE_DEFAULT_IN_ORG,
+    MILESTONE_STATUS,
+    MILESTONE,
+    CURRENCY,
+    MONEY_TYPE,
+    MONEY,
+    FUNDING_TYPE,
+    FUNDING,
+    PROJECT_FUNDING,
+    PROJECT_FUNDING_UNIQUE,
+    PROJECT_FUNDING_ONE_PRIMARY,
+    PRIORITY,
+    EST_HOURS,
+    DUE_DAYS,
+    TASK_TEMPLATE,
+    FILE_SIZE,
+    ATTACHMENT_TYPE,
+    ATTACHMENT,
+    ATTACHMENT_IDS_UNIQUE,
+    CHECKLIST_ITEM_TYPE,
+    CHECKLIST_ITEM,
+    CHECKLIST_IDS_UNIQUE,
+    TASK,
+    TASK_TEMPLATE_ONCE_PER_PROJECT_FUNDING,
+    TASK_ASSIGNMENT,
+    HOURS,
+    TIME_ENTRY,
+    NONEMPTY_TEXT,
+    COMMENT,
+    EXPENSE_TYPE,
+    EXPENSE,
+    ENTITY_TYPE,
+    ACTIVITY_ACTION,
+    ACTIVITY_LOG,
+    ACTIVITY_LOG_GUARD,
+    ACTIVITY_LOG_APPEND_ONLY,
+    ACTIVITY_LOG_NO_TRUNCATE,
+    NOTIFICATION,
+)
+
+# Version -> objects created by it. A later change is a new version with ALTER statements.
+MIGRATIONS: dict[int, tuple[SchemaObject, ...]] = {1: SCHEMA_OBJECTS}

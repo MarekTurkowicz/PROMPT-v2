@@ -23,6 +23,54 @@ services:
       timeout: 5s
       retries: 10
 
+  # Object-relational variant, started with: docker compose --profile object_relational up
+  ordb:
+    image: postgres:18.3-alpine
+    container_name: prompt_ordb
+    restart: on-failure
+    profiles:
+      - object_relational
+    environment:
+      POSTGRES_DB: ${OR_DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGPORT: ${OR_DB_PORT:-27016}
+    volumes:
+      - ordb_data:/var/lib/postgresql
+    ports:
+      - "${OR_DB_PORT:-27016}:${OR_DB_PORT:-27016}"
+    networks:
+      - my-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${OR_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate_or:
+    command: python manage.py migrate_or
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    container_name: prompt_ordb_migrate
+    restart: "no"
+    profiles:
+      - object_relational
+    depends_on:
+      ordb:
+        condition: service_healthy
+    environment:
+      OR_DB_NAME: ${OR_DB_NAME}
+      OR_DB_USER: ${DB_USER}
+      OR_DB_PASSWORD: ${DB_PASSWORD}
+      OR_DB_HOST: ordb
+      OR_DB_PORT: ${OR_DB_PORT:-27016}
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+    networks:
+      - my-network
+
   frontend:
     build:
       context: ./frontend
@@ -100,3 +148,4 @@ services:
 
 volumes:
   postgres_data:
+  ordb_data:

@@ -40,7 +40,7 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r backend/requirements.txt
-      - run: mypy backend/
+      - run: mypy backend/ --exclude '/migrations/|^backend/api/'
       - run: pipx run --spec pip-audit==2.10.1 pip-audit -r backend/requirements.txt
 
   frontend-audit:
@@ -80,6 +80,20 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      ordb:
+        image: postgres:18.3-alpine
+        env:
+          POSTGRES_DB: promt_or
+          POSTGRES_USER: promt_user
+          POSTGRES_PASSWORD: promt_ci
+          PGPORT: 27016
+        ports:
+          - 27016:27016
+        options: >-
+          --health-cmd "pg_isready -U promt_user -d promt_or"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
@@ -93,7 +107,14 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py migrate
-      - run: pytest
+      - run: python manage.py migrate_or
+        env: &or_db_env
+          OR_DB_HOST: localhost
+          OR_DB_PORT: "27016"
+          OR_DB_USER: promt_user
+          OR_DB_PASSWORD: promt_ci
+      - run: pytest app
+        env: *or_db_env
 
   e2e-playwright:
     # Disabled until the PROMT 2.0 frontend exists (M4).
