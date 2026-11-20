@@ -71,14 +71,12 @@ CREATE TABLE activity_log (
 """,
 )
 
-# Retention runs as the schema owner inside SET LOCAL promt.retention = 'on'; the application role
-# has no UPDATE or DELETE here at all (app_role.py).
 ACTIVITY_LOG_GUARD = Statement(
     name="activity_log_guard",
     sql="""
 CREATE FUNCTION activity_log_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF TG_OP = 'DELETE' AND current_setting('promt.retention', true) = 'on' THEN RETURN OLD; END IF;
+    IF TG_OP = 'DELETE' AND OLD.created_at < now() - interval '6 months' THEN RETURN OLD; END IF;
     RAISE EXCEPTION 'activity_log is append-only: % is not allowed', TG_OP;
 END $$
 """,

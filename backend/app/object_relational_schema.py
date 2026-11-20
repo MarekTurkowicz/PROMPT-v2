@@ -35,7 +35,6 @@ from app.project.adapter.outbound.object_relational_db.schema.task_status import
     TASK_STATUS,
     TASK_STATUS_ONE_DEFAULT_IN_ORG,
 )
-from app.shared.adapter.outbound.object_relational_db.schema.app_role import APP_ROLE
 from app.shared.adapter.outbound.object_relational_db.schema.composite_types import (
     ATTACHMENT,
     ATTACHMENT_IDS_UNIQUE,
@@ -117,7 +116,6 @@ SCHEMA_OBJECTS: tuple[SchemaObject, ...] = (
     ACTIVITY_LOG_APPEND_ONLY,
     ACTIVITY_LOG_NO_TRUNCATE,
     NOTIFICATION,
-    APP_ROLE,
 )
 
 # Version -> objects created by it. A later change is a new version with ALTER statements.
