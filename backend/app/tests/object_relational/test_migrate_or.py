@@ -1,16 +1,16 @@
-import os
 from collections.abc import Iterator
 
 import psycopg2
 import pytest
+from django.conf import settings
 from psycopg2.extensions import connection, cursor
 
 from app.object_relational_schema import MIGRATIONS, SCHEMA_OBJECTS
-from app.shared.adapter.outbound.object_relational_db.migrate import apply_migrations, connect_from_env
+from app.shared.adapter.outbound.object_relational_db.migrate import apply_migrations, connect
 from app.shared.adapter.outbound.object_relational_db.schema.objects import EnumType
 
-# The tests use their own database, so the data in OR_DB_NAME is never touched.
-TEST_DB = os.getenv("OR_DB_NAME", "promt_or") + "_test"
+# The tests use their own database, so the data in the configured one is never touched.
+TEST_DB = settings.OBJECT_RELATIONAL_DB["NAME"] + "_test"
 
 SEED = """
 INSERT INTO "user" (id, password, email, first_name, last_name, is_active, is_staff, is_superuser,
@@ -48,12 +48,12 @@ INSERT INTO notification (id, activity_id, recipient_id, content, created_at)
 @pytest.fixture(scope="module")
 def db() -> Iterator[connection]:
     # Needs the prompt_ordb container (or OR_DB_*); like the MongoDB tests, no skip without a database.
-    admin = connect_from_env("postgres")
+    admin = connect("postgres")
     admin.autocommit = True
     with admin.cursor() as cur:
         cur.execute(f"DROP DATABASE IF EXISTS {TEST_DB} WITH (FORCE)")
         cur.execute(f"CREATE DATABASE {TEST_DB}")
-    conn = connect_from_env(TEST_DB)
+    conn = connect(TEST_DB)
     assert apply_migrations(conn, MIGRATIONS) == [1]
     yield conn
     conn.close()

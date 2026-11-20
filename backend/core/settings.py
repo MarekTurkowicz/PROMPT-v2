@@ -149,6 +149,15 @@ DATABASES = {
     }
 }
 
+# Object-relational variant, used through psycopg2 and not by Django. Defaults to the main database login.
+OBJECT_RELATIONAL_DB = {
+    "NAME": os.getenv("OR_DB_NAME", "promt_or"),
+    "USER": os.getenv("OR_DB_USER", DATABASES["default"]["USER"]),
+    "PASSWORD": os.getenv("OR_DB_PASSWORD", DATABASES["default"]["PASSWORD"]),
+    "HOST": os.getenv("OR_DB_HOST", DATABASES["default"]["HOST"]),
+    "PORT": os.getenv("OR_DB_PORT", DATABASES["default"]["PORT"]),
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

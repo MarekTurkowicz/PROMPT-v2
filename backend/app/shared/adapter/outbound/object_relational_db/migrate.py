@@ -1,4 +1,3 @@
-import os
 from collections.abc import Mapping, Sequence
 
 import psycopg2
@@ -18,15 +17,14 @@ CREATE TABLE IF NOT EXISTS schema_version (
 LOCK_KEY = 52_052
 
 
-def connect_from_env(dbname: str | None = None) -> connection:
-    """OR_DB_* variables; user, password, host and port default to the main database."""
-    default = settings.DATABASES["default"]
+def connect(dbname: str | None = None) -> connection:
+    db = settings.OBJECT_RELATIONAL_DB
     return psycopg2.connect(
-        dbname=dbname or os.getenv("OR_DB_NAME", "promt_or"),
-        user=os.getenv("OR_DB_USER", default["USER"]),
-        password=os.getenv("OR_DB_PASSWORD", default["PASSWORD"]),
-        host=os.getenv("OR_DB_HOST", default["HOST"]),
-        port=os.getenv("OR_DB_PORT", default["PORT"]),
+        dbname=dbname or db["NAME"],
+        user=db["USER"],
+        password=db["PASSWORD"],
+        host=db["HOST"],
+        port=db["PORT"],
     )
 
 
