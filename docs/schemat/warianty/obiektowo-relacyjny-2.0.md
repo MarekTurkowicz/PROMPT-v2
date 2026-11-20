@@ -1,7 +1,8 @@
 # PROMT 2.0 – model obiektowo-relacyjny (PostgreSQL 18)
 
-Diagram: `obiektowo-relacyjny-2.0.drawio` (3 strony: diagram ER · mechanizmy i decyzje · zmiany i otwarte kwestie).
-Kod: `backend/app/<moduł>/adapter/outbound/object_relational_db/schema/`, lista obiektów w
+Diagram: `obiektowo-relacyjny-2.0.drawio` (2 strony: diagram ER w układzie relacyjnego · typy, domeny i enumy).
+Typy obiektowe (`_t`, `_d`, enumy) są w kolumnach pogrubione.
+Kod: `backend/app/<moduł>/adapter/outbound/object_relational_db/models/`, reguły w `<moduł>/core/domain/`, lista obiektów w
 `backend/app/object_relational_schema.py`, komenda `migrate_or`, testy w `backend/app/tests/object_relational/`.
 Punkt wyjścia: 22 tabele na `main` (wariant relacyjny). Zastępuje szkic `obiektowo-relacyjny.md`.
 
@@ -36,18 +37,26 @@ katalogu 33 kodów uprawnień, formatu e-maila, wymaganych kluczy i kształtu `j
 `task.project_funding` należy do tego samego projektu.
 
 Jedyny wyjątek to trigger append-only na `activity_log`. Nie odrzuca żadnego wiersza przy przenoszeniu danych
-(blokuje `UPDATE`/`DELETE`/`TRUNCATE`, nie `INSERT`), więc przełączanie baz nic nie traci.
+(blokuje `UPDATE`, `TRUNCATE` i `DELETE` wpisów młodszych niż 6 miesięcy, nie `INSERT`), więc przełączanie baz nic nie traci.
 
 ## 3. Gdzie to leży w architekturze (main, dc52156)
 
 | Miejsce | Zawartość |
 |---|---|
-| `app/shared/adapter/outbound/object_relational_db/schema/objects.py` | bloki `EnumType`, `Domain`, `Statement`, `Table` (podklasa `Statement`); `missing_dependencies` |
-| `app/shared/.../schema/domains.py`, `composite_types.py` | domeny i typy używane przez kilka modułów |
-| `app/shared/.../object_relational_db/migrate.py` | `connect_from_env`, `apply_migrations` (tabela `schema_version`, blokada) |
-| `app/<moduł>/adapter/outbound/object_relational_db/schema/<tabela>.py` | tabela modułu i obiekty używane tylko przez nią |
+| `app/<moduł>/core/domain/constraints/<element>.py` | reguły wartości wspólne dla wszystkich baz: stałe `MIN`, `MAX`, `GREATER_THAN`, `MIN_LENGTH`, `PATTERN` i ich sprawdzenie |
+| `app/<moduł>/core/domain/enums/<enum>.py` | enumy (`StrEnum`) |
+| `app/shared/adapter/outbound/object_relational_db/objects.py` | bloki `EnumType`, `Domain`, `Statement`, `Table`; `value_rule`, `missing_dependencies` |
+| `app/shared/.../object_relational_db/migrate.py` | `connect` (z `settings.OBJECT_RELATIONAL_DB`), `apply_migrations` (tabela `schema_version`, blokada) |
+| `app/<moduł>/adapter/outbound/object_relational_db/models/<tabela>.py` | tabela modułu i obiekty używane tylko przez nią (jak `relational_db/models/`) |
+| `app/shared/.../models/position.py`, `money.py` | domeny i typy używane przez kilka modułów (`position_d`, `currency_d`, `money_d`) |
+| `app/task/.../models/checklist_item.py`, `attachment.py` | typy złożone checklisty i załącznika z funkcjami unikalności id |
 | `app/object_relational_schema.py` | `SCHEMA_OBJECTS` w kolejności tworzenia + `MIGRATIONS` (jak `app/models.py`) |
 | `app/management/commands/migrate_or.py` | komenda tworząca schemat |
+
+Reguły leżą w domenie, model OR podaje tylko nazwę typu w bazie:
+`EnumType.from_enum("project_status_t", ProjectStatus)`, `Domain.from_value_object("color_d", "text", Color)`.
+`CHECK` składa się ze stałych w `constraints/`, więc zmiana reguły w domenie zmienia ją w każdej bazie.
+Test sprawdza, że reguła z domeny i domena PostgreSQL odrzucają te same wartości.
 
 Moduły: `access` (user, role, role_assignment), `organization` (4 tabele), `project` (project, task_status, milestone),
 `finance` (funding, project_funding, task_template, expense), `task` (task, task_assignment, time_entry, comment),
@@ -71,8 +80,9 @@ Repozytoria OR (implementacje tych samych portów co `relational_db`) to następ
 | `entity_type_t` | 18 wartości `EntityType` | `activity_log.entity_type` |
 | `activity_action_t` | 24 wartości `ActivityAction` | `activity_log.action` |
 
-`ADD VALUE` działa, usunąć wartości się nie da – dlatego ENUM tylko dla list stałych. Test porównuje każdy ENUM
-z `TextChoices` (wartości i kolejność) i z `pg_enum` na żywej bazie.
+`ADD VALUE` działa, usunąć wartości się nie da – dlatego ENUM tylko dla list stałych. Wartości pochodzą z enumów
+w domenie. Test porównuje je z `TextChoices` relacyjnego (wartości i kolejność), dopóki relacyjny ma własne kopie,
+i z `pg_enum` na żywej bazie.
 
 ### 4.2 DOMAIN (10) – zastępują CHECK na jednej kolumnie
 
@@ -117,18 +127,13 @@ razem albo wcale, rozmiar > 0, wymagane pola. Kolumny zachowują nazwy z relacyj
 | `activity_log_guard()` + 2 triggery | historia tylko do dopisywania |
 
 ```sql
--- retencja: jedyny sposób na usunięcie historii
-BEGIN;
-SET LOCAL promt.retention = 'on';
-DELETE FROM activity_log WHERE organization_id = $1 AND created_at < $2;
-COMMIT;
+-- retencja: usuwa tylko wpisy starsze niż 6 miesięcy, młodsze trigger odrzuca
+DELETE FROM activity_log WHERE created_at < now() - interval '6 months';
 ```
 
-`TRUNCATE` nie odpala triggerów wierszowych, dlatego jest drugi trigger `BEFORE TRUNCATE`.
-`SET LOCAL` wygasa z końcem transakcji, więc furtka nie zostaje otwarta na połączeniu z puli.
-Sam trigger nie wystarcza: `promt.retention` może ustawić każdy, a właściciel tabeli może wyłączyć trigger.
-Dlatego aplikacja loguje się jako członek roli `promt_or_app` (`app_role.py`), która na `activity_log` ma tylko
-`SELECT, INSERT`. Retencję i migracje robi właściciel schematu.
+`UPDATE` i `TRUNCATE` są odrzucane zawsze, `DELETE` tylko dla wpisów młodszych niż 6 miesięcy, niezależnie od
+tego, kto je wykonuje. `TRUNCATE` nie odpala triggerów wierszowych, dlatego jest drugi trigger
+`BEFORE TRUNCATE`. Retencję ma uruchamiać harmonogram (polecenie jak `send_reminders`), nie człowiek.
 
 ### 4.5 Partial uniques
 
@@ -173,7 +178,7 @@ Liczba tabel: 22 → 20.
 | brak `UNIQUE` wewnątrz tablicy | `CHECK` z funkcją `*_ids_unique` |
 | odhaczenie punktu przepisuje cały wiersz zadania | adapter: atomowy `UPDATE` elementu albo `version` |
 | ENUM: nie da się usunąć wartości | ENUM tylko dla list stałych |
-| ORM nie zna typów i domen | schemat w `schema/`, repozytoria na psycopg |
+| ORM nie zna typów i domen | schemat w `models/`, repozytoria na psycopg |
 
 ## 7. Uruchomienie
 
@@ -189,6 +194,8 @@ docker logs prompt_ordb_migrate          # Applied versions: [1]  (kolejne uruch
 | `OR_DB_NAME` | `promt_or` | nazwa bazy |
 | `OR_DB_HOST` / `OR_DB_PORT` | `localhost` / `27016` | z hosta; w Dockerze compose ustawia `ordb:27016` |
 | `OR_DB_USER` / `OR_DB_PASSWORD` | jak `DB_USER` / `DB_PASSWORD` | |
+
+Zmienne czyta tylko `core/settings.py` (`OBJECT_RELATIONAL_DB`, obok `DATABASES`), reszta kodu bierze je z ustawień.
 
 Lokalnie (z `backend/`, kontener `prompt_ordb` działa):
 
@@ -211,7 +218,7 @@ Nowa zmiana schematu = nowa wersja w `MIGRATIONS` z poleceniami `ALTER`.
 | FK wewnątrz agregatu | tak | nie – serwis | nie – serwis |
 | historia append-only w bazie | nie | tak | nie |
 | karta zadania | 3 tabele | 1 wiersz | 1 dokument |
-| definicja schematu | migracje Django | obiekty `schema/` + `migrate_or` | `init_mongo` |
+| definicja schematu | migracje Django | obiekty `models/` + `migrate_or` | `init_mongo` |
 
 ## 9. Do decyzji zespołu
 
