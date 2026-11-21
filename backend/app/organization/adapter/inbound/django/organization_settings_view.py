@@ -9,9 +9,9 @@ from app.organization.adapter.inbound.django.serializers.update_organization_set
 from app.organization.core.ports.api.update_organization_settings_port import (
     UpdateOrganizationSettingsPort,
 )
+from app.shared.adapter.inbound.django.actor import get_actor
 
 
-# TODO Sprawdzenie uprawnień
 class OrganizationSettingsView(APIView):
     update_organization_settings: UpdateOrganizationSettingsPort = None  # type: ignore[assignment]  # set via as_view()
 
@@ -19,7 +19,7 @@ class OrganizationSettingsView(APIView):
         serializer = UpdateOrganizationSettingsDeserializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command(organization_id)
-        organization = self.update_organization_settings.execute(command)
+        organization = self.update_organization_settings.execute(get_actor(request), command)
         levels = organization.settings.priority_levels
         return Response(
             {

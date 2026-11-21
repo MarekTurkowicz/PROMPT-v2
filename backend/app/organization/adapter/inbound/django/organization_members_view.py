@@ -9,9 +9,9 @@ from app.organization.adapter.inbound.django.serializers.add_organization_member
 from app.organization.core.ports.api.add_organization_member_port import (
     AddOrganizationMemberPort,
 )
+from app.shared.adapter.inbound.django.actor import get_actor
 
 
-# TODO Sprawdzenie uprawnień
 class OrganizationMembersView(APIView):
     add_organization_member: AddOrganizationMemberPort = None  # type: ignore[assignment]  # set via as_view()
 
@@ -19,7 +19,7 @@ class OrganizationMembersView(APIView):
         serializer = AddOrganizationMemberDeserializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command(organization_id)
-        member = self.add_organization_member.execute(command)
+        member = self.add_organization_member.execute(get_actor(request), command)
         return Response(
             {
                 "id": member.id,

@@ -1,5 +1,8 @@
 from dataclasses import replace
 
+from app.access.core.application.authorizer import Authorizer
+from app.access.core.application.requires_permission import requires_permission
+from app.access.core.domain.enums.permission_enum import PermissionEnum
 from app.organization.core.domain.entities.organization import Organization
 from app.organization.core.domain.exceptions import OrganizationNotFoundError
 from app.organization.core.domain.value_objects.organization_settings import (
@@ -14,14 +17,17 @@ from app.organization.core.ports.api.update_organization_settings_port import (
 from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
+from app.shared.core.ports.api.actor import Actor
 from app.shared.core.utils import is_not_unset
 
 
 class UpdateOrganizationSettingsUseCase(UpdateOrganizationSettingsPort):
-    def __init__(self, repository: OrganizationPort) -> None:
+    def __init__(self, repository: OrganizationPort, authorizer: Authorizer) -> None:
         self._repository = repository
+        self._authorizer = authorizer
 
-    def execute(self, command: UpdateOrganizationSettingsCommand) -> Organization:
+    @requires_permission(PermissionEnum.UPDATE_ORGANIZATION_SETTINGS)
+    def execute(self, actor: Actor, command: UpdateOrganizationSettingsCommand) -> Organization:
         organization = self._repository.get_by_id(command.organization_id)
         if organization is None:
             raise OrganizationNotFoundError(command.organization_id)

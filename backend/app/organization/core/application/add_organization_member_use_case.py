@@ -1,3 +1,6 @@
+from app.access.core.application.authorizer import Authorizer
+from app.access.core.application.requires_permission import requires_permission
+from app.access.core.domain.enums.permission_enum import PermissionEnum
 from app.access.core.ports.user_port import UserPort
 from app.activity.core.ports.spi.db.repositories.notification_port import (
     NotificationPort,
@@ -23,6 +26,7 @@ from app.organization.core.ports.spi.db.repositories.organization_member_port im
 from app.organization.core.ports.spi.db.repositories.organization_port import (
     OrganizationPort,
 )
+from app.shared.core.ports.api.actor import Actor
 
 
 class AddOrganizationMemberUseCase(AddOrganizationMemberPort):
@@ -32,14 +36,16 @@ class AddOrganizationMemberUseCase(AddOrganizationMemberPort):
         member_repository: OrganizationMemberPort,
         user_repository: UserPort,
         notification_repository: NotificationPort,
+        authorizer: Authorizer,
     ) -> None:
         self._organization_repository = organization_repository
         self._member_repository = member_repository
         self._user_repository = user_repository
         self._notification_repository = notification_repository
+        self._authorizer = authorizer
 
-    def execute(self, command: AddOrganizationMemberCommand) -> OrganizationMember:
-        # TODO Sprawdzanie uprawnień
+    @requires_permission(PermissionEnum.ADD_ORGANIZATION_MEMBER)
+    def execute(self, actor: Actor, command: AddOrganizationMemberCommand) -> OrganizationMember:
         if self._organization_repository.get_by_id(command.organization_id) is None:
             raise OrganizationNotFoundError(command.organization_id)
         if not self._user_repository.exists_by_id(command.user_id):

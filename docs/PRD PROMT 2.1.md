@@ -110,7 +110,7 @@ porównać trzy paradygmaty na identycznych danych i identycznych operacjach.
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Frontend                 | **Szkielet gotowy jako artifact** (makieta wszystkich ekranów z danymi w pamięci). Do przeniesienia do React + TypeScript w `frontend/`.                                                                                                                                                    |
 | Architektura             | `backend/app/` zarejestrowane w `INSTALLED_APPS` (`app.apps.ApplicationConfig`); `DependenciesContainer` tworzony w `ready()`; moduł `shared` (błędy, `ErrorKind` → HTTP, bazowe porty i mappery, `UNSET`). Na razie brak `UnitOfWork`, `import-linter` i wyboru `DATA_BACKEND`.            |
-| Backend (API, logika)    | Moduł `organization`: założenie organizacji, zmiana ustawień, dodanie członka (`POST /api/organizations/`, `PATCH …/settings/`, `POST …/members/`) – jeszcze bez uprawnień i transakcji. Moduły `access` i `activity`: modele i szkielet portów. Logowanie (sesja + CSRF) do implementacji. |
+| Backend (API, logika)    | Moduł `organization`: założenie organizacji, zmiana ustawień, dodanie członka (`POST /api/organizations/`, `PATCH …/settings/`, `POST …/members/`) – z uwierzytelnianiem i uprawnieniami, jeszcze bez transakcji. Moduł `access`: modele, logowanie (sesja + CSRF, `/api/access/…`), `PermissionEnum`, `Authorizer` i port `OrganizationAccessPort`. Moduł `activity`: modele i szkielet portów. |
 | Baza relacyjna           | Przeniesione do `backend/app` 9 z 22 modeli (organizacja, członkostwo, grupy, konto, role, nadania ról, dziennik, powiadomienia); migracja `0001_initial` obejmuje tylko `organization` i `organization_member`. Pozostałe 13 modeli czeka w `backend/api/models/`.                         |
 | Baza obiektowo-relacyjna | Tylko projekt (`obiektowo-relacyjny.md`).                                                                                                                                                                                                                                                   |
 | Baza dokumentowa         | Projekt modelu pod architekturę heksagonalną (`nosql-mongodb-heksagonalny.drawio`).                                                                                                                                                                                                         |
@@ -165,8 +165,8 @@ zastąpione wyborem z menu (zmień status, ustaw daty).
 - Rolę nadaje się **osobie albo grupie**, **w całej organizacji albo w jednym projekcie** (FR-ACC-05).
 - **Dostęp kaskadowy:** rola nadana w organizacji działa we wszystkich jej projektach; rola nadana w projekcie działa
   tylko w nim. Obserwator może więc widzieć całą organizację albo organizację ograniczoną do wybranych projektów.
-- Rola to nazwany zestaw kodów uprawnień. Role wbudowane mają stały `code`, którego nie da się zmienić ani usunąć;
-  organizacja może tworzyć role własne (FR-ACC-02).
+- Rola to nazwany zestaw kodów uprawnień. Rolę identyfikuje jej `name` (unikalna w organizacji); rola nie ma pola
+  `code`. Organizacja może tworzyć role własne (FR-ACC-02).
 - Nikt nie nada roli z uprawnieniami, których sam nie ma, ani nie zmieni własnej roli (FR-ACC-07).
 - **Usuwanie obiektów nadrzędnych** (projekt, finansowanie, grupa, rola) jest zarezerwowane dla Dyrektora organizacji i
   administratorów. Cel: kierownik projektu nie może przypadkowo „rozjechać” całego projektu.
@@ -176,7 +176,7 @@ zastąpione wyborem z menu (zmień status, ustaw daty).
 
 Od najniższej:
 
-| Rola (`code`)                                     | Kto to jest                                                    | Zakres                                                                                                                                                               |
+| Rola (`name`)                                     | Kto to jest                                                    | Zakres                                                                                                                                                               |
 |---------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Obserwator (`viewer`)                             | osoba przeglądająca, np. członek zarządu albo osoba z zewnątrz | tylko odczyt elementów, do których dostał dostęp (organizacja albo wybrane projekty)                                                                                 |
 | Użytkownik (`member`)                             | pracownik realizujący zadania                                  | swoje zadania, czas pracy, checklisty, komentarze                                                                                                                    |
@@ -202,7 +202,10 @@ rola – D1.
 
 ### 3.4 Katalog uprawnień
 
-Kody są stałą listą w kodzie (`Permission`), nie tabelą. Każda rola wbudowana jest zestawem tych kodów.
+Kody są stałą listą w kodzie (`PermissionEnum`, `access/core/domain/enums/permission_enum.py`), nie tabelą. Każda rola
+wbudowana jest zestawem tych kodów. `PermissionEnum` zawiera dziś tylko kody używane przez istniejące przypadki użycia
+(`org.create`, `org.settings`, `member.manage`); pozostałe kody z tabeli dochodzą razem z przypadkami użycia.
+`org.create` jest sprawdzany poza kontekstem organizacji, więc na razie ma go tylko superuser.
 
 | Obszar      | Kody                                                                                                                                                           |
 |-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -210,7 +213,7 @@ Kody są stałą listą w kodzie (`Permission`), nie tabelą. Każda rola wbudow
 | Zadania     | `task.create`, `task.edit`, `task.delete`, `task.assign`, `task.plan` (daty, oś czasu), `checklist.edit`, `time.log`, `comment.create`, `comment.moderate`     |
 | Projekt     | `project.create`, `project.edit`, `project.close`, `project.delete`, `milestone.manage`, `status.manage_project`, `group.manage_project`, `role.grant_project` |
 | Finanse     | `funding.manage`, `funding.attach`, `template.manage`, `expense.manage`, `budget.export`                                                                       |
-| Organizacja | `member.manage`, `role.manage`, `group.manage`, `status.manage`, `org.settings`                                                                                |
+| Organizacja | `org.create`, `member.manage`, `role.manage`, `group.manage`, `status.manage`, `org.settings`                                                                  |
 
 ### 3.5 Macierz ról
 
@@ -538,7 +541,7 @@ zapisuje model Django przez `OrganizationMapper` → widok zwraca 201.
   `relational` | `object_relational` | `nonrelational`. Nie ma mieszania wariantów ani synchronizacji danych między
   nimi.
 - **Konto i logowanie zostają w Django i PostgreSQL we wszystkich wariantach:** `user` (`AUTH_USER_MODEL`), sesje, panel
-  admina, JWT. Warianty różnią się danymi domeny. W MongoDB są tylko odwołania `user_id` / `recipient_user_id` i kopia
+  admina. Warianty różnią się danymi domeny. W MongoDB są tylko odwołania `user_id` / `recipient_user_id` i kopia
   `display_name`.
 - **Te same identyfikatory w każdej bazie:** `bigint` w PostgreSQL, `_id: long` w MongoDB, nadawane przez port
   `IdGenerator` (sekwencje w PostgreSQL, kolekcja `counters` w MongoDB, przy wsadach rezerwacja zakresu). Dzięki temu
@@ -622,14 +625,14 @@ zostanie usunięty.
 | Moduł                                                                   | Obszar                              | Modele                                                                                                                                                                        | Stan                                                                                        |
 |-------------------------------------------------------------------------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
 | `organization`                                                          | organizacja, członkowie, grupy      | `Organization`, `OrganizationMember`, `MemberGroup`, `MemberGroupMember`                                                                                                      | przeniesione; 3 przypadki użycia i endpointy                                                |
-| `access`                                                                | konto, role, nadania ról, logowanie | `User`, `Role`, `RoleAssignment`                                                                                                                                              | przeniesione; port `UserPort`; logowanie do przeniesienia                                   |
+| `access`                                                                | konto, role, nadania ról, logowanie | `User`, `Role`, `RoleAssignment`                                                                                                                                              | przeniesione; porty `UserPort`, `OrganizationAccessPort`; logowanie (sesja + CSRF) pod `/api/access/…` |
 | `activity`                                                              | dziennik zdarzeń, powiadomienia     | `ActivityLog`, `Notification`                                                                                                                                                 | przeniesione; porty szkieletowe                                                             |
 | `shared`                                                                | wspólne elementy                    | –                                                                                                                                                                             | błędy, `ErrorKind`, `BasePort`, `BaseMapper`, `UNSET`, `exception_handler`, `get_container` |
 | nowe moduły (propozycja: `project`, `task`, `finance`, `collaboration`) | praca, finanse, współpraca          | `TaskStatus`, `Project`, `Milestone`, `Funding`, `ProjectFunding`, `TaskTemplate`, `Task`, `TaskAssignment`, `TimeEntry`, `ChecklistItem`, `Comment`, `Attachment`, `Expense` | w `backend/api/models/` – do przeniesienia                                                  |
 
 Model jest przeniesiony, gdy: leży w `<moduł>/adapter/outbound/relational_db/models/`, jest wyeksportowany w
 `app/models.py` i ujęty w migracji, ma encję domenową, mapper, port i repozytorium zarejestrowane w
-`dependencies_container.py` oraz testy. Procedura krok po kroku: `docs/architektura-backendu.md`, rozdz. 10.
+`dependencies_container.py` oraz testy. Procedura krok po kroku: `docs/architektura-backendu.md`, rozdz. 11.
 
 ---
 
@@ -677,7 +680,7 @@ Każda zmiana obowiązuje we **wszystkich trzech wariantach** (diagram relacyjny
 |-----|--------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | Z1  | `task_template.mandatory` – usunięte; każdy szablon obowiązkowy                                                    | ustalenie zespołu (4.8)                                                                             |
 | Z2  | `task.from_template` bool – kopiowane przy tworzeniu zadania z szablonu                                            | ochrona zadań z szablonu nie może zależeć od żywego szablonu (`template_id` może zostać wyzerowane) |
-| Z3  | `role.code` NULL, unikalny w organizacji; kody ról wbudowanych z 3.2                                               | rozpoznanie roli administratora i ról wbudowanych niezależnie od nazwy                              |
+| Z3  | odrzucone: bez `role.code`; rolę identyfikuje `role.name` (unikalna w organizacji)                                 | ustalenie zespołu (3.1)                                                                             |
 | Z4  | `member_group.organization` NOT NULL, nowe `member_group.project_id` NULL                                          | izolacja; grupy projektowe (3.3)                                                                    |
 | Z5  | `project_funding.allocated_amount`                                                                                 | budżet finansowania w projekcie (4.3, 4.8)                                                          |
 | Z6  | `task_assignment.removed_at`                                                                                       | odpięcie osoby, która zarejestrowała czas                                                           |
@@ -725,16 +728,21 @@ powiadomienia; pozostałe procesy do zrobienia.
 ## 9. Specyfikacja API
 
 REST, JSON, prefiks `/api/`, warstwa `<moduł>/adapter/inbound/django` (każdy moduł ma własne `urls.py` dołączane w
-`core/urls.py`). Identyfikatory są liczbami całkowitymi w każdym wariancie bazy (6.2). Dane organizacji zawsze pod
-`/api/orgs/{org}/…`, więc izolacja jest widoczna w adresie i sprawdzana w jednym miejscu. Zapis agregatu ze starą
+`core/urls.py`). Ścieżki mają postać `/api/{moduł}/{widok}/…` (np. `/api/access/login/`); istniejących ścieżek modułu
+`organization` nie zmieniamy. Ścieżki w tabeli poniżej (`/api/orgs/{org}/…`, `/api/me/…`) są robocze i zostaną
+dostosowane do tej konwencji przy implementacji modułów. Izolację organizacji sprawdza `Authorizer` w każdym
+przypadku użycia na podstawie `organization_id` z komendy. Identyfikatory są liczbami całkowitymi w każdym wariancie
+bazy (6.2). Wszystkie endpointy poza `/api/access/csrf/` i `/api/access/login/` wymagają zalogowania (sesja Django +
+CSRF, bez JWT). Zapis agregatu ze starą
 wartością `version` zwraca 409. Listy stronicowane, najwyżej 100 elementów (NFR-PERF-05). Dokumentacja OpenAPI pod
 `/api/docs` (FR-ADM-02).
 
 | Metoda                | Ścieżka                                                                              | Cel                                                                  |
 |-----------------------|--------------------------------------------------------------------------------------|----------------------------------------------------------------------|
 | GET                   | `/api/health`                                                                        | stan aplikacji i wariant bazy                                        |
-| POST                  | `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`                           | JWT                                                                  |
-| GET/PATCH             | `/api/me`                                                                            | profil konta, zmiana hasła                                           |
+| GET                   | `/api/access/csrf/`                                                                  | ustawienie ciasteczka CSRF                                           |
+| POST                  | `/api/access/login/`, `/api/access/logout/`                                          | sesja Django + CSRF                                                  |
+| GET/PATCH             | `/api/access/me/`                                                                    | profil konta, zmiana hasła                                           |
 | GET                   | `/api/me/organizations`                                                              | organizacje osoby                                                    |
 | GET/POST              | `/api/me/notifications`, `/api/me/notifications/read`                                | skrzynka, oznaczanie przeczytanych                                   |
 | GET/PATCH             | `/api/orgs/{org}`                                                                    | organizacja i ustawienia                                             |
@@ -783,8 +791,8 @@ odpowiedzi:
 Błędy formatu danych z deserializerów DRF mają domyślny format DRF (słownik pól z listą błędów).
 
 **Stan implementacji:** działają `POST /api/organizations/`, `PATCH /api/organizations/{id}/settings/`,
-`POST /api/organizations/{id}/members/` (bez uwierzytelniania i uprawnień). Ścieżki różnią się od docelowych
-`/api/orgs/{org}/…` – patrz D10.
+`POST /api/organizations/{id}/members/` (z uwierzytelnianiem i uprawnieniami) oraz `/api/access/csrf/`,
+`/api/access/login/`, `/api/access/logout/`, `GET /api/access/me/`.
 
 ---
 
@@ -857,7 +865,7 @@ backend/
           nonrelational_db/    walidatory, indeksy, repozytoria na PyMongo
       tests/
   api/                 poprzednia implementacja – do wygaszenia
-  core/                ustawienia Django (konto, sesje, JWT – zawsze PostgreSQL), urls.py
+  core/                ustawienia Django (konto, sesje – zawsze PostgreSQL), urls.py
   tests/
     unit/              domena i serwisy na adapterach w pamięci
     contract/          testy portów spi – ten sam zestaw na trzech adapterach
@@ -944,7 +952,7 @@ architektury heksagonalnej.
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
 | F0 – Porządki                         | **zrobione:** `backend/app` zarejestrowane, kontener zależności, moduł `shared`, `backend/api` odłączone, pierwszy moduł (`organization`) jako wzorzec. **Do zrobienia:** wszystkie przeniesione modele w `app/models.py` i migracji, `AUTH_USER_MODEL = "app.User"`, `import-linter`, typowany kontener; decyzje D1–D10 podjęte; zmiany Z1–Z14 na diagramach trzech wariantów | `manage.py check` i CI zielone; `import-linter` skonfigurowany; rejestr decyzji bez otwartych pozycji blokujących  |
 | F1 – Domena, porty, adapter relacyjny | przeniesienie pozostałych 13 modeli z `backend/api` do modułów (6.6); encje domeny, porty `api` i `spi`, `UnitOfWork`, przypadki użycia P1–P12, adaptery w pamięci, `adapter/outbound/relational_db`, seed                                                                                                                                                                     | testy jednostkowe i kontraktowe zielone na adapterze relacyjnym; `backend/api/models` bez modeli nieprzeniesionych |
-| F2 – API                              | endpointy z rozdz. 9, JWT (logowanie przeniesione z `backend/api` do modułu `access`), uprawnienia, OpenAPI; usunięcie `backend/api`                                                                                                                                                                                                                                           | testy API (w tym izolacja i macierz ról) zielone; `/api/docs` kompletne; katalog `backend/api` usunięty            |
+| F2 – API                              | endpointy z rozdz. 9, logowanie sesją + CSRF (przeniesione z `backend/api` do modułu `access`), uprawnienia, OpenAPI; usunięcie `backend/api`                                                                                                                                                                                                                                  | testy API (w tym izolacja i macierz ról) zielone; `/api/docs` kompletne; katalog `backend/api` usunięty            |
 | F3 – Frontend                         | shadcn/ui, motyw ciemny, i18n; ekrany wg mapy z rozdz. 4 na prawdziwym API, w kolejności: projekty i zadania → Kanban i oś czasu → przegląd projektu → zespół → finansowania i budżet → administracja                                                                                                                                                                          | każda trasa makiety ma odpowiednik w React; E2E ścieżek z 13.2 zielone                                             |
 | F4 – Raporty i powiadomienia          | PDF, CSV, przypomnienia, retencja                                                                                                                                                                                                                                                                                                                                              | raport PDF dla projektu z seeda generuje się \< 30 s; P10 bez duplikatów                                           |
 | F5 – Adapter obiektowo-relacyjny      | schemat SQL, `migrate_or`, `adapter/outbound/object_relational_db` w każdym module                                                                                                                                                                                                                                                                                             | 100% testów kontraktowych i API zielonych z `DATA_BACKEND=object_relational`                                       |
@@ -968,7 +976,7 @@ architektury heksagonalnej.
 | D7  | `notification.organization_id`: analiza (A6) chce go do filtrowania po bieżącej organizacji i ukrywania przypomnień po odejściu z niej; model dokumentowy go pomija (odbiorcą jest konto, klucz shardu `recipient_user_id`) | dodać jako pole opcjonalne (bez wpływu na klucz shardu), we wszystkich wariantach                                                                                                  |
 | D8  | Agregaty dashboardów i raportów jako osobny port `ReportQueries`                                                                                                                                                            | tak – zapytania tylko do odczytu, implementowane w każdym adapterze osobno                                                                                                         |
 | D9  | Nazwa zmiennej wyboru adaptera (na diagramie oznaczona jako propozycja)                                                                                                                                                     | `DATA_BACKEND` = `relational` \| `object_relational` \| `nonrelational`                                                                                                            |
-| D10 | Ścieżki API: obecne `/api/organizations/{id}/…` są docelowe                                                                                                                                                                 | `/api/orgs/{org}/…` – zmienić istniejące endpointy modułu `organization` przed F2                                                                                                  |
+| D10 | Ścieżki API: obecne `/api/organizations/{id}/…` są docelowe                                                                                                                                                                 | `/api/{moduł}/{widok}/…`; istniejących endpointów modułu `organization` nie zmieniamy                                                                                              |
 | D11 | Granica transakcji bez wiązania `core` z Django                                                                                                                                                                             | port `UnitOfWork` w `shared/core/ports`, implementacja `transaction.atomic` w adapterze relacyjnym                                                                                 |
 | D12 | Podział pozostałych 13 modeli na moduły (6.6)                                                                                                                                                                               | `project` (projekt, etap, statusy), `task` (zadanie, przypisanie, czas, checklista), `finance` (finansowanie, podpięcie, szablon, wydatek), `collaboration` (komentarz, załącznik) |
 
@@ -980,7 +988,9 @@ architektury heksagonalnej.
 | Podział `backend/app` na moduły domenowe z jednakowym układem warstw (`core/…`, `adapter/inbound/…`, `adapter/outbound/…`) | moduły rozwijane niezależnie; nowy moduł kopiuje wzorzec `organization`            |
 | Błędy domenowe z `kind` i `code`, zamieniane na HTTP w jednym miejscu                                                      | jednolity format błędów API; domena nie zna kodów HTTP                             |
 | `backend/api` jako poprzednia implementacja, modele przenoszone sukcesywnie                                                | stopniowe przejście bez zatrzymania prac; reguły z modeli trafiają do domeny       |
-| Konto, sesje, admin i JWT zawsze w Django i PostgreSQL                                                                     | warianty porównują dane domeny; logowanie nie zależy od wariantu                   |
+| Konto, sesje i admin zawsze w Django i PostgreSQL                                                                          | warianty porównują dane domeny; logowanie nie zależy od wariantu                   |
+| Uwierzytelnianie: sesja Django + CSRF, bez JWT                                                                             | ustalenie zespołu; ten sam mechanizm co panel admina Django                        |
+| Uprawnienia sprawdzane w każdym przypadku użycia (`@requires_permission` z `PermissionEnum`)                               | reguła w rdzeniu, niezależna od adaptera i wariantu bazy                           |
 | Identyfikatory `long` we wszystkich bazach (`IdGenerator`, w MongoDB `counters`)                                           | te same testy portów, adresy API i seed dla trzech baz                             |
 | Adapter MongoDB na PyMongo, bez `django-mongodb-backend`                                                                   | backend Django zakłada klucze ObjectId, a domena ma `int`                          |
 | Szczegóły zadania w panelu bocznym (drugi układ z makiety usunięty)                                                        | szybki podgląd bez opuszczania listy, osi czasu i Kanbanu                          |
