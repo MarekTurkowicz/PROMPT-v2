@@ -21,3 +21,16 @@ repos:
       - id: ruff-format
         files: ^backend/
         exclude: /migrations/
+
+  - repo: local
+    hooks:
+      - id: no-skipped-backend-tests
+        name: no skipped backend tests
+        language: pygrep
+        entry: '\bpytest\.(mark\.)?skip(if)?\b|\bunittest\.skip|@skip(If|Unless)?\b'
+        files: ^backend/.*tests?.*\.py$
+      - id: no-skipped-frontend-tests
+        name: no skipped frontend tests
+        language: pygrep
+        entry: '\b(it|test|describe)\.(skip|fixme)\b|\bx(it|describe)\('
+        files: ^frontend/.*\.(spec|test)\.[jt]sx?$
