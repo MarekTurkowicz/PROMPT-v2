@@ -30,7 +30,7 @@ PROMT 2.0 builds on the original PROMT (engineering diploma thesis) and extends 
 | Backend | Python · Django · Django REST Framework · Pydantic |
 | Database | PostgreSQL |
 | Testing | pytest · Vitest · Testing Library · Playwright |
-| Environment | Docker · Docker Compose |
+| Environment | Docker · Docker Compose · uv |
 
 ---
 
@@ -89,9 +89,8 @@ cd frontend && npx playwright test --config=playwright.config.ts
 Runs on the host from the repository root (the config is `mypy.ini`); CI runs the same check on pull requests and pushes to `main`.
 
 ```bash
-python -m venv backend/.venv                                    # Python 3.13, once
-backend/.venv/Scripts/pip install -r backend/requirements.txt   # Linux/macOS: backend/.venv/bin/pip
-backend/.venv/Scripts/mypy backend/                             # Linux/macOS: backend/.venv/bin/mypy
+uv --project backend sync                                       # Python 3.14, once
+uv --project backend run mypy backend/
 ```
 
 ---

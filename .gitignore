@@ -74,7 +74,6 @@ backend/.env.*.local
 **/docker-cache/
 
 # =============== MISC ===============
-backend/poetry.lock
 backend/.python-version
 
 # Windows PowerShell history

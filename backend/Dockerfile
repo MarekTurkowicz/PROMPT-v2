@@ -1,8 +1,17 @@
 FROM python:3.14-alpine
-COPY requirements.txt /app/
+
+COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /uvx /bin/
+
 WORKDIR /app
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY pyproject.toml uv.lock /app/
+RUN uv sync --frozen --no-dev --no-install-project
+
 COPY . /app
+
 EXPOSE 8000
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
