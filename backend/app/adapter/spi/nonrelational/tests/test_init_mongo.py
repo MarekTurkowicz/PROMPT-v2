@@ -28,9 +28,7 @@ from app.adapter.spi.nonrelational.models.time_entries import TIME_ENTRIES
 @pytest.fixture
 def db() -> Iterator[Database[dict[str, Any]]]:
     client: MongoClient[dict[str, Any]] = MongoClient(
-        os.environ.get(
-            "MONGO_URL", "mongodb://localhost:27017/?replicaSet=rs0&directConnection=true"
-        ),
+        os.environ.get("MONGO_URL", "mongodb://localhost:27017/?replicaSet=rs0&directConnection=true"),
         serverSelectionTimeoutMS=3000,
     )
     name = f"promt_test_{uuid.uuid4().hex[:8]}"
@@ -109,9 +107,7 @@ def test_manage_py_init_mongo_runs_twice(
     call_command("init_mongo")
 
     assert set(db.list_collection_names()) == {spec.name for spec in COLLECTIONS}
-    assert db.notifications.index_information()["created_at_1"]["expireAfterSeconds"] == (
-        180 * 24 * 60 * 60
-    )
+    assert db.notifications.index_information()["created_at_1"]["expireAfterSeconds"] == (180 * 24 * 60 * 60)
 
 
 def test_organization_accepts_unique_statuses_and_custom_roles_without_code(
@@ -384,9 +380,7 @@ def test_time_entry_needs_work_date_and_an_optional_interval(
 
 
 @pytest.mark.parametrize("organization_id", [None, "missing"])
-def test_group_requires_organization(
-    db: Database[dict[str, Any]], organization_id: str | None
-) -> None:
+def test_group_requires_organization(db: Database[dict[str, Any]], organization_id: str | None) -> None:
     init_mongo(db)
     group: dict[str, Any] = {
         "_id": 1,

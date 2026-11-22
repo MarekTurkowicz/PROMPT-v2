@@ -63,9 +63,7 @@ def test_z3_role_code_is_optional_and_unique_in_organization() -> None:
 def test_z4_group_requires_organization_and_may_belong_to_project() -> None:
     properties = GROUPS.schema["properties"]
     name_index = next(
-        index.document
-        for index in GROUPS.indexes
-        if index.document["name"] == "organization_id_1_name_1"
+        index.document for index in GROUPS.indexes if index.document["name"] == "organization_id_1_name_1"
     )
 
     assert properties["organization_id"] == REQUIRED_ID
@@ -133,8 +131,7 @@ def test_z13_every_root_with_embedded_documents_has_a_version() -> None:
     for collection in COLLECTIONS:
         properties = collection.schema["properties"]
         embeds_documents = any(
-            prop.get("bsonType") == "array" and "properties" in prop["items"]
-            for prop in properties.values()
+            prop.get("bsonType") == "array" and "properties" in prop["items"] for prop in properties.values()
         )
         if embeds_documents:
             checked.add(collection.name)
@@ -157,13 +154,9 @@ def test_z14_expense_always_has_project_and_optional_funding() -> None:
 
 
 def test_notifications_expire_after_180_days() -> None:
-    ttl = [
-        index.document for index in NOTIFICATIONS.indexes if "expireAfterSeconds" in index.document
-    ]
+    ttl = [index.document for index in NOTIFICATIONS.indexes if "expireAfterSeconds" in index.document]
 
-    assert ttl == [
-        {"key": {"created_at": 1}, "name": "created_at_1", "expireAfterSeconds": 15552000}
-    ]
+    assert ttl == [{"key": {"created_at": 1}, "name": "created_at_1", "expireAfterSeconds": 15552000}]
 
 
 # Remaining PRD and relational model rules
@@ -224,9 +217,7 @@ def test_no_partial_index_filters_by_bson_type() -> None:
 
 def test_indexes_on_optional_fields_skip_missing_values_with_range_filters() -> None:
     partial = {
-        f"{collection.name}:{','.join(index.document['key'])}": index.document[
-            "partialFilterExpression"
-        ]
+        f"{collection.name}:{','.join(index.document['key'])}": index.document["partialFilterExpression"]
         for collection in COLLECTIONS
         for index in collection.indexes
         if "partialFilterExpression" in index.document
@@ -281,9 +272,7 @@ def test_unique_task_index_starts_with_organization_shard_key() -> None:
 
 
 def test_unique_notification_indexes_start_with_recipient_shard_key() -> None:
-    unique_indexes = [
-        index.document for index in NOTIFICATIONS.indexes if index.document.get("unique")
-    ]
+    unique_indexes = [index.document for index in NOTIFICATIONS.indexes if index.document.get("unique")]
 
     assert all(next(iter(index["key"])) == "recipient_user_id" for index in unique_indexes)
 

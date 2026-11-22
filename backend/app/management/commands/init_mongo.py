@@ -14,9 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         database = os.environ.get("MONGO_DB", "promt")
-        client: MongoClient[dict[str, object]] = MongoClient(
-            os.environ.get("MONGO_URL", DEFAULT_MONGO_URL)
-        )
+        client: MongoClient[dict[str, object]] = MongoClient(os.environ.get("MONGO_URL", DEFAULT_MONGO_URL))
         with client:
             init_mongo(client[database])
         self.stdout.write(f"MongoDB schema is up to date in database {database!r}")

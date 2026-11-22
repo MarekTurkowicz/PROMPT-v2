@@ -156,11 +156,7 @@ def not_before(later: str, earlier: str) -> Expr:
 
 
 def every(array: str, alias: str, condition: Expr) -> Expr:
-    return {
-        "$allElementsTrue": [
-            {"$map": {"input": {"$ifNull": [array, []]}, "as": alias, "in": condition}}
-        ]
-    }
+    return {"$allElementsTrue": [{"$map": {"input": {"$ifNull": [array, []]}, "as": alias, "in": condition}}]}
 
 
 def at_most_one(array: str, alias: str, condition: Expr | str) -> Expr:

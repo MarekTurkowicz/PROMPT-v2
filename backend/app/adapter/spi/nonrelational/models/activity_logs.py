@@ -76,9 +76,7 @@ ACTIVITY_LOGS = CollectionSpec(
         }
     ),
     indexes=[
-        IndexModel(
-            [("organization_id", 1), ("entity_type", 1), ("entity_id", 1), ("created_at", -1)]
-        ),
+        IndexModel([("organization_id", 1), ("entity_type", 1), ("entity_id", 1), ("created_at", -1)]),
         IndexModel([("organization_id", 1), ("created_at", -1)]),
         IndexModel(
             [("organization_id", 1), ("project_id", 1), ("created_at", -1)],
