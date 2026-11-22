@@ -39,7 +39,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
       - run: uv --project backend sync --frozen
-      - run: uv --project backend run mypy backend/ --exclude '/migrations/|^backend/api/'
+      - run: uv --project backend run mypy
       - run: uv --project backend export --frozen --no-hashes -o /tmp/requirements.txt
       - run: uvx pip-audit==2.10.1 -r /tmp/requirements.txt
 

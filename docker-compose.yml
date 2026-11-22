@@ -18,7 +18,7 @@ services:
     networks:
       - my-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -42,7 +42,7 @@ services:
     networks:
       - my-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${OR_DB_NAME}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${OR_DB_NAME}" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -53,7 +53,7 @@ services:
     profiles:
       - nonrelational
     restart: on-failure
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all" ]
     volumes:
       - mongo_data:/data/db
     ports:
@@ -62,21 +62,18 @@ services:
       - my-network
     healthcheck:
       test:
-        - CMD
-        - mongosh
-        - --quiet
-        - --eval
-        - >-
-          try { rs.status(); }
-          catch (e) {
-            if (e.code !== 94) throw e;
-            rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongo:27017'}]});
-          }
-          quit(db.hello().isWritablePrimary ? 0 : 1);
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "try { rs.status(); } catch (e) { if (e.code !== 94) throw e; rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongo:27017'}]}); } quit(db.hello().isWritablePrimary ? 0 : 1);"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  #TODO Do wyrzutu, trzeba napisać komendę migrate która będzie wywoływać migrate relacyjne, or, nosql
   migrate_or:
     command: python manage.py migrate_or
     build:
@@ -114,7 +111,7 @@ services:
     networks:
       - my-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5173 || exit 1"]
+      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:5173 || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -148,7 +145,7 @@ services:
     networks:
       - my-network
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')\""]
+      test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')\"" ]
       interval: 30s
       timeout: 5s
       retries: 10
