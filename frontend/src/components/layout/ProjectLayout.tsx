@@ -48,7 +48,7 @@ export function ProjectLayout() {
           </NavLink>
         ))}
       </nav>
-      <section>
+      <section className="min-w-0">
         <Outlet />
       </section>
     </div>

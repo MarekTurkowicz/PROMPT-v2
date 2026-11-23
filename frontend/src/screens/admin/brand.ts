@@ -40,7 +40,7 @@ export function brandVars(b: Pick<Brand, "accent" | "nav">): Record<string, stri
 
 export function applyBrand(b: Brand) {
   const v = brandVars(b);
-  for (const k in v) document.documentElement.style.setProperty(k, v[k]);
+  for (const k in v) document.documentElement.style.setProperty("--brand-" + k.slice(2), v[k]);
   document.title = b.name;
 }
 

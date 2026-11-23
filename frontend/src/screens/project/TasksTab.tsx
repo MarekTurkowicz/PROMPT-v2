@@ -5,16 +5,8 @@ import type { Task } from "@/demo/data";
 import { gName, hasLbl, inPool, isOverdue, pName, fName, topLevel } from "@/demo/helpers";
 import { store } from "@/demo/store";
 import { Chip, Due, EmptyState, LabelChips, PrioChip, StatusChip, TaskLink } from "@/demo/ui";
-import {
-  LabelFilter,
-  SubBlock,
-  deleteTask,
-  openLabelForm,
-  openTaskAdd,
-  openTaskEdit,
-  takeFromPool,
-  useProject,
-} from "./part1/shared";
+import { deleteTask, openTaskForm, takeFromPool } from "@/demo/tasks";
+import { LabelFilter, SubBlock, openLabelForm, useProject } from "./part1/shared";
 
 const FLT: Record<string, (t: Task) => boolean> = {
   all: () => true,
@@ -68,7 +60,7 @@ function TaskCard({ t }: { t: Task }) {
               Weź zadanie
             </button>
           ) : null}
-          <button type="button" className="btn" onClick={() => openTaskEdit(t)}>
+          <button type="button" className="btn" onClick={() => openTaskForm(t)}>
             Edytuj
           </button>
           <button type="button" className="btn-danger" onClick={() => deleteTask(t)}>
@@ -95,7 +87,7 @@ export default function TasksTab() {
     </button>
   );
   const add = (
-    <button type="button" className="btn-primary" onClick={() => openTaskAdd(p.id)}>
+    <button type="button" className="btn-primary" onClick={() => openTaskForm(null, { project: p.id })}>
       Dodaj zadanie
     </button>
   );

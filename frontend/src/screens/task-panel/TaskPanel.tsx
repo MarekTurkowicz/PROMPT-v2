@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Paperclip, X } from "lucide-react";
 import { AL, ATT_OK, CAT, EL, PR_PL, ago, base, fmt, fmtH, fsize, off, plural } from "@/demo/core";
-import type { ChecklistItem, Task } from "@/demo/data";
+import type { AssignmentMeta, ChecklistItem, Task } from "@/demo/data";
 import {
   activeMem,
   actorName,
+  attErr,
   fName,
   gName,
   inPool,
@@ -18,13 +19,11 @@ import {
 } from "@/demo/helpers";
 import { logAudit, nextId, openTask, store, update, useDemo } from "@/demo/store";
 import { Avatar, Chip, Prop, PrioChip, StatusChip, bad, openForm, toast } from "@/demo/ui";
-import { attErr } from "./CommentThread";
 import CommentThread from "./CommentThread";
-import { addSubtask, changeStatus, deleteTask, taskEditForm } from "./taskActions";
+import { addSubtask, changeStatus, deleteTask, openTaskForm, takeFromPool } from "@/demo/tasks";
 
 const asKey = (t: number, u: number) => t + ":" + u;
 const DEF_LIST = "Checklista";
-type Asm = { by: number; at: string | null; start: string | null; end: string | null; pool?: boolean };
 
 function CheckRow({ c, i, n }: { c: ChecklistItem; i: number; n: number }) {
   const opts = memUsers().filter((u) => activeMem(u.id) || u.id === c.assignee);
@@ -395,7 +394,7 @@ function Side({ t }: { t: Task }) {
   const candSel = cand.some((u) => String(u.id) === asUser) ? asUser : String(cand[0]?.id ?? "");
   const pfs = p ? store.PF.filter((x) => x.project === p.id) : [];
   const me = store.ME;
-  const meta = (u: number) => store.ASM[asKey(t.id, u)] as Asm | undefined;
+  const meta = (u: number) => store.ASM[asKey(t.id, u)];
   const ref = { tid: t.id, pid: t.project ?? undefined };
 
   const assign = () => {
@@ -438,18 +437,6 @@ function Side({ t }: { t: Task }) {
       a.end = off(0);
     });
     logAudit("update", "task", t.title, "Zakończono pracę");
-  };
-  const take = () => {
-    if (!inPool(t)) {
-      toast("Zadanie z puli może wziąć tylko członek grupy.");
-      return;
-    }
-    update((s) => {
-      t.assg.push(me);
-      s.ASM[asKey(t.id, me)] = { by: me, pool: true, at: off(0), start: null, end: null } as Asm;
-    });
-    logAudit("assigned", "task", t.title, "Wzięto z puli grupy „" + gName(t.group) + "”");
-    toast("Zadanie jest teraz Twoje");
   };
   const addTime = () => {
     const h = parseFloat(hours.replace(",", "."));
@@ -510,7 +497,7 @@ function Side({ t }: { t: Task }) {
         <small>Przypisane osoby</small>
         {t.assg.length ? (
           t.assg.map((u) => {
-            const a = meta(u) ?? ({} as Partial<Asm>);
+            const a = meta(u) ?? ({} as Partial<AssignmentMeta>);
             const mine = u === me;
             return (
               <div key={u} className="as">
@@ -542,7 +529,7 @@ function Side({ t }: { t: Task }) {
           <div className="muted">Nikt nie jest przypisany.</div>
         )}
         {inPool(t) ? (
-          <button type="button" className="mini pri" style={{ marginTop: 6 }} onClick={take}>
+          <button type="button" className="mini pri" style={{ marginTop: 6 }} onClick={() => takeFromPool(t)}>
             Weź zadanie z puli grupy
           </button>
         ) : null}
@@ -752,7 +739,7 @@ export default function TaskPanel() {
               </div>
             </div>
             <div className="td-tools">
-              <button type="button" className="mini" onClick={() => taskEditForm(t)}>
+              <button type="button" className="mini" onClick={() => openTaskForm(t)}>
                 Edytuj
               </button>
               <button type="button" className="mini dang" onClick={() => deleteTask(t)}>

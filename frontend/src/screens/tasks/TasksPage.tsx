@@ -7,8 +7,7 @@ import { fName, gName, inPool, isOverdue, pName, topLevel } from "@/demo/helpers
 import { store, useDemo } from "@/demo/store";
 import { Avatar, Chip, Due, EmptyState, LabelChips, PrioChip, StatusChip, TaskLink } from "@/demo/ui";
 import { FilterBar } from "./FilterBar";
-import { deleteTask, takeFromPool } from "./taskActions";
-import { openTaskForm } from "./taskForm";
+import { deleteTask, openTaskForm, takeFromPool } from "@/demo/tasks";
 
 type StatusFilter = "all" | TaskCat | "overdue";
 type Scope = "all" | "pool" | "unassigned" | "project" | "funding";

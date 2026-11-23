@@ -6,7 +6,8 @@ import type { Status, Task } from "@/demo/data";
 import { PR_PL, hasLbl, sortBy, visSt } from "@/demo/helpers";
 import { store } from "@/demo/store";
 import { Chip, Due, EmptyState, LabelChips, PrioChip, TaskLink } from "@/demo/ui";
-import { LabelFilter, LblProp, changeStatus, openLabelForm, openTaskAdd, useProject } from "./part1/shared";
+import { changeStatus, openTaskForm } from "@/demo/tasks";
+import { LabelFilter, LblProp, openLabelForm, useProject } from "./part1/shared";
 
 function Card({
   t,
@@ -182,7 +183,7 @@ export default function KanbanTab() {
             <button type="button" className="btn" style={{ borderColor: "#e2e8f0" }} onClick={openLabelForm}>
               + Etykieta
             </button>
-            <button type="button" className="btn-dark" onClick={() => openTaskAdd(p.id)}>
+            <button type="button" className="btn-dark" onClick={() => openTaskForm(null, { project: p.id })}>
               + Dodaj zadanie
             </button>
           </div>
@@ -201,7 +202,7 @@ export default function KanbanTab() {
           {cols.map((s) => {
             const l = ts.filter((t) => t.sid === s.id);
             return (
-              <div key={s.id} className="kcol" style={{ "--ac": s.color, background: `color-mix(in srgb,${s.color} 6%,#fff)` } as React.CSSProperties}>
+              <div key={s.id} className="kcol" style={{ "--ac": s.color, background: `color-mix(in srgb,${s.color} 6%,var(--surface))` } as React.CSSProperties}>
                 <div className="kcol-h">
                   <b>{s.name}</b>
                   <span>{l.length}</span>

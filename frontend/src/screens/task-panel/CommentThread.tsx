@@ -1,18 +1,10 @@
 import { useRef, useState } from "react";
 import { Paperclip } from "lucide-react";
-import { ATT_OK, MAX_ATT, ago, fsize } from "@/demo/core";
+import { ATT_OK, ago, fsize } from "@/demo/core";
 import type { Comment } from "@/demo/data";
-import { actorName, pName } from "@/demo/helpers";
+import { actorName, attErr, pName } from "@/demo/helpers";
 import { logAudit, nextId, store, update } from "@/demo/store";
 import { Avatar, toast } from "@/demo/ui";
-
-/** Port of attErr: validates name and size only. */
-export function attErr(f: { name: string; size: number }) {
-  const ext = f.name.split(".").pop()!.toLowerCase();
-  if (!ATT_OK.includes(ext)) return "Niedozwolony typ pliku. Dozwolone: " + ATT_OK.join(", ") + ".";
-  if (f.size <= 0 || f.size > MAX_ATT) return "Plik musi mieć od 1 B do 50 MB.";
-  return "";
-}
 
 function Item({ c, reply, onReply }: { c: Comment; reply?: boolean; onReply: (id: number) => void }) {
   return (

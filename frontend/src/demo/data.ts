@@ -274,6 +274,8 @@ export interface AssignmentMeta {
   at: string | null;
   start: string | null;
   end: string | null;
+  /** Taken from a group's task pool. */
+  pool?: boolean;
 }
 export interface Brand {
   name: string;

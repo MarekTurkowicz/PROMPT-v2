@@ -1,13 +1,12 @@
 // Port of the mock's pfForm / pf-confirm / pf-del: attach a funding to a project (creates tasks from the funding's templates).
-import { CAT_KEY, addDays, base, fmt, fmtH, plural } from "@/demo/core";
-import type { ProjectFunding, Task } from "@/demo/data";
-import { defSt, fName, money, stById } from "@/demo/helpers";
-import { logAudit, nextId, store, update } from "@/demo/store";
-import { bad, closeDialog, openConfirm, openForm, openInfo, toast } from "@/demo/ui";
-import { PR_PL } from "@/demo/core";
+import { CAT_KEY, PR_PL, addDays, base, fmt, fmtH, plural } from "./core";
+import type { ProjectFunding, Task } from "./data";
+import { defSt, fName, money, stById } from "./helpers";
+import { logAudit, nextId, store, update } from "./store";
+import { bad, closeDialog, openConfirm, openForm, openInfo, toast } from "./ui";
 
 /** Creates the mandatory tasks of a funding's templates for a new project link; throws when the organization has no default status. */
-function tasksFromTemplates(pf: ProjectFunding): Task[] {
+export function tasksFromTemplates(pf: ProjectFunding): Task[] {
   const tps = store.TEMPL.filter((x) => x.funding === pf.funding);
   const ds = defSt();
   if (tps.some((x) => !x.status) && !ds) throw new Error("organizacja nie ma statusu domyślnego");

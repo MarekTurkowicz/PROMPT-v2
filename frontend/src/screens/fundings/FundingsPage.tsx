@@ -6,9 +6,9 @@ import { fundUse, money, pName, spent, stById } from "@/demo/helpers";
 import { logAudit, store, update, useDemo } from "@/demo/store";
 import { Chip, Due, EmptyState, PrioChip, Prop, StatusChip, openConfirm, toast } from "@/demo/ui";
 import { FilterBar } from "@/screens/tasks/FilterBar";
-import { openTaskForm } from "@/screens/tasks/taskForm";
+import { openTaskForm } from "@/demo/tasks";
 import { openFundingForm, openTemplateForm } from "./fundingForms";
-import { openPfForm } from "./pfForm";
+import { openPfForm } from "@/demo/fundingLink";
 
 interface Filters {
   q: string;
