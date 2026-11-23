@@ -8,6 +8,7 @@ import { api } from "@/app/api";
 import { MAIN_NAV } from "@/app/navigation";
 import { useLogoutMutation, useMeQuery } from "@/features/auth/authApi";
 import { cn } from "@/lib/utils";
+import { OrgSwitcher } from "@/screens/shell/OrgSwitcher";
 
 function displayName(me: Me) {
   return [me.first_name, me.last_name].filter(Boolean).join(" ") || me.email;
@@ -85,6 +86,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           {t("appName")}
         </span>
       </Link>
+
+      <OrgSwitcher onNavigate={onNavigate} />
 
       <nav aria-label={t("nav.main")} className="grid gap-0.5 px-2.5 py-1.5">
         {MAIN_NAV.map((item) => (

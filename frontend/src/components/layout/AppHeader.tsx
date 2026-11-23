@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MOCK_API } from "@/mocks/enabled";
+import { NotificationBell } from "@/screens/shell/NotificationBell";
 import { breadcrumbs } from "./breadcrumbs";
 import { ThemeMenu } from "./ThemeMenu";
 
@@ -57,6 +58,7 @@ export function AppHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
             {t("demoData.label")}
           </Badge>
         )}
+        <NotificationBell />
         <ThemeMenu />
       </div>
     </header>
