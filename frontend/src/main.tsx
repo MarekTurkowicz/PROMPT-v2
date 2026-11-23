@@ -1,5 +1,6 @@
 import "./index.css";
 import "./app/i18n";
+import "./demo/mock.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Toaster } from "react-hot-toast";

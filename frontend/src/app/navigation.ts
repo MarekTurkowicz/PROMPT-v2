@@ -1,13 +1,17 @@
 import {
   Clock,
   Columns3,
+  Download,
   Folder,
   House,
   KeyRound,
+  LayoutDashboard,
   ListChecks,
   Network,
+  Palette,
   ScrollText,
   SlidersHorizontal,
+  Upload,
   Users,
   Wallet,
 } from "lucide-react";
@@ -37,6 +41,7 @@ export const PROJECT_TABS = [
 ] as const;
 
 export const ADMIN_SECTIONS = [
+  { path: "dashboard", label: "admin.dashboard", icon: LayoutDashboard, issue: 129 },
   { path: "members", label: "admin.members", icon: Users, issue: 38 },
   { path: "groups", label: "admin.groups", icon: Network, issue: 39 },
   { path: "roles", label: "admin.roles", icon: KeyRound, issue: 39 },
@@ -47,5 +52,8 @@ export const ADMIN_SECTIONS = [
     icon: SlidersHorizontal,
     issue: 129,
   },
+  { path: "branding", label: "admin.branding", icon: Palette, issue: 129 },
+  { path: "import", label: "admin.import", icon: Upload, issue: 129 },
+  { path: "export", label: "admin.export", icon: Download, issue: 129 },
   { path: "log", label: "admin.log", icon: ScrollText, issue: 129 },
 ] as const;

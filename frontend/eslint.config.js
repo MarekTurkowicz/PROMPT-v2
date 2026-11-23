@@ -38,6 +38,13 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/screens/**", "src/demo/**"],
+    rules: {
+      "i18next/no-literal-string": "off",
+      "react-refresh/only-export-components": "off",
+    },
+  },
+  {
     files: ["src/components/ui/**"],
     rules: { "react-refresh/only-export-components": "off" },
   },

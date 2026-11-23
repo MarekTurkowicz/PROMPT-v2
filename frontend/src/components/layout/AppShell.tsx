@@ -8,6 +8,8 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { DataTip, DemoDialogs } from "@/demo/ui";
+import TaskPanel from "@/screens/task-panel/TaskPanel";
 import { AppHeader } from "./AppHeader";
 import { SidebarContent } from "./Sidebar";
 
@@ -55,6 +57,9 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <TaskPanel />
+      <DemoDialogs />
+      <DataTip />
     </div>
   );
 }

@@ -1,19 +1,30 @@
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import { PROJECT_TABS } from "@/app/navigation";
+import { projectOf, PS_PL } from "@/demo/helpers";
+import { useDemo } from "@/demo/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function ProjectLayout() {
   const { t } = useTranslation();
   const { projectId = "" } = useParams();
+  useDemo();
+  const project = projectOf(projectId);
 
   return (
     <div className="grid gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[22px] font-semibold">
-          {t("project.title", { id: projectId })}
-        </h1>
+        <div className="mk flex min-w-0 items-center gap-3">
+          <h1 className="text-[22px] font-semibold">
+            {project?.name ?? t("project.title", { id: projectId })}
+          </h1>
+          {project ? (
+            <span className={`pd-st ${project.status}`}>
+              {PS_PL[project.status]}
+            </span>
+          ) : null}
+        </div>
         <Button variant="outline" size="lg" asChild>
           <Link to="/projects">{t("project.backToList")}</Link>
         </Button>

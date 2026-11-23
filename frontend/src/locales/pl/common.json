@@ -34,11 +34,15 @@
   },
   "admin": {
     "sections": "Sekcje administracji",
+    "dashboard": "Pulpit",
     "members": "Członkowie",
     "groups": "Grupy",
     "roles": "Role",
     "statuses": "Statusy",
     "settings": "Ustawienia",
+    "branding": "Branding",
+    "import": "Import",
+    "export": "Eksport",
     "log": "Dziennik"
   },
   "theme": {
