@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { ADMIN_SECTIONS, MAIN_NAV, PROJECT_TABS } from "@/app/navigation";
 import { setCurrentUser } from "@/mocks/db";
 import { renderApp, t } from "@/test/renderApp";
@@ -54,7 +54,9 @@ describe("app routes", () => {
     ["/admin", "admin.members"],
   ])("%s redirects to its first screen", async (path, label) => {
     renderApp(path);
-    expect(await currentCrumb()).toHaveTextContent(t(label));
+    await waitFor(async () =>
+      expect(await currentCrumb()).toHaveTextContent(t(label)),
+    );
   });
 
   it("shows the not found page for an unknown path", async () => {
