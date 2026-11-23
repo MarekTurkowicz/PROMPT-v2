@@ -62,9 +62,12 @@ describe("app routes", () => {
   it("shows the real project name and status in a project", async () => {
     renderApp("/projects/1/overview");
     expect(
-      await screen.findByRole("heading", { name: "Portal klienta 2.0" }),
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Portal klienta 2.0",
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Aktywny")).toBeInTheDocument();
+    expect(screen.getAllByText("Aktywny").length).toBeGreaterThan(0);
   });
 
   it("marks the projects menu item active inside a project", async () => {
