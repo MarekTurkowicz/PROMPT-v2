@@ -14,9 +14,15 @@ from app.access.core.ports.spi.db.repositories.organization_access_port import (
     OrganizationAccessPort,
 )
 from app.access.core.ports.user_port import UserPort
+from app.activity.adapter.outbound.relational_db.repositories.activity_log_repository import (
+    ActivityLogRepository,
+)
 from app.activity.adapter.outbound.relational_db.repositories.notification_repository import (
     NotificationRepository,
 )
+from app.activity.core.application.list_activity_use_case import ListActivityUseCase
+from app.activity.core.ports.api.list_activity_port import ListActivityPort
+from app.activity.core.ports.spi.db.repositories.activity_log_port import ActivityLogPort
 from app.activity.core.ports.spi.db.repositories.notification_port import (
     NotificationPort,
 )
@@ -57,6 +63,7 @@ RELATIONAL_DB_REPOSITORIES: dict[type, type] = {
     UserPort: UserRepository,
     NotificationPort: NotificationRepository,
     OrganizationAccessPort: OrganizationAccessRepository,
+    ActivityLogPort: ActivityLogRepository,
 }
 
 
@@ -66,6 +73,7 @@ class DependenciesContainer:
     create_organization: CreateOrganizationPort
     update_organization_settings: UpdateOrganizationSettingsPort
     add_organization_member: AddOrganizationMemberPort
+    list_activity: ListActivityPort
     repositories: dict[type, Any]
 
     def __init__(self) -> None:
@@ -91,6 +99,10 @@ class DependenciesContainer:
             member_repository=self.repositories[OrganizationMemberPort],
             user_repository=self.repositories[UserPort],
             notification_repository=self.repositories[NotificationPort],
+            authorizer=self.authorizer,
+        )
+        self.list_activity = ListActivityUseCase(
+            repository=self.repositories[ActivityLogPort],
             authorizer=self.authorizer,
         )
 
