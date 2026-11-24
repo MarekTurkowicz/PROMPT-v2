@@ -66,10 +66,11 @@ def test_filters_come_from_the_query_string(client: APIClient, organization_id: 
         {"entity_id": 1},
         {"entity_id": 1, "entity_types": ["project", "task"]},
         {"limit": 101},
+        {"created_from": "2026-11-01T00:00:00Z", "created_to": "2026-10-01T00:00:00Z"},
     ],
 )
 def test_rejects_invalid_filters(
-    client: APIClient, organization_id: int, params: dict[str, int | list[str]]
+    client: APIClient, organization_id: int, params: dict[str, int | str | list[str]]
 ) -> None:
     assert client.get(url(organization_id), params).status_code == 400
 

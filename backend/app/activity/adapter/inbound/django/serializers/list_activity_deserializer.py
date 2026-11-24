@@ -28,6 +28,8 @@ class ListActivityDeserializer(serializers.Serializer[ListActivityQuery]):
         # An id alone does not say whether it is task 42 or project 42.
         if "entity_id" in attrs and len(attrs.get("entity_types", ())) != 1:
             raise serializers.ValidationError({"entity_id": "Needs exactly one entity type."})
+        if "created_from" in attrs and "created_to" in attrs and attrs["created_from"] >= attrs["created_to"]:
+            raise serializers.ValidationError({"created_to": "Must be later than created_from."})
         return attrs
 
     def create_query(self, organization_id: int) -> ListActivityQuery:
