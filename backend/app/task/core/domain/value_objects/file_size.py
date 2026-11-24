@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
-from app.shared.core.domain.exceptions import InvalidValueError
+from app.task.core.domain.exceptions import InvalidFileSizeError
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,4 +12,4 @@ class FileSize:
 
     def __post_init__(self) -> None:
         if self.value <= self.GREATER_THAN:
-            raise InvalidValueError("file size", self.value, f"must be greater than {self.GREATER_THAN}")
+            raise InvalidFileSizeError(self.value, f"must be greater than {self.GREATER_THAN}")

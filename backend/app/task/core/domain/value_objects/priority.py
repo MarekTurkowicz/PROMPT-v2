@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
-from app.shared.core.domain.exceptions import InvalidValueError
+from app.task.core.domain.exceptions import InvalidPriorityError
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,4 +13,4 @@ class Priority:
 
     def __post_init__(self) -> None:
         if not self.MIN <= self.value <= self.MAX:
-            raise InvalidValueError("priority", self.value, f"must be between {self.MIN} and {self.MAX}")
+            raise InvalidPriorityError(self.value, f"must be between {self.MIN} and {self.MAX}")

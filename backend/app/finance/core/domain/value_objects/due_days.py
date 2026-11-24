@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
-from app.shared.core.domain.exceptions import InvalidValueError
+from app.finance.core.domain.exceptions import InvalidDueDaysError
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,4 +12,4 @@ class DueDays:
 
     def __post_init__(self) -> None:
         if self.value < self.MIN:
-            raise InvalidValueError("due days", self.value, f"must be at least {self.MIN}")
+            raise InvalidDueDaysError(self.value, f"must be at least {self.MIN}")

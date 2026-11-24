@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar
 
-from app.shared.core.domain.exceptions import InvalidValueError
+from app.project.core.domain.exceptions import InvalidColorError
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,4 +13,4 @@ class Color:
 
     def __post_init__(self) -> None:
         if not re.fullmatch(self.PATTERN, self.value):
-            raise InvalidValueError("color", self.value, "must be #RRGGBB")
+            raise InvalidColorError(self.value, "must be #RRGGBB")

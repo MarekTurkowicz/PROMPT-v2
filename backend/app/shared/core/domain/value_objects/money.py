@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import ClassVar
 
-from app.shared.core.domain.exceptions import InvalidValueError
+from app.shared.core.domain.exceptions import InvalidCurrencyError, InvalidMoneyAmountError
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,7 +14,7 @@ class Currency:
 
     def __post_init__(self) -> None:
         if not re.fullmatch(self.PATTERN, self.value):
-            raise InvalidValueError("currency", self.value, "must be a three-letter ISO 4217 code")
+            raise InvalidCurrencyError(self.value, "must be a three-letter ISO 4217 code")
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,4 +26,4 @@ class Money:
 
     def __post_init__(self) -> None:
         if not self.amount.is_finite() or self.amount <= self.GREATER_THAN:
-            raise InvalidValueError("amount", self.amount, f"must be greater than {self.GREATER_THAN}")
+            raise InvalidMoneyAmountError(self.amount, f"must be greater than {self.GREATER_THAN}")

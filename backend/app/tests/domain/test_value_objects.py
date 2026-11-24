@@ -40,6 +40,26 @@ def test_rejects_invalid_value(factory: type, value: object) -> None:
 
 
 @pytest.mark.parametrize(
+    ("factory", "value", "code"),
+    [
+        (Priority, 0, "task.invalid_priority"),
+        (Position, -1, "shared.invalid_position"),
+        (DueDays, -1, "finance.invalid_due_days"),
+        (EstimatedHours, Decimal(0), "task.invalid_estimated_hours"),
+        (Hours, Decimal("-1"), "task.invalid_hours"),
+        (FileSize, 0, "task.invalid_file_size"),
+        (Currency, "pln", "shared.invalid_currency"),
+        (Color, "red", "project.invalid_color"),
+        (CommentContent, "", "task.invalid_comment_content"),
+    ],
+)
+def test_rejected_value_has_its_own_error_code(factory: type, value: object, code: str) -> None:
+    with pytest.raises(InvalidValueError) as error:
+        factory(value)
+    assert error.value.code == code
+
+
+@pytest.mark.parametrize(
     ("factory", "value"),
     [
         (Priority, 1),
@@ -59,8 +79,9 @@ def test_accepts_valid_value(factory: type, value: object) -> None:
 
 
 def test_money_needs_a_positive_amount() -> None:
-    with pytest.raises(InvalidValueError):
+    with pytest.raises(InvalidValueError) as error:
         Money(Decimal(0), Currency("PLN"))
+    assert error.value.code == "shared.invalid_money_amount"
     assert Money(Decimal("10.50"), Currency("PLN")).amount == Decimal("10.50")
 
 
