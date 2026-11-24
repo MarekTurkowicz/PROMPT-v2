@@ -2,12 +2,13 @@ import re
 from dataclasses import dataclass
 from typing import ClassVar
 
+from app.project.core.domain.constants import COLOR_PATTERN
 from app.project.core.domain.exceptions import InvalidColorError
 
 
 @dataclass(frozen=True, slots=True)
 class Color:
-    PATTERN: ClassVar[str] = "#[0-9A-Fa-f]{6}"
+    PATTERN: ClassVar[str] = COLOR_PATTERN
 
     value: str
 

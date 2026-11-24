@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
+from app.task.core.domain.constants import PRIORITY_MAX, PRIORITY_MIN
 from app.task.core.domain.exceptions import InvalidPriorityError
 
 
 @dataclass(frozen=True, slots=True)
 class Priority:
-    MIN: ClassVar[int] = 1
-    MAX: ClassVar[int] = 5
+    MIN: ClassVar[int] = PRIORITY_MIN
+    MAX: ClassVar[int] = PRIORITY_MAX
 
     value: int
 

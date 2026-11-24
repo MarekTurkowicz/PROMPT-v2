@@ -3,12 +3,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import ClassVar
 
+from app.shared.core.domain.constants import CURRENCY_PATTERN, MONEY_AMOUNT_GREATER_THAN
 from app.shared.core.domain.exceptions import InvalidCurrencyError, InvalidMoneyAmountError
 
 
 @dataclass(frozen=True, slots=True)
 class Currency:
-    PATTERN: ClassVar[str] = "[A-Z]{3}"
+    PATTERN: ClassVar[str] = CURRENCY_PATTERN
 
     value: str
 
@@ -19,7 +20,7 @@ class Currency:
 
 @dataclass(frozen=True, slots=True)
 class Money:
-    GREATER_THAN: ClassVar[int] = 0
+    GREATER_THAN: ClassVar[int] = MONEY_AMOUNT_GREATER_THAN
 
     amount: Decimal
     currency: Currency

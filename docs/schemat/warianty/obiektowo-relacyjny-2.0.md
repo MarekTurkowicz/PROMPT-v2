@@ -43,7 +43,8 @@ Jedyny wyjątek to trigger append-only na `activity_log`. Nie odrzuca żadnego w
 
 | Miejsce | Zawartość |
 |---|---|
-| `app/<moduł>/core/domain/value_objects/<element>.py` | obiekty wartości z regułami wspólnymi dla wszystkich baz: stałe `MIN`, `MAX`, `GREATER_THAN`, `MIN_LENGTH`, `PATTERN` i ich sprawdzenie |
+| `app/<moduł>/core/domain/constants.py` | liczby i wzorce reguł modułu w jednym miejscu |
+| `app/<moduł>/core/domain/value_objects/<element>.py` | obiekty wartości z regułami wspólnymi dla wszystkich baz: atrybuty `MIN`, `MAX`, `GREATER_THAN`, `MIN_LENGTH`, `PATTERN` (wartości z `constants.py`) i ich sprawdzenie |
 | `app/<moduł>/core/domain/enums/<enum>.py` | enumy (`StrEnum`) |
 | `app/shared/adapter/outbound/object_relational_db/objects.py` | bloki `EnumType`, `Domain`, `Statement`, `Table`; `value_rule`, `missing_dependencies` |
 | `app/shared/.../object_relational_db/migrate.py` | `connect` (z `settings.OBJECT_RELATIONAL_DB`), `apply_migrations` (tabela `schema_version`, blokada) |

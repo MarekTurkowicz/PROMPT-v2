@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
+from app.finance.core.domain.constants import DUE_DAYS_MIN
 from app.finance.core.domain.exceptions import InvalidDueDaysError
 
 
 @dataclass(frozen=True, slots=True)
 class DueDays:
-    MIN: ClassVar[int] = 0
+    MIN: ClassVar[int] = DUE_DAYS_MIN
 
     value: int
 

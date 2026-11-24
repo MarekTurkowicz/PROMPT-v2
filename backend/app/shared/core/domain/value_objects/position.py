@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
+from app.shared.core.domain.constants import POSITION_MIN
 from app.shared.core.domain.exceptions import InvalidPositionError
 
 
 @dataclass(frozen=True, slots=True)
 class Position:
-    MIN: ClassVar[int] = 0
+    MIN: ClassVar[int] = POSITION_MIN
 
     value: int
 

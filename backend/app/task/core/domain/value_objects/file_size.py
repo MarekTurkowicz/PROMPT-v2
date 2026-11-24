@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
+from app.task.core.domain.constants import FILE_SIZE_GREATER_THAN
 from app.task.core.domain.exceptions import InvalidFileSizeError
 
 
 @dataclass(frozen=True, slots=True)
 class FileSize:
-    GREATER_THAN: ClassVar[int] = 0
+    GREATER_THAN: ClassVar[int] = FILE_SIZE_GREATER_THAN
 
     value: int
 

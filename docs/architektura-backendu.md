@@ -127,7 +127,7 @@ app/<module>/
 │   │   ├── entities/          # Domain entities (frozen dataclasses)
 │   │   ├── value_objects/     # Value objects with validation
 │   │   ├── enums/             # Domain enums (StrEnum)
-│   │   ├── constants.py       # Domain limits (for example, maximum length)
+│   │   ├── constants.py       # Domain limits read by value objects (for example, maximum length)
 │   │   └── exceptions.py      # Domain errors
 │   ├── application/           # Use cases
 │   └── ports/

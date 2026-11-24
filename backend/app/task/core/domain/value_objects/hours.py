@@ -2,12 +2,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import ClassVar
 
+from app.task.core.domain.constants import HOURS_GREATER_THAN
 from app.task.core.domain.exceptions import InvalidHoursError
 
 
 @dataclass(frozen=True, slots=True)
 class Hours:
-    GREATER_THAN: ClassVar[int] = 0
+    GREATER_THAN: ClassVar[int] = HOURS_GREATER_THAN
 
     value: Decimal
 
