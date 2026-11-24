@@ -1,11 +1,19 @@
 {
   "compilerOptions": {
     "jsx": "react-jsx",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "vitest/globals"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src", "tests", "src/vitest.d.ts"]
 }

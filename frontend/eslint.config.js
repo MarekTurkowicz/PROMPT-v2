@@ -1,12 +1,13 @@
 import js from "@eslint/js";
 import globals from "globals";
+import i18next from "eslint-plugin-i18next";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist"]),
+  globalIgnores(["dist", "public/mockServiceWorker.js"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
@@ -19,5 +20,32 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+  },
+  {
+    files: ["src/**/*.tsx"],
+    ignores: ["src/components/ui/**", "src/**/*.test.tsx"],
+    plugins: { i18next },
+    rules: {
+      "i18next/no-literal-string": [
+        "error",
+        {
+          mode: "jsx-only",
+          "jsx-attributes": {
+            include: ["aria-label", "title", "placeholder", "alt", "label"],
+          },
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/screens/**", "src/demo/**"],
+    rules: {
+      "i18next/no-literal-string": "off",
+      "react-refresh/only-export-components": "off",
+    },
+  },
+  {
+    files: ["src/components/ui/**"],
+    rules: { "react-refresh/only-export-components": "off" },
   },
 ]);

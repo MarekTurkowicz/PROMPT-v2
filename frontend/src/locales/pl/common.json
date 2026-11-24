@@ -1,0 +1,72 @@
+{
+  "appName": "PROMT",
+  "skipToContent": "Przejdź do treści",
+  "nav": {
+    "main": "Główna nawigacja",
+    "overview": "Przegląd",
+    "projects": "Projekty",
+    "fundings": "Finansowania",
+    "tasks": "Zadania",
+    "time": "Mój czas",
+    "admin": "Administracja",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "breadcrumb": "Okruszki"
+  },
+  "project": {
+    "title": "Projekt {{id}}",
+    "backToList": "Wróć do listy",
+    "sections": "Sekcje projektu",
+    "tabs": {
+      "overview": "Przegląd",
+      "tasks": "Zadania",
+      "kanban": "Tablica",
+      "milestones": "Etapy",
+      "timeline": "Oś czasu",
+      "team": "Zespół",
+      "time": "Czas pracy",
+      "fundings": "Finansowania",
+      "budget": "Budżet",
+      "comments": "Komentarze",
+      "history": "Historia",
+      "settings": "Ustawienia"
+    }
+  },
+  "admin": {
+    "sections": "Sekcje administracji",
+    "dashboard": "Pulpit",
+    "members": "Członkowie",
+    "groups": "Grupy",
+    "roles": "Role",
+    "statuses": "Statusy",
+    "settings": "Ustawienia",
+    "branding": "Branding",
+    "import": "Import",
+    "export": "Eksport",
+    "log": "Dziennik"
+  },
+  "theme": {
+    "label": "Motyw",
+    "system": "Systemowy",
+    "light": "Jasny",
+    "dark": "Ciemny"
+  },
+  "user": {
+    "logout": "Wyloguj",
+    "profile": "Profil"
+  },
+  "placeholder": {
+    "title": "Ekran w budowie",
+    "body": "Ten ekran powstaje w ramach zadania",
+    "issue": "#{{number}} na GitHubie"
+  },
+  "notFound": {
+    "title": "Nie ma takiej strony",
+    "back": "Wróć do przeglądu"
+  },
+  "demoData": {
+    "label": "Dane demo",
+    "hint": "Tryb makiety: dane pochodzą z MSW i znikają po odświeżeniu strony."
+  },
+  "loading": "Ładowanie…"
+}
