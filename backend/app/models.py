@@ -3,6 +3,7 @@ from app.access.adapter.outbound.relational_db.models.role_assignment import (
     RoleAssignment,
 )
 from app.access.adapter.outbound.relational_db.models.user import User
+from app.activity.adapter.outbound.relational_db.models.activity_log import ActivityLog
 from app.organization.adapter.outbound.relational_db.models.member_group import (
     MemberGroup,
 )
@@ -18,6 +19,7 @@ from app.organization.adapter.outbound.relational_db.models.organization_member 
 from app.project.adapter.outbound.relational_db.models.project import Project
 
 __all__ = [
+    "ActivityLog",
     "MemberGroup",
     "MemberGroupMember",
     "Organization",
