@@ -39,7 +39,8 @@ class ActivityLogRepository(ActivityLogPort):
         return [ActivityLogMapper.to_entity(model) for model in page]
 
     def delete_older_than(self, organization_id: int, cutoff: datetime) -> int:
-        deleted, _ = ActivityLogModel.objects.filter(
+        # delete() also counts the cascaded notifications, so only the log rows are returned.
+        _, deleted_per_model = ActivityLogModel.objects.filter(
             organization_id=organization_id, created_at__lt=cutoff
         ).delete()
-        return deleted
+        return deleted_per_model.get(ActivityLogModel._meta.label, 0)

@@ -20,6 +20,7 @@ from app.activity.adapter.outbound.relational_db.repositories.activity_log_repos
 from app.activity.adapter.outbound.relational_db.repositories.notification_repository import (
     NotificationRepository,
 )
+from app.activity.core.application.activity_retention import ActivityRetention
 from app.activity.core.application.list_activity_use_case import ListActivityUseCase
 from app.activity.core.ports.api.list_activity_port import ListActivityPort
 from app.activity.core.ports.spi.db.repositories.activity_log_port import ActivityLogPort
@@ -74,6 +75,7 @@ class DependenciesContainer:
     update_organization_settings: UpdateOrganizationSettingsPort
     add_organization_member: AddOrganizationMemberPort
     list_activity: ListActivityPort
+    activity_retention: ActivityRetention
     repositories: dict[type, Any]
 
     def __init__(self) -> None:
@@ -104,6 +106,10 @@ class DependenciesContainer:
         self.list_activity = ListActivityUseCase(
             repository=self.repositories[ActivityLogPort],
             authorizer=self.authorizer,
+        )
+        self.activity_retention = ActivityRetention(
+            repository=self.repositories[ActivityLogPort],
+            organization_repository=self.repositories[OrganizationPort],
         )
 
     def _verify_authorization(self) -> None:

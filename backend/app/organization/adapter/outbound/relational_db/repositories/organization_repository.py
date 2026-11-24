@@ -13,11 +13,8 @@ from app.organization.core.ports.spi.db.repositories.organization_port import (
 
 
 class OrganizationRepository(OrganizationPort):
-    # def get_all(self) -> list[OrganizationEntity]:
-    #     return list(
-    #         OrganizationMapper.to_entity(organization_model)
-    #         for organization_model in OrganizationModel.objects.all()
-    #     )
+    def get_all(self) -> list[OrganizationEntity]:
+        return [OrganizationMapper.to_entity(model) for model in OrganizationModel.objects.all()]
 
     def exists_by_tax_id(self, tax_id: str) -> bool:
         return OrganizationModel.objects.filter(tax_id=tax_id).exists()
