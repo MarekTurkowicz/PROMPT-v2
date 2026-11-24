@@ -9,3 +9,10 @@ ERROR_KIND_TO_HTTP_STATUS_MAP = {
     ErrorKind.NOT_FOUND: status.HTTP_404_NOT_FOUND,
     ErrorKind.CONFLICT: status.HTTP_409_CONFLICT,
 }
+
+PUBLIC_ENDPOINT_NAMES = frozenset(
+    {
+        "access-csrf",
+        "access-login",
+    }
+)

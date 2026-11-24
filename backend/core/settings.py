@@ -66,11 +66,11 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "app.shared.adapter.inbound.django.exception_handler.exception_handler",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "app.shared.adapter.inbound.django.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     # TODO Tymczasowo do testów
-    # "DEFAULT_AUTHENTICATION_CLASSES": [
-    #     "rest_framework.authentication.SessionAuthentication",
-    # ],
-    # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     # "PAGE_SIZE": 20,
     # "DEFAULT_FILTER_BACKENDS": (
@@ -162,8 +162,7 @@ OBJECT_RELATIONAL_DB = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-# TODO na czas testów
-# AUTH_USER_MODEL = "api.User"
+AUTH_USER_MODEL = "app.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {

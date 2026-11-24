@@ -6,7 +6,8 @@ from app.organization.core.domain.entities.organization_member import (
 from app.organization.core.ports.api.commands.add_organization_member_command import (
     AddOrganizationMemberCommand,
 )
+from app.shared.core.ports.api.actor import Actor
 
 
 class AddOrganizationMemberPort(Protocol):
-    def execute(self, command: AddOrganizationMemberCommand) -> OrganizationMember: ...
+    def execute(self, actor: Actor, command: AddOrganizationMemberCommand) -> OrganizationMember: ...

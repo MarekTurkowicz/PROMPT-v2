@@ -9,9 +9,9 @@ from app.organization.adapter.inbound.django.serializers.create_organization_des
 from app.organization.core.ports.api.create_organization_port import (
     CreateOrganizationPort,
 )
+from app.shared.adapter.inbound.django.actor import get_actor
 
 
-# TODO Sprawdzenie uprawnień
 class OrganizationView(APIView):
     create_organization: CreateOrganizationPort = None  # type: ignore[assignment]  # set via as_view()
 
@@ -19,7 +19,7 @@ class OrganizationView(APIView):
         serializer = CreateOrganizationDeserializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         command = serializer.create_command()
-        organization = self.create_organization.execute(command)
+        organization = self.create_organization.execute(get_actor(request), command)
         # TODO Response można jeszcze jakoś uprościć
         return Response(
             {
