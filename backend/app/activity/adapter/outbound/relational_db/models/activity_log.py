@@ -1,74 +1,17 @@
 from django.db import models
 from django.db.models import Q
 
+from app.activity.core.domain.enums.activity_action import ActivityAction
+from app.activity.core.domain.enums.entity_type import EntityType
 
-class EntityType(models.TextChoices):
-    """
-    Basic audit messages
-    """
-
-    ORGANIZATION = "organization", "Organization"
-    ORGANIZATION_MEMBER = "organization_member", "Organization member"
-    MEMBER_GROUP = "member_group", "Member group"
-    ROLE = "role", "Role"
-    ROLE_ASSIGNMENT = "role_assignment", "Role assignment"
-    TASK_STATUS = "task_status", "Task status"
-    PROJECT = "project", "Project"
-    MILESTONE = "milestone", "Milestone"
-    FUNDING = "funding", "Funding"
-    PROJECT_FUNDING = "project_funding", "Project funding"
-    TASK_TEMPLATE = "task_template", "Task template"
-    TASK = "task", "Task"
-    TASK_ASSIGNMENT = "task_assignment", "Task assignment"
-    TIME_ENTRY = "time_entry", "Time entry"
-    CHECKLIST_ITEM = "checklist_item", "Checklist item"
-    COMMENT = "comment", "Comment"
-    ATTACHMENT = "attachment", "Attachment"
-    EXPENSE = "expense", "Expense"
-
-
-class ActivityAction(models.TextChoices):
-    """
-    Closed dictionary of logged actions (see PRD). The entry is logged on the object the user
-    sees (task, project, member, group), not on the linking table.
-    """
-
-    # basic
-    CREATED = "created", "Created"
-    UPDATED = "updated", "Updated"
-    DELETED = "deleted", "Deleted"
-    STATUS_CHANGED = "status_changed", "Status changed"
-    RESCHEDULED = "rescheduled", "Rescheduled"
-    ASSIGNED = "assigned", "Assigned"
-    UNASSIGNED = "unassigned", "Unassigned"
-    GRANTED = "granted", "Role granted"
-    REVOKED = "revoked", "Role revoked"
-    ATTACHED = "attached", "Funding attached"
-    DETACHED = "detached", "Funding detached"
-    # extended
-    CHECKED = "checked", "Checklist item checked"
-    UNCHECKED = "unchecked", "Checklist item unchecked"
-    ADDED_TO_GROUP = "added_to_group", "Added to group"
-    REMOVED_FROM_GROUP = "removed_from_group", "Removed from group"
-    INVITED = "invited", "Invited"
-    REMINDER_SENT = "reminder_sent", "Reminder sent"
-    MOVED = "moved", "Moved"
-    HIDDEN = "hidden", "Status hidden"
-    SHOWN = "shown", "Status shown"
-    ARCHIVED = "archived", "Archived"
-    RESTORED = "restored", "Restored"
-    # alerts
-    ALERT_RAISED = "alert_raised", "Alert raised"
-    ALERT_RESOLVED = "alert_resolved", "Alert resolved"
+ENTITY_TYPES = [entity_type.value for entity_type in EntityType]
+ACTIONS = [action.value for action in ActivityAction]
 
 
 class ActivityLog(models.Model):
     """
     Represents one entry of the append-only event log: who did what to which object and when.
     """
-
-    EntityType = EntityType
-    Action = ActivityAction
 
     organization = models.ForeignKey(
         "app.Organization",
@@ -84,9 +27,9 @@ class ActivityLog(models.Model):
         related_name="activity_logs",
     )
 
-    entity_type = models.CharField(max_length=40, choices=EntityType.choices)
+    entity_type = models.CharField(max_length=40, choices=[(value, value) for value in ENTITY_TYPES])
     entity_id = models.BigIntegerField()
-    action = models.CharField(max_length=40, choices=ActivityAction.choices)
+    action = models.CharField(max_length=40, choices=[(value, value) for value in ACTIONS])
     changes = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -97,11 +40,11 @@ class ActivityLog(models.Model):
         ordering = ["-created_at", "-id"]
         constraints = [
             models.CheckConstraint(
-                condition=Q(entity_type__in=EntityType.values),
+                condition=Q(entity_type__in=ENTITY_TYPES),
                 name="activity_log_entity_type_valid",
             ),
             models.CheckConstraint(
-                condition=Q(action__in=ActivityAction.values),
+                condition=Q(action__in=ACTIONS),
                 name="activity_log_action_valid",
             ),
         ]

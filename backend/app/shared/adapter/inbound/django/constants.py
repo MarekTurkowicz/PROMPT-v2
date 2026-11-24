@@ -10,6 +10,9 @@ ERROR_KIND_TO_HTTP_STATUS_MAP = {
     ErrorKind.CONFLICT: status.HTTP_409_CONFLICT,
 }
 
+DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 100
+
 PUBLIC_ENDPOINT_NAMES = frozenset(
     {
         "access-csrf",
