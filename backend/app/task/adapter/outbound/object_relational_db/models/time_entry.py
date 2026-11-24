@@ -1,5 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Table
-from app.task.core.domain.constraints.hours import Hours
+from app.task.core.domain.value_objects.hours import Hours
 
 HOURS = Domain.from_value_object("hours_d", "numeric(5,2)", Hours)
 

@@ -6,20 +6,20 @@ import pytest
 from django.conf import settings
 from psycopg2.extensions import connection, cursor
 
-from app.access.core.domain.constraints.email import Email
-from app.finance.core.domain.constraints.due_days import DueDays
+from app.access.core.domain.value_objects.email import Email
+from app.finance.core.domain.value_objects.due_days import DueDays
 from app.object_relational_schema import MIGRATIONS, SCHEMA_OBJECTS
-from app.project.core.domain.constraints.color import Color
+from app.project.core.domain.value_objects.color import Color
 from app.shared.adapter.outbound.object_relational_db.migrate import apply_migrations, connect
 from app.shared.adapter.outbound.object_relational_db.objects import EnumType
-from app.shared.core.domain.constraints.money import Currency
-from app.shared.core.domain.constraints.position import Position
 from app.shared.core.domain.exceptions import InvalidValueError
-from app.task.core.domain.constraints.comment_content import CommentContent
-from app.task.core.domain.constraints.estimated_hours import EstimatedHours
-from app.task.core.domain.constraints.file_size import FileSize
-from app.task.core.domain.constraints.hours import Hours
-from app.task.core.domain.constraints.priority import Priority
+from app.shared.core.domain.value_objects.money import Currency
+from app.shared.core.domain.value_objects.position import Position
+from app.task.core.domain.value_objects.comment_content import CommentContent
+from app.task.core.domain.value_objects.estimated_hours import EstimatedHours
+from app.task.core.domain.value_objects.file_size import FileSize
+from app.task.core.domain.value_objects.hours import Hours
+from app.task.core.domain.value_objects.priority import Priority
 
 # The tests use their own database, so the data in the configured one is never touched.
 TEST_DB = settings.OBJECT_RELATIONAL_DB["NAME"] + "_test"

@@ -1,4 +1,4 @@
-from app.access.core.domain.constraints.email import Email
+from app.access.core.domain.value_objects.email import Email
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Table
 
 LOGIN_EMAIL = Domain.from_value_object("login_email_d", "text", Email)

@@ -1,4 +1,4 @@
-from app.finance.core.domain.constraints.due_days import DueDays
+from app.finance.core.domain.value_objects.due_days import DueDays
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Table
 
 DUE_DAYS = Domain.from_value_object("due_days_d", "integer", DueDays)

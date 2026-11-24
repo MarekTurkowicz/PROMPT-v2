@@ -1,5 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Statement, value_rule
-from app.task.core.domain.constraints.file_size import FileSize
+from app.task.core.domain.value_objects.file_size import FileSize
 
 FILE_SIZE = Domain.from_value_object("file_size_d", "bigint", FileSize)
 

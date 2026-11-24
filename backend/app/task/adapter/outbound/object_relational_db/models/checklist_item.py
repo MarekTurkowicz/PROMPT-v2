@@ -1,5 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Statement, value_rule
-from app.shared.core.domain.constraints.position import Position
+from app.shared.core.domain.value_objects.position import Position
 
 # done_by_id has no FK: an element of an array cannot reference a table.
 CHECKLIST_ITEM_TYPE = Statement(

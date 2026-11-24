@@ -1,5 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Statement, value_rule
-from app.shared.core.domain.constraints.money import Currency, Money
+from app.shared.core.domain.value_objects.money import Currency, Money
 
 CURRENCY = Domain.from_value_object("currency_d", "text", Currency)
 

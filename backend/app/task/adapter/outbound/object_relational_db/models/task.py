@@ -1,6 +1,6 @@
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Statement, Table
-from app.task.core.domain.constraints.estimated_hours import EstimatedHours
-from app.task.core.domain.constraints.priority import Priority
+from app.task.core.domain.value_objects.estimated_hours import EstimatedHours
+from app.task.core.domain.value_objects.priority import Priority
 
 PRIORITY = Domain.from_value_object("priority_d", "smallint", Priority)
 

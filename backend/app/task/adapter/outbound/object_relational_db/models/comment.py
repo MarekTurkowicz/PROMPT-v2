@@ -1,5 +1,5 @@
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, Table
-from app.task.core.domain.constraints.comment_content import CommentContent
+from app.task.core.domain.value_objects.comment_content import CommentContent
 
 NONEMPTY_TEXT = Domain.from_value_object("nonempty_text_d", "text", CommentContent)
 
