@@ -9,7 +9,8 @@ ENV UV_PROJECT_ENVIRONMENT=/app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY pyproject.toml uv.lock /app/
-RUN uv sync --frozen --no-dev --no-install-project
+#no-dev psuje lokalnego dockera.
+RUN uv sync --frozen --no-install-project
 
 COPY . /app
 
