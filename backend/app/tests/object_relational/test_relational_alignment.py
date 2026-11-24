@@ -30,7 +30,6 @@ RELATIONAL_CHOICES = {
     "expense_type_t": ("api/models/expense.py", "ExpenseType"),
 }
 
-# ENUM -> the domain enum the relational model takes its values from.
 RELATIONAL_DOMAIN_ENUMS = {
     "entity_type_t": (relational_activity_log.ENTITY_TYPES, EntityType),
     "activity_action_t": (relational_activity_log.ACTIONS, ActivityAction),

@@ -28,7 +28,6 @@ class ActivityLog:
         return _months_before(now, ACTIVITY_RETENTION_MONTHS)
 
 
-# Same as PostgreSQL's "- interval 'N months'": a day missing in the target month becomes its last day.
 def _months_before(moment: datetime, months: int) -> datetime:
     year, month_index = divmod(moment.year * 12 + moment.month - 1 - months, 12)
     month = month_index + 1

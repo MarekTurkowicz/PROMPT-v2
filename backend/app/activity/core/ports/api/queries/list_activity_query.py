@@ -14,5 +14,5 @@ class ListActivityQuery:
     entity_id: int | None = None
     created_from: datetime | None = None
     created_to: datetime | None = None
-    limit: int = 50
+    limit: int | None = None
     offset: int = 0

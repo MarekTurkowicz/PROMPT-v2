@@ -35,11 +35,11 @@ class ActivityLogRepository(ActivityLogPort):
         if query.created_to is not None:
             models = models.filter(created_at__lt=query.created_to)
 
-        page = models.order_by("-created_at", "-id")[query.offset : query.offset + query.limit]
+        end = None if query.limit is None else query.offset + query.limit
+        page = models.order_by("-created_at", "-id")[query.offset : end]
         return [ActivityLogMapper.to_entity(model) for model in page]
 
     def delete_older_than(self, organization_id: int, cutoff: datetime) -> int:
-        # delete() also counts the cascaded notifications, so only the log rows are returned.
         _, deleted_per_model = ActivityLogModel.objects.filter(
             organization_id=organization_id, created_at__lt=cutoff
         ).delete()

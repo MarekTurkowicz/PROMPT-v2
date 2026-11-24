@@ -5,9 +5,7 @@ from rest_framework import serializers
 from app.activity.core.domain.enums.activity_action import ActivityAction
 from app.activity.core.domain.enums.entity_type import EntityType
 from app.activity.core.ports.api.queries.list_activity_query import ListActivityQuery
-
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 100
+from app.shared.adapter.inbound.django.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 
 
 class ListActivityDeserializer(serializers.Serializer[ListActivityQuery]):
@@ -25,7 +23,6 @@ class ListActivityDeserializer(serializers.Serializer[ListActivityQuery]):
     offset = serializers.IntegerField(min_value=0, default=0)
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
-        # An id alone does not say whether it is task 42 or project 42.
         if "entity_id" in attrs and len(attrs.get("entity_types", ())) != 1:
             raise serializers.ValidationError({"entity_id": "Needs exactly one entity type."})
         if "created_from" in attrs and "created_to" in attrs and attrs["created_from"] >= attrs["created_to"]:

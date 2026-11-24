@@ -5,7 +5,6 @@ from app.activity.core.ports.spi.db.repositories.activity_log_port import Activi
 from app.organization.core.ports.spi.db.repositories.organization_port import OrganizationPort
 
 
-# A system process run by the scheduler, not a user use case, so it has no actor or permission.
 class ActivityRetention:
     def __init__(self, repository: ActivityLogPort, organization_repository: OrganizationPort) -> None:
         self._repository = repository
