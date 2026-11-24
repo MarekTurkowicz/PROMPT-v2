@@ -3,6 +3,9 @@ from pathlib import Path
 
 import pytest
 
+from app.activity.adapter.outbound.relational_db.models import activity_log as relational_activity_log
+from app.activity.core.domain.enums.activity_action import ActivityAction
+from app.activity.core.domain.enums.entity_type import EntityType
 from app.object_relational_schema import SCHEMA_OBJECTS
 from app.shared.adapter.outbound.object_relational_db.objects import (
     EnumType,
@@ -25,11 +28,12 @@ RELATIONAL_CHOICES = {
     "milestone_status_t": ("api/models/milestone.py", "MilestoneStatus"),
     "funding_type_t": ("api/models/funding.py", "FundingType"),
     "expense_type_t": ("api/models/expense.py", "ExpenseType"),
-    "entity_type_t": ("app/activity/adapter/outbound/relational_db/models/activity_log.py", "EntityType"),
-    "activity_action_t": (
-        "app/activity/adapter/outbound/relational_db/models/activity_log.py",
-        "ActivityAction",
-    ),
+}
+
+# ENUM -> the domain enum the relational model takes its values from.
+RELATIONAL_DOMAIN_ENUMS = {
+    "entity_type_t": (relational_activity_log.ENTITY_TYPES, EntityType),
+    "activity_action_t": (relational_activity_log.ACTIONS, ActivityAction),
 }
 
 
@@ -46,13 +50,22 @@ def text_choices_values(path: str, class_name: str) -> tuple[str, ...]:
 
 
 def test_every_enum_is_checked() -> None:
-    assert set(ENUMS) == set(RELATIONAL_CHOICES)
+    assert set(ENUMS) == set(RELATIONAL_CHOICES) | set(RELATIONAL_DOMAIN_ENUMS)
 
 
 @pytest.mark.parametrize("enum_name", sorted(RELATIONAL_CHOICES))
 def test_enum_values_match_relational_choices(enum_name: str) -> None:
     # Same order too: PostgreSQL compares ENUM values by their position.
     assert ENUMS[enum_name].values == text_choices_values(*RELATIONAL_CHOICES[enum_name])
+
+
+@pytest.mark.parametrize("enum_name", sorted(RELATIONAL_DOMAIN_ENUMS))
+def test_enum_values_come_from_the_same_domain_enum(enum_name: str) -> None:
+    relational_values, domain_enum = RELATIONAL_DOMAIN_ENUMS[enum_name]
+    domain_values = tuple(member.value for member in domain_enum)
+
+    assert ENUMS[enum_name].values == domain_values
+    assert tuple(relational_values) == domain_values
 
 
 def test_schema_has_no_missing_dependencies() -> None:

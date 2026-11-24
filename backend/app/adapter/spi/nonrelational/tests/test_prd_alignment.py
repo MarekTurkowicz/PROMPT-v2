@@ -2,7 +2,8 @@ from collections.abc import Iterator
 
 from bson import Decimal128
 
-from app.activity.adapter.outbound.relational_db.models.activity_log import ActivityAction, EntityType
+from app.activity.core.domain.enums.activity_action import ActivityAction
+from app.activity.core.domain.enums.entity_type import EntityType
 from app.adapter.spi.nonrelational.models import COLLECTIONS
 from app.adapter.spi.nonrelational.models._schema import CollectionSpec, distinct
 from app.adapter.spi.nonrelational.models.activity_logs import ACTIVITY_LOGS
@@ -193,8 +194,8 @@ def test_checklist_item_does_not_add_an_assignee_absent_from_prd() -> None:
 def test_activity_log_dictionaries_match_relational_model() -> None:
     properties = ACTIVITY_LOGS.schema["properties"]
 
-    assert properties["entity_type"]["enum"] == list(EntityType.values)
-    assert properties["action"]["enum"] == list(ActivityAction.values)
+    assert properties["entity_type"]["enum"] == [entity_type.value for entity_type in EntityType]
+    assert properties["action"]["enum"] == [action.value for action in ActivityAction]
 
 
 def test_identifiers_accept_bson_int32_and_int64() -> None:
