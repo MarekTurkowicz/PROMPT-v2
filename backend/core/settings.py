@@ -22,7 +22,8 @@ django_stubs_ext.monkeypatch()
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = BACKEND_DIR.parent
 
-IN_DOCKER = os.path.exists("/.dockerenv")
+# Podman does not create /.dockerenv; it creates /run/.containerenv.
+IN_DOCKER = os.path.exists("/.dockerenv") or os.path.exists("/run/.containerenv")
 load_dotenv(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production

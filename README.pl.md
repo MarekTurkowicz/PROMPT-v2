@@ -30,7 +30,7 @@ PROMT 2.0 rozwija pierwotny PROMT (praca inżynierska) z narzędzia dla jednego 
 | Backend | Python · Django · Django REST Framework · Pydantic |
 | Baza danych | PostgreSQL |
 | Testy | pytest · Vitest · Testing Library · Playwright |
-| Środowisko | Docker · Docker Compose |
+| Środowisko | Docker · Docker Compose · uv |
 
 ---
 
@@ -89,9 +89,8 @@ cd frontend && npx playwright test --config=playwright.config.ts
 Uruchamiane na hoście z katalogu głównego repozytorium (konfiguracja w `mypy.ini`); CI wykonuje to samo sprawdzenie przy pull requestach i pushu do `main`.
 
 ```bash
-python -m venv backend/.venv                                    # Python 3.13, jednorazowo
-backend/.venv/Scripts/pip install -r backend/requirements.txt   # Linux/macOS: backend/.venv/bin/pip
-backend/.venv/Scripts/mypy backend/                             # Linux/macOS: backend/.venv/bin/mypy
+uv --project backend sync                                       # Python 3.14, jednorazowo
+uv --project backend run mypy backend/
 ```
 
 ---
