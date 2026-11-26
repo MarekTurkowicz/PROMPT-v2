@@ -13,19 +13,19 @@ container = get_container()
 
 urlpatterns = [
     path(
-        "/",
+        "",
         OrganizationView.as_view(create_organization=container.create_organization),
         name="create-organization",
     ),
     path(
-        "/<int:organization_id>/settings/",
+        "<int:organization_id>/settings/",
         OrganizationSettingsView.as_view(
             update_organization_settings=container.update_organization_settings,
         ),
         name="update-organization-settings",
     ),
     path(
-        "/<int:organization_id>/members/",
+        "<int:organization_id>/members/",
         OrganizationMembersView.as_view(
             add_organization_member=container.add_organization_member,
         ),

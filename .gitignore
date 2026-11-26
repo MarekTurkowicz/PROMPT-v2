@@ -51,6 +51,9 @@ backend/.coverage
 backend/coverage.xml
 backend/htmlcov/
 
+!backend/*/migrations/__init__.py
+backend/*/migrations/*
+
 # Local databases / dumps
 backend/db.sqlite3
 backend/*.sqlite3

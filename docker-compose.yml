@@ -118,7 +118,7 @@ services:
       start_period: 30s
 
   backend:
-    command: sh -c "python manage.py migrate && python manage.py create_default_super_user && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py create_default_super_user && python manage.py runserver 0.0.0.0:8000"
     build:
       context: ./backend
       dockerfile: ./Dockerfile
