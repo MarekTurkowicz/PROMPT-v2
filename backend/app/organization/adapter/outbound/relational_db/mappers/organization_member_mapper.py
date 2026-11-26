@@ -4,7 +4,7 @@ from app.organization.adapter.outbound.relational_db.models.organization_member 
 from app.organization.core.domain.entities.organization_member import (
     OrganizationMember as OrganizationMemberEntity,
 )
-from app.organization.core.domain.value_objects.member_status import MemberStatus
+from app.organization.core.domain.enums.member_status import MemberStatus
 from app.shared.core.ports.spi.db.base_mapper import BaseMapper
 
 

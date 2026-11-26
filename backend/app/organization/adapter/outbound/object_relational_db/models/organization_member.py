@@ -1,4 +1,4 @@
-from app.organization.core.domain.value_objects.member_status import MemberStatus
+from app.organization.core.domain.enums.member_status import MemberStatus
 from app.shared.adapter.outbound.object_relational_db.objects import EnumType, Table
 
 MEMBER_STATUS = EnumType.from_enum("member_status_t", MemberStatus)

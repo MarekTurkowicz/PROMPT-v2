@@ -1,5 +1,5 @@
-from app.project.core.domain.constraints.color import Color
 from app.project.core.domain.enums.status_category import StatusCategory
+from app.project.core.domain.value_objects.color import Color
 from app.shared.adapter.outbound.object_relational_db.objects import Domain, EnumType, Statement, Table
 
 STATUS_CATEGORY = EnumType.from_enum("status_category_t", StatusCategory)

@@ -7,8 +7,8 @@ from app.organization.core.domain.constants import (
     MEMBER_JOB_TITLE_MAX_LENGTH,
     MEMBER_PHONE_MAX_LENGTH,
 )
+from app.organization.core.domain.enums.member_status import MemberStatus
 from app.organization.core.domain.exceptions import InvalidMemberProfileError
-from app.organization.core.domain.value_objects.member_status import MemberStatus
 
 
 @dataclass(frozen=True, slots=True)

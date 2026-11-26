@@ -851,7 +851,8 @@ backend/
         domain/
           entities/            encje (frozen dataclass)
           value_objects/       obiekty wartości z walidacją
-          constants.py         limity domeny
+          enums/               enumy domeny (StrEnum)
+          constants.py         limity domeny (liczby, z których korzystają value objecty)
           exceptions.py        błędy domenowe (kind, code)
         application/           przypadki użycia P1–P12 i zapytania widoków
         ports/

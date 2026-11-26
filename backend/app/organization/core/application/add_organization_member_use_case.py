@@ -8,12 +8,12 @@ from app.activity.core.ports.spi.db.repositories.notification_port import (
 from app.organization.core.domain.entities.organization_member import (
     OrganizationMember,
 )
+from app.organization.core.domain.enums.member_status import MemberStatus
 from app.organization.core.domain.exceptions import (
     MemberAlreadyExistsError,
     OrganizationNotFoundError,
     UserNotFoundError,
 )
-from app.organization.core.domain.value_objects.member_status import MemberStatus
 from app.organization.core.ports.api.add_organization_member_port import (
     AddOrganizationMemberPort,
 )

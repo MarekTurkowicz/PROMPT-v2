@@ -5,7 +5,7 @@ from app.access.core.domain.enums.permission_enum import PermissionEnum
 from app.access.core.ports.spi.db.repositories.organization_access_port import (
     OrganizationAccessPort,
 )
-from app.organization.core.domain.value_objects.member_status import MemberStatus
+from app.organization.core.domain.enums.member_status import MemberStatus
 
 # Only organization-wide grants (project_id IS NULL) count; UNION in the recursive part stops on group cycles.
 ORGANIZATION_ACCESS_QUERY = """
