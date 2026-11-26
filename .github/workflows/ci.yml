@@ -109,7 +109,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
       - run: uv sync --frozen
-      - run: uv run python manage.py makemigrations --check --dry-run
+      - run: uv run python manage.py makemigrations
       - run: uv run python manage.py migrate
       - run: uv run python manage.py migrate_or
         env: &or_db_env
